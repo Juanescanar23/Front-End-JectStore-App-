@@ -28,7 +28,14 @@ const ServiceContent: FC<ServiceContentDataTypes> = ({ serviceData }) => {
         ? safeParse(service.options)
         : service.options;
 
-    return <ServiceCarouselRender key={index} serviceList={{ options }} />;
+    if (!options || typeof options !== "object") return null;
+
+    return (
+      <ServiceCarouselRender
+        key={index}
+        serviceList={{ options: options as OptionDataTypes }}
+      />
+    );
   });
 };
 
