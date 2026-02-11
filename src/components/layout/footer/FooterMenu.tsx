@@ -58,7 +58,7 @@ export default function FooterMenu({
       {isArray(columns?.column_1) ? (
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
-            {columns.column_1.map((item: ThemeOptions, index: number) => {
+            {(columns?.column_1 || []).map((item: ThemeOptions, index: number) => {
               return <FooterMenuItem key={index} item={item} />;
             })}
           </ul>
@@ -69,7 +69,7 @@ export default function FooterMenu({
       {isArray(columns?.column_2) ? (
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
-            {columns.column_2.map((item: ThemeOptions, index: number) => {
+            {(columns?.column_2 || []).map((item: ThemeOptions, index: number) => {
               return <FooterMenuItem key={index} item={item} />;
             })}
           </ul>
@@ -80,7 +80,7 @@ export default function FooterMenu({
       {isArray(columns?.column_3) ? (
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
-            {columns.column_3.map((item: ThemeOptions, index: number) => {
+            {(columns?.column_3 || []).map((item: ThemeOptions, index: number) => {
               return <FooterMenuItem key={index} item={item} />;
             })}
           </ul>
