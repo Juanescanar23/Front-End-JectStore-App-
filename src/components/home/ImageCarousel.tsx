@@ -9,6 +9,7 @@ interface ImageCarouselProps {
     options: {
         images: {
             image: string;
+            imageUrl?: string;
             link: string;
             title?: string;
         }[];
