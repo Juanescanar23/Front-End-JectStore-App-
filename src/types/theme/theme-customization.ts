@@ -35,7 +35,7 @@ export interface GetFooterResponse {
   themeCustomization: ThemeCustomizationNode[];
 }
 
-export interface GetFooterVariables {}
+export type GetFooterVariables = Record<string, never>;
 
 export interface ThemeCustomizationTranslationNode {
   id: string;

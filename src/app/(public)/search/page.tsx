@@ -64,57 +64,6 @@ export default async function SearchPage({
   const itemsPerPage = 12;
   const parsedPage = page ? parseInt(page, 10) : 1;
   const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const sortValue = params?.sort || "name-asc";
-  const selectedSort =
-    SortByFields.find((s) => s.key === sortValue) || SortByFields[0];
-  const rawColor = params?.color;
-  const rawSize = params?.size;
-  const rawBrand = params?.brand;
-
-  const colorFilter =
-    typeof rawColor === "string"
-      ? rawColor.split(",")
-      : Array.isArray(rawColor)
-        ? rawColor
-        : [];
-  const sizeFilter =
-    typeof rawSize === "string"
-      ? rawSize.split(",")
-      : Array.isArray(rawSize)
-        ? rawSize
-        : [];
-
-  const brandFilter =
-    typeof rawBrand === "string"
-      ? rawBrand.split(",")
-      : Array.isArray(rawBrand)
-        ? rawBrand
-        : [];
-
-  const extractId = (value: string) => {
-    if (/^\d+$/.test(value)) return value;
-
-    const match = value.match(/\/(\d+)$/);
-    return match ? match[1] : null;
-  };
-  const colorIds = colorFilter
-    .map(extractId)
-    .filter((id): id is string => Boolean(id));
-
-  const sizeIds = sizeFilter
-    .map(extractId)
-    .filter((id): id is string => Boolean(id));
-
-  const brandIds = brandFilter
-    .map(extractId)
-    .filter((id): id is string => Boolean(id));
-
-  const filterObject: Record<string, string> = {};
-
-  if (colorIds.length > 0) filterObject.color = colorIds.join(",");
-  if (sizeIds.length > 0) filterObject.size = sizeIds.join(",");
-  if (brandIds.length > 0) filterObject.brand = brandIds.join(",");
-  const isFilterApplied = Object.keys(filterObject).length > 0;
   const dataPromise = graphqlRequest<ProductsResponse>(GET_PRODUCTS, {
     input: {
       page: currentPage,
