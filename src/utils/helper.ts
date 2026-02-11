@@ -66,10 +66,11 @@ export const isCleanFilter = (
 ): string | object => {
   if (type === "url") {
     return `search?${filters
-      .map(
-        ({ key, value }) =>
-          `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
-      )
+      .map(({ key, value }) => {
+        const safeKey = key ?? "";
+        const safeValue = value ?? "";
+        return `${encodeURIComponent(safeKey)}=${encodeURIComponent(safeValue)}`;
+      })
       .join("&")}`;
   }
 
