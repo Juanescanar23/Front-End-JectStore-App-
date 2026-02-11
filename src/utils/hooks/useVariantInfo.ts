@@ -15,8 +15,9 @@ export const getVariantInfo = (
     };
   }
   const searchParams = new URLSearchParams(params);
+  const parsedIndex = safeParse(index);
   const indexData: Record<string, Record<string, number>> =
-    safeParse(index) || {};
+    parsedIndex && typeof parsedIndex === "object" ? (parsedIndex as Record<string, Record<string, number>>) : {};
 
   const selectedAttributes: Record<string, number> = {};
 
