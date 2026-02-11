@@ -4,7 +4,7 @@ import { FC } from "react";
 import Link from "next/link";
 import { GridTileImage } from "@/components/theme/ui/grid/Tile";
 import { useMediaQuery } from "@utils/hooks/useMediaQueryHook";
-import { getProductImageUrl } from "@/utils/constants";
+import { getProductImageUrl, NOT_IMAGE } from "@/utils/constants";
 
 interface ThreeItemGridProps {
     title: string;
@@ -27,7 +27,7 @@ function ThreeItemGridItem({ product, size, priority }: {
     size: 'full' | 'half';
     priority?: boolean;
 }) {
-    const imageUrl = getProductImageUrl(product);
+    const imageUrl = getProductImageUrl(product) || NOT_IMAGE;
     const displayPrice = product?.specialPrice ?? product?.price ?? '0';
 
     return (
@@ -75,7 +75,7 @@ function MobileThreeItemGridItem({ product, size, priority }: {
     size: 'full' | 'half';
     priority?: boolean;
 }) {
-    const imageUrl = getProductImageUrl(product);
+    const imageUrl = getProductImageUrl(product) || NOT_IMAGE;
     const displayPrice = product?.specialPrice ?? product?.price ?? '0';
 
     return (
