@@ -30,6 +30,20 @@ type ExtractVariables<T> = T extends { variables: object }
   ? T["variables"]
   : never;
 
+const normalizeBase = (value?: string) => {
+  if (!value) return "";
+  return value.replace(/\/+$/, "");
+};
+
+const resolveGraphqlUrl = () => {
+  if (!GRAPHQL_URL) return GRAPHQL_URL;
+  if (!GRAPHQL_URL.startsWith("/")) return GRAPHQL_URL;
+  const base = normalizeBase(
+    process.env.BAGISTO_SERVER_ENDPOINT || process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT
+  );
+  return base ? `${base}${GRAPHQL_URL}` : GRAPHQL_URL;
+};
+
 export async function bagistoFetch<T>({
   cache = "force-cache",
   headers,
@@ -88,7 +102,7 @@ export async function bagistoFetch<T>({
       }
     }
 
-    const result = await fetch(GRAPHQL_URL, {
+    const result = await fetch(resolveGraphqlUrl(), {
       method: "POST",
       headers: baseHeaders,
       body: JSON.stringify({
@@ -129,7 +143,7 @@ export async function bagistoFetchNoSession<T>({
   revalidate?: number,
 }): Promise<{ status: number; body: T } | never> {
   try {
-    const result = await fetch(GRAPHQL_URL, {
+    const result = await fetch(resolveGraphqlUrl(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
