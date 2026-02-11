@@ -35,20 +35,18 @@ export async function generateMetadata({
 
   const treeData = await graphqlRequest<TreeCategoriesResponse>(
     GET_TREE_CATEGORIES,
-    { parentId: 1 },
+    { getCategoryTree: true },
     { tags: ["categories"], life: "days" }
   );
 
-  const categories = treeData?.treeCategories || [];
+  const categories = treeData?.homeCategories || [];
   const categoryItem = findCategoryBySlug(categories, categorySlug);
 
   if (!categoryItem) return notFound();
 
-  const translation = categoryItem.translation;
-
   return {
-    title: translation?.metaTitle || translation?.name,
-    description: translation?.description || `${translation?.name} products`,
+    title: categoryItem.metaTitle || categoryItem.name,
+    description: categoryItem.description || `${categoryItem.name} products`,
   };
 }
 
@@ -65,15 +63,15 @@ export default async function CategoryPage({
   const [treeData, colorFilterData, sizeFilterData, brandFilterData] = await Promise.all([
     graphqlRequest<TreeCategoriesResponse>(
       GET_TREE_CATEGORIES,
-      { parentId: 1 },
+      { getCategoryTree: true },
       { tags: ["categories"], life: "days" }
     ),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "/api/admin/attributes/23", locale: "en" }),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "/api/admin/attributes/24", locale: "en" }),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "/api/admin/attributes/25", locale: "en" }),
+    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "23", locale: "en" }),
+    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "24", locale: "en" }),
+    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "25", locale: "en" }),
   ]);
 
-  const categories = treeData?.treeCategories || [];
+  const categories = treeData?.homeCategories || [];
   const categoryItem = findCategoryBySlug(categories, categorySlug);
 
   if (!categoryItem) return notFound();
@@ -83,50 +81,20 @@ export default async function CategoryPage({
   const {
     q: searchValue,
     page,
-    cursor,
-    before,
   } = (resolvedParams || {}) as {
     [key: string]: string;
   };
 
   const itemsPerPage = 12;
-  const currentPage = page ? parseInt(page) - 1 : 0;
-  const sortValue = resolvedParams?.sort || "name-asc";
-  const selectedSort =
-    SortByFields.find((s) => s.key === sortValue) || SortByFields[0];
-
-  const rawColor = resolvedParams?.color;
-  const rawSize = resolvedParams?.size;
-  const rawBrand = resolvedParams?.brand;
-
-  const colorFilter = typeof rawColor === "string" ? rawColor.split(",") : [];
-  const sizeFilter = typeof rawSize === "string" ? rawSize.split(",") : [];
-  const brandFilter = typeof rawBrand === "string" ? rawBrand.split(",") : [];
-
-  const colorIds = colorFilter.map((iri) => extractNumericId(iri)).filter(Boolean);
-  const sizeIds = sizeFilter.map((iri) => extractNumericId(iri)).filter(Boolean);
-  const brandIds = brandFilter.map((iri) => extractNumericId(iri)).filter(Boolean);
-
-  const filterObject: Record<string, string> = {};
-
-  if (numericId) {
-    filterObject.category_id = numericId;
-  }
-
-  if (colorIds.length > 0) filterObject.color = colorIds.join(",");
-  if (sizeIds.length > 0) filterObject.size = sizeIds.join(",");
-  if (brandIds.length > 0) filterObject.brand = brandIds.join(",");
-
-  const filterInput = JSON.stringify(filterObject)
+  const parsedPage = page ? parseInt(page, 10) : 1;
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const [data] = await Promise.all([
     graphqlRequest<ProductsResponse>(GET_FILTER_PRODUCTS, {
-      query: searchValue || "",
-      filter: filterInput,
-      ...(before
-        ? { last: itemsPerPage, before: before }
-        : { first: itemsPerPage, after: cursor }),
-      sortKey: selectedSort.sortKey,
-      reverse: selectedSort.reverse,
+      input: {
+        page: currentPage,
+        limit: itemsPerPage,
+        ...(searchValue ? { name: searchValue } : {}),
+      },
     }),
   ]);
 
@@ -140,25 +108,35 @@ export default async function CategoryPage({
       id: attr.id,
       code: attr.code,
       adminName: attr.code.toUpperCase(),
-      options: attr.options.edges.map((o) => ({
-        id: o.node.id,
-        adminName: o.node.adminName,
-      })),
+      options: (attr.options || []).map((o) => {
+        const translation =
+          o.translations?.find((t) => t.locale === "en") ||
+          o.translations?.[0];
+        return {
+          id: o.id,
+          adminName: translation?.label || o.adminName,
+        };
+      }),
     }));
 
-  const products = data?.products?.edges?.map((e) => e.node) || [];
-  const pageInfo = data?.products?.pageInfo;
-  const totalCount = data?.products?.totalCount;
-  const translation = categoryItem.translation;
-
+  const products = data?.products?.data || [];
+  const pageInfo = data?.products?.paginatorInfo;
+  const totalCount = pageInfo?.total || products.length;
+  const categoryId = numericId || categoryItem.id;
+  const filteredProducts = categoryId
+    ? products.filter((product) =>
+      (product.categories || []).some(
+        (category) => String(category?.id) === String(categoryId)
+      )
+    )
+    : products;
   return (
     <>
       <MobileSearchBar />
       <section>
         <Suspense fallback={<FilterListSkeleton />}>
           <CategoryDetail
-            categoryItem={{ description: translation?.description ?? "", name: translation?.name ?? "" }}
-
+            categoryItem={{ description: categoryItem.description ?? "", name: categoryItem.name ?? "" }}
           />
         </Suspense>
         <div className="my-10 hidden gap-4 md:flex md:items-baseline md:justify-between w-full max-w-screen-2xl mx-auto px-4">
@@ -170,10 +148,10 @@ export default async function CategoryPage({
           <SortOrder sortOrders={SortByFields} title="Sort by" />
         </div>
 
-        {isArray(products) && products.length > 0 ? (
+        {isArray(filteredProducts) && filteredProducts.length > 0 ? (
           <Grid className="grid-cols-2 lg:grid-cols-4 gap-5 md:gap-11.5 w-full max-w-screen-2xl mx-auto px-4"
           >
-            <ProductGridItems products={products} />
+            <ProductGridItems products={filteredProducts} />
           </Grid>
         ) : (
           <div className="px-4">
@@ -183,7 +161,7 @@ export default async function CategoryPage({
           </div>
         )}
 
-        {isArray(products) && (totalCount > itemsPerPage || pageInfo?.hasNextPage) && (
+        {isArray(filteredProducts) && totalCount > itemsPerPage && (
           <nav
             aria-label="Collection pagination"
             className="my-10 block items-center sm:flex"
@@ -191,9 +169,7 @@ export default async function CategoryPage({
             <Pagination
               itemsPerPage={itemsPerPage}
               itemsTotal={totalCount || 0}
-              currentPage={currentPage}
-              nextCursor={pageInfo?.endCursor}
-              prevCursor={pageInfo?.startCursor}
+              currentPage={currentPage - 1}
             />
           </nav>
         )}

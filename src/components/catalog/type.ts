@@ -1,80 +1,49 @@
-export interface ProductSectionNode {
-  isSaleable: string | undefined;
-  id: string;
-  sku: string;
-  type: string;
-  urlKey?: string;
-  name?: string;
-  baseImageUrl?: string;
-  price?: string | number;
-  specialPrice?: string;
-  images?: {
-    edges: Array<{
-      node: {
-        publicPath: string;
-      };
-    }>;
-  };
+export interface CacheImage {
+  smallImageUrl?: string | null;
+  mediumImageUrl?: string | null;
+  largeImageUrl?: string | null;
+  originalImageUrl?: string | null;
 }
 
-export interface ProductNode {
-  variants: any;
+export interface ProductSectionNode {
   id: string;
   sku: string;
   type: string;
-  name?: string;
   urlKey?: string;
+  name?: string;
+  price?: number | string | null;
+  specialPrice?: number | string | null;
+  isSaleable?: boolean | null;
+  cacheBaseImage?: CacheImage[];
+  cacheGalleryImages?: CacheImage[];
+  images?: Array<{ url?: string | null; imageUrl?: string | null }>;
+  categories?: Array<{ id?: string | number; slug?: string | null; name?: string | null }>;
+}
+
+export interface ProductNode extends ProductSectionNode {
   description?: string;
   shortDescription?: string;
-  specialPrice?: string;
-  metaTitle?: string;
-  baseImageUrl?: string;
-  superAttributes?: {
-    edges: Array<{ node: ProductReviewNode }>;
-  };
-  reviews?: {
-    edges: Array<{ node: ProductReviewNode }>;
-  };
-  relatedProducts?: {
-    edges: Array<{ node: ProductSectionNode }>;
-  };
-  crossSells?: {
-    edges: Array<{ node: ProductSectionNode }>;
-  };
-  upSells?: {
-    edges: Array<{ node: ProductSectionNode }>;
-  };
+  variants?: ProductNode[] | null;
+  reviews?: ProductReviewNode[] | null;
+  relatedProducts?: ProductSectionNode[] | null;
+  crossSells?: ProductSectionNode[] | null;
+  upSells?: ProductSectionNode[] | null;
+  superAttributes?: any;
+}
+
+export interface PaginatorInfo {
+  count: number;
+  currentPage: number;
+  lastPage: number;
+  perPage: number;
+  total: number;
+  hasMorePages: boolean;
 }
 
 export interface ProductsResponse {
   products: {
-    edges: Array<{ node: ProductNode }>;
-    pageInfo: {
-      endCursor: string;
-      startCursor: string;
-      hasNextPage: boolean;
-      hasPreviousPage: boolean;
-    };
-    totalCount: number;
-  };
-}
-
-export interface ProductSectionNode {
-  id: string;
-  sku: string;
-  type: string;
-  urlKey?: string;
-  name?: string;
-  baseImageUrl?: string;
-  minimumPrice?: string | number;
-  price?: string | number;
-  specialPrice?: string;
-  images?: {
-    edges: Array<{
-      node: {
-        publicPath: string;
-      };
-    }>;
+    paginatorInfo: PaginatorInfo;
+    data: ProductNode[];
   };
 }
 
@@ -88,14 +57,15 @@ export interface ProductFilterAttributeResponse {
   attribute: {
     id: string;
     code: string;
-    options: {
-      edges: Array<{
-        node: {
-          id: string;
-          adminName: string;
-        };
+    options: Array<{
+      id: string;
+      adminName: string;
+      translations: Array<{
+        id: string;
+        label: string;
+        locale: string;
       }>;
-    };
+    }>;
   };
 }
 
@@ -108,42 +78,16 @@ export interface ProductReviewNode {
 }
 
 export interface ProductData {
-  variants?: {
-    edges?: {
-      node?: {
-        attributeValues?: {
-          edges?: {
-            node?: {
-              attribute?: {
-                code?: string;
-              };
-              value?: string;
-            };
-          }[];
-        };
-        id?: string;
-        priceBaseImageUrl?: string;
-        name?: string;
-        name_id?: string;
-        sku?: string;
-        type?: string;
-        color?: string;
-        size?: string;
-      };
-    }[];
-  } | null;
-  name?: string;
-  price?: { value?: number; currencyCode?: string } | number | null;
-  priceHtml?: { currencyCode?: string } | null;
-  averageRating?: number;
-  type?: string;
-  reviewCount?: number;
-  minimumPrice?: string;
-  specialPrice?: string;
-  shortDescription?: string;
-  status?: boolean;
   id?: string;
+  sku?: string;
+  type?: string;
+  name?: string;
+  price?: { value?: number; currencyCode?: string } | number | string | null;
+  specialPrice?: number | string | null;
+  priceHtml?: { currencyCode?: string } | null;
+  shortDescription?: string;
   description?: string;
+  isSaleable?: boolean | null;
   configutableData?: {
     attributes?: unknown[];
     index?: unknown[];

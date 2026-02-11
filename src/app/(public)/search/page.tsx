@@ -4,10 +4,9 @@ import NotFound from "@/components/theme/search/not-found";
 import { isArray } from "@/utils/type-guards";
 import {
   GET_FILTER_OPTIONS,
-  GET_FILTER_PRODUCTS,
   graphqlRequest,
 } from "@/graphql";
-import { GET_PRODUCTS, GET_PRODUCTS_PAGINATION } from "@/graphql";
+import { GET_PRODUCTS } from "@/graphql";
 import { generateMetadataForPage } from "@/utils/helper";
 import SortOrder from "@/components/theme/filters/SortOrder";
 import { SortByFields } from "@/utils/constants";
@@ -29,51 +28,7 @@ export const dynamicParams = true;
 
 
 export async function generateStaticParams() {
-  try {
-    const itemsPerPage = 12;
-    const commonSearches = [""];
-    const params = [];
-    for (const query of commonSearches) {
-      const data = await graphqlRequest<ProductsResponse>(GET_PRODUCTS, {
-        query: query,
-        first: 1,
-        sortKey: "CREATED_AT",
-        reverse: true,
-      });
-
-      const totalCount = data?.products?.totalCount || 0;
-      const totalPages = Math.ceil(totalCount / itemsPerPage);
-      let cursor: string | undefined;
-
-      for (let i = 0; i < totalPages; i++) {
-        const pageParams: { page: string; cursor?: string } = {
-          page: String(i + 1),
-        };
-        if (i > 0 && cursor) {
-          pageParams.cursor = cursor;
-        }
-        params.push(pageParams);
-        if (i < totalPages - 1) {
-          const pageData = await graphqlRequest<ProductsResponse>(
-            GET_PRODUCTS,
-            {
-              query: query,
-              first: itemsPerPage,
-              sortKey: "CREATED_AT",
-              reverse: true,
-              ...(cursor && { after: cursor }),
-            }
-          );
-          cursor = pageData?.products?.pageInfo?.endCursor;
-        }
-      }
-    }
-
-    return params;
-  } catch (error) {
-    console.error("Error generating static params:", error);
-    return [];
-  }
+  return [];
 }
 
 export async function generateMetadata({
@@ -102,19 +57,16 @@ export default async function SearchPage({
   const {
     q: searchValue,
     page,
-    cursor,
-    before,
   } = (params || {}) as {
     [key: string]: string;
   };
 
   const itemsPerPage = 12;
-  const currentPage = page ? parseInt(page) - 1 : 0;
+  const parsedPage = page ? parseInt(page, 10) : 1;
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const sortValue = params?.sort || "name-asc";
   const selectedSort =
     SortByFields.find((s) => s.key === sortValue) || SortByFields[0];
-  const afterCursor: string | undefined = cursor;
-  const beforeCursor: string | undefined = before;
   const rawColor = params?.color;
   const rawSize = params?.size;
   const rawBrand = params?.brand;
@@ -163,60 +115,26 @@ export default async function SearchPage({
   if (sizeIds.length > 0) filterObject.size = sizeIds.join(",");
   if (brandIds.length > 0) filterObject.brand = brandIds.join(",");
   const isFilterApplied = Object.keys(filterObject).length > 0;
-  const filterInput = isFilterApplied
-    ? JSON.stringify(filterObject)
-    : undefined;
-
-  let dataPromise;
-  if (isFilterApplied) {
-    dataPromise = graphqlRequest<ProductsResponse>(GET_FILTER_PRODUCTS, {
-      query: searchValue,
-      filter: filterInput,
-      ...(beforeCursor
-        ? { last: itemsPerPage, before: beforeCursor }
-        : { first: itemsPerPage, after: afterCursor }),
-      sortKey: selectedSort.sortKey,
-      reverse: selectedSort.reverse,
-    });
-  } else {
-    dataPromise = (async () => {
-      let currentAfterCursor = afterCursor;
-      if (currentPage > 0 && !afterCursor) {
-        const cursorData = await graphqlRequest<ProductsResponse>(
-          GET_PRODUCTS_PAGINATION,
-          {
-            query: searchValue,
-            first: currentPage * itemsPerPage,
-            sortKey: selectedSort.sortKey,
-            reverse: selectedSort.reverse,
-          }
-        );
-        currentAfterCursor = cursorData?.products?.pageInfo?.endCursor;
-      }
-
-      return graphqlRequest<ProductsResponse>(GET_PRODUCTS, {
-        query: searchValue,
-        ...(beforeCursor
-          ? { last: itemsPerPage, before: beforeCursor }
-          : { first: itemsPerPage, after: currentAfterCursor }),
-        sortKey: selectedSort.sortKey,
-        reverse: selectedSort.reverse,
-      });
-    })();
-  }
+  const dataPromise = graphqlRequest<ProductsResponse>(GET_PRODUCTS, {
+    input: {
+      page: currentPage,
+      limit: itemsPerPage,
+      ...(searchValue ? { name: searchValue } : {}),
+    },
+  });
 
   const [data, colorFilterData, sizeFilterData, brandFilterData] = await Promise.all([
     dataPromise,
     graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, {
-      id: "/api/admin/attributes/23",
+      id: "23",
       locale: "en",
     }),
     graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, {
-      id: "/api/admin/attributes/24",
+      id: "24",
       locale: "en",
     }),
     graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, {
-      id: "/api/admin/attributes/25",
+      id: "25",
       locale: "en",
     }),
   ]);
@@ -231,15 +149,20 @@ export default async function SearchPage({
       id: attr.id,
       code: attr.code,
       adminName: attr.code.toUpperCase(),
-      options: attr.options.edges.map((o) => ({
-        id: o.node.id,
-        adminName: o.node.adminName,
-      })),
+      options: (attr.options || []).map((o) => {
+        const translation =
+          o.translations?.find((t) => t.locale === "en") ||
+          o.translations?.[0];
+        return {
+          id: o.id,
+          adminName: translation?.label || o.adminName,
+        };
+      }),
     }));
 
-  const products = data?.products?.edges?.map((e) => e.node) || [];
-  const pageInfo = data?.products?.pageInfo;
-  const totalCount = data?.products?.totalCount;
+  const products = data?.products?.data || [];
+  const pageInfo = data?.products?.paginatorInfo;
+  const totalCount = pageInfo?.total || products.length;
 
   return (
     <>
@@ -276,7 +199,7 @@ export default async function SearchPage({
         </Grid>
       ) : null}
 
-      {!isFilterApplied && isArray(products) && totalCount > itemsPerPage && (
+      {isArray(products) && totalCount > itemsPerPage && (
         <nav
           aria-label="Collection pagination"
           className="my-10 block items-center sm:flex"
@@ -284,24 +207,7 @@ export default async function SearchPage({
           <Pagination
             itemsPerPage={itemsPerPage}
             itemsTotal={totalCount || 0}
-            currentPage={currentPage}
-            nextCursor={pageInfo?.endCursor}
-            prevCursor={pageInfo?.startCursor}
-          />
-        </nav>
-      )}
-
-      {isFilterApplied && isArray(products) && pageInfo?.hasNextPage && (
-        <nav
-          aria-label="Filtered pagination"
-          className="my-10 block items-center sm:flex"
-        >
-          <Pagination
-            itemsPerPage={itemsPerPage}
-            itemsTotal={totalCount || 0}
-            currentPage={currentPage}
-            nextCursor={pageInfo?.endCursor}
-            prevCursor={pageInfo?.startCursor}
+            currentPage={(pageInfo?.currentPage ?? currentPage) - 1}
           />
         </nav>
       )}

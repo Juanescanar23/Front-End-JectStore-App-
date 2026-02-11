@@ -116,9 +116,7 @@ export function AddToCart({
 
   const superAttributes = productSwatchReview?.superAttributeOptions
     ? safeParse(productSwatchReview.superAttributeOptions)
-    : productSwatchReview?.superAttributes?.edges?.map(
-        (e: { node: any }) => e.node,
-      ) || [];
+    : productSwatchReview?.superAttributes || [];
 
   const isConfigurable = superAttributes.length > 0;
 

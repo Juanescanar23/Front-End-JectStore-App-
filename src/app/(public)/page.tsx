@@ -6,12 +6,12 @@ import { ThemeCustomizationResponse } from "@/types/theme/theme-customization";
 export const revalidate = 3600;
 
 export default async function Home() {
-  const data = await graphqlRequest<ThemeCustomizationResponse>(GET_THEME_CUSTOMIZATION, {first: 20}, {
+  const data = await graphqlRequest<ThemeCustomizationResponse>(GET_THEME_CUSTOMIZATION, undefined, {
     tags: ["theme-customization"],
     life: "days"
   });
 
   return (
-    <RenderThemeCustomization themeCustomizations={data?.themeCustomizations} />
+    <RenderThemeCustomization themeCustomizations={data?.themeCustomization} />
   );
 }

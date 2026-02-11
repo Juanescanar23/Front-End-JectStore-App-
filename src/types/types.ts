@@ -481,17 +481,11 @@ export type AttributeOptionNode = {
   isValid: boolean;
 };
 
-export type AttributeOptionEdge = {
-  node: AttributeOptionNode;
-};
-
 export type AttributeData = {
   id: string;
   code: string;
   label?: string;
-  options: AttributeOptionNode[] | {
-    edges: AttributeOptionEdge[];
-  };
+  options: AttributeOptionNode[];
 };
 
 export type ProductPrice = {
@@ -686,37 +680,43 @@ export type TranslationsTypes = {
 };
 
 export type FilterDataTypes = {
-  key: string;
-  value: string;
-  __typename: string;
+  key?: string | null;
+  value?: string | null;
+  __typename?: string;
 };
 
 export type ThemeOptions = {
-  url: string;
-  title: string;
-  sortOrder: string;
+  url?: string | null;
+  title?: string | null;
+  sortOrder?: string | null;
 };
 export type OptionDataTypes = {
-  title: string;
-  css: string;
-  html: string;
-  images: ImagesDataType[];
-  filters: FilterDataTypes[];
-  column_1: ThemeOptions[];
-  column_2: ThemeOptions[];
-  column_3: ThemeOptions[];
-  services: {
-    service_icon: string;
-    description: string;
-    title: string;
+  title?: string | null;
+  css?: string | null;
+  html?: string | null;
+  links?: ImagesDataType[];
+  images?: ImagesDataType[];
+  filters?: FilterDataTypes[];
+  column_1?: ThemeOptions[];
+  column_2?: ThemeOptions[];
+  column_3?: ThemeOptions[];
+  services?: {
+    serviceIcon?: string | null;
+    service_icon?: string | null;
+    description?: string | null;
+    title?: string | null;
   }[];
 };
 
 export type ImagesDataType = {
-  title: string;
-  link: string;
-  image: string;
-  imageUrl: string;
+  title?: string | null;
+  link?: string | null;
+  image?: string | null;
+  imageUrl?: string | null;
+  url?: string | null;
+  slug?: string | null;
+  type?: string | null;
+  id?: string | null;
 };
 
 export type BagistoCollectionHomeOperation = {

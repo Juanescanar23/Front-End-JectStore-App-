@@ -6,12 +6,15 @@ export const PRODUCT_CORE_FRAGMENT = gql`
     sku
     type
     name
-    price
     urlKey
-    baseImageUrl
-    minimumPrice
+    price
     specialPrice
     isSaleable
+    categories {
+      id
+      slug
+      name
+    }
   }
 `;
 
@@ -25,31 +28,8 @@ export const PRODUCT_DETAILED_FRAGMENT = gql`
     description
     shortDescription
     price
-    baseImageUrl
-    minimumPrice
-     specialPrice
-     isSaleable
-    variants {
-      edges {
-        node {
-          id
-          sku
-          baseImageUrl
-        }
-      }
-    }
-    reviews {
-        edges {
-          node {
-            rating
-            id
-            name
-            title
-            comment
-            createdAt
-          }
-        }
-      }
+    specialPrice
+    isSaleable
   }
 `;
 
@@ -71,9 +51,13 @@ export const PRODUCT_SECTION_FRAGMENT = gql`
     name
     urlKey
     type
-    baseImageUrl
     price
-    minimumPrice
+    specialPrice
     isSaleable
+    categories {
+      id
+      slug
+      name
+    }
   }
 `;

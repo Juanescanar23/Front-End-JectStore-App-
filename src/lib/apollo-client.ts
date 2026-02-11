@@ -1,4 +1,4 @@
-import { GRAPHQL_URL } from "@/utils/constants";
+import { GRAPHQL_URL, STOREFRONT_KEY } from "@/utils/constants";
 import { ApolloClient, HttpLink, InMemoryCache, from } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { getSession } from "next-auth/react";
@@ -10,6 +10,9 @@ export default function initializeApollo() {
   const httpLink = new HttpLink({
     uri: GRAPHQL_URL,
     credentials: "include", 
+    headers: {
+      "X-STOREFRONT-KEY": STOREFRONT_KEY || "",
+    },
   });
 
   const authLink = setContext(async (_, { headers }) => {

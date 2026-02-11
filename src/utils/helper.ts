@@ -315,20 +315,26 @@ export const getValidTitle = (text: string) => {
 
 
 export function safePriceValue(product: ProductData): number {
-  if (typeof product?.price === "string") {
-    const priceValue = product?.type === "configurable"
-      ? product?.minimumPrice ?? "0"
-      : product?.price ?? "0";
-    return parseFloat(priceValue) || 0;
-  }
-  if (
-    typeof product?.price === "object" &&
-    product.price !== null &&
-    typeof (product.price as { value?: number }).value === "number"
-  ) {
-    return (product.price as { value: number }).value;
-  }
-  return 0;
+  const getNumber = (value: unknown): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      typeof (value as { value?: number }).value === "number"
+    ) {
+      return (value as { value: number }).value;
+    }
+    return 0;
+  };
+
+  const special = getNumber(product?.specialPrice);
+  if (special > 0) return special;
+
+  return getNumber(product?.price);
 }
 
 export function safeCurrencyCode(product: ProductData): string {
@@ -411,7 +417,7 @@ export function throttle<T extends (...args: any[]) => any>(
 
 export function findCategoryBySlug(categories: CategoryNode[], slug: string): CategoryNode | null {
   for (const category of categories) {
-    if (category.translation?.slug === slug) return category;
+    if (category.slug === slug) return category;
 
     if (category.children && isArray(category.children)) {
       const found = findCategoryBySlug(category.children, slug);
@@ -438,11 +444,17 @@ export const getAuthToken = (req: Request): string | undefined => {
  * @param value - The string to parse
  * @returns The parsed object or null
  */
-export function safeParse<T = any>(value: string | null | undefined): T | null {
-  if (!value || typeof value !== "string") return null;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
+export function safeParse<T = any>(
+  value: string | T | null | undefined
+): T | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
   }
+  if (typeof value === "object") return value as T;
+  return null;
 }

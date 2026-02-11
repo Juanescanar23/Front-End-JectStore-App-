@@ -17,7 +17,7 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
   try {
     const data = await graphqlRequest<any>(
       GET_HOME_CATEGORIES,
-      {},
+      { getCategoryTree: false },
       {
         tags: ["categories"],
         life: "days",
@@ -25,7 +25,7 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
     );
 
     const categories =
-      data?.categories?.edges?.map((edge: any) => edge.node) || [];
+      data?.homeCategories || [];
 
     const topCategories = categories
       .filter((category: any) => category.id !== "1")
@@ -54,17 +54,17 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
               >
                 <Link
                   className="relative h-full w-full"
-                  href={`/search/${category.translation.slug}`}
-                  aria-label={`Shop ${category.translation.name} category`}
+                  href={`/search/${category.slug}`}
+                  aria-label={`Shop ${category.name} category`}
                 >
                   <GridTileImage
                     fill
-                    alt={`${category.translation.name} category image`}
+                    alt={`${category.name} category image`}
                     className={
                       "relative rounded-[18px] overflow-hidden object-cover transition duration-300 ease-in-out group-hover:scale-105"
                     }
                     label={{
-                      title: category.translation.name || "",
+                      title: category.name || "",
                       page: "category",
                       amount: "0",
                       currencyCode: "USD",

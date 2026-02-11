@@ -8,30 +8,31 @@ import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
 import { CategoryCarouselSkeleton } from "@components/common/skeleton/CategoryCarouselSkeleton";
 
 interface RenderThemeCustomizationProps {
-    themeCustomizations: ThemeCustomizationResponse['themeCustomizations'];
+    themeCustomizations: ThemeCustomizationResponse["themeCustomization"] | undefined;
 }
 
 const RenderThemeCustomization: FC<RenderThemeCustomizationProps> = ({ themeCustomizations }) => {
-    if (!themeCustomizations?.edges?.length) return null;
+    if (!themeCustomizations?.length) return null;
 
     let productCarouselIndex = 0;
 
-    const sortedEdges = [...themeCustomizations.edges].sort((a, b) =>
-        (a.node.sortOrder || 0) - (b.node.sortOrder || 0)
+    const sortedThemes = [...themeCustomizations].sort((a, b) =>
+        (a.sortOrder || 0) - (b.sortOrder || 0)
     );
 
     return (
         <>
             <MobileSearchBar />
             <section className="w-full max-w-screen-2xl mx-auto pb-4 px-4 xss:px-7.5">
-                {sortedEdges.map(({ node }) => {
-                    const translation = node.translations.edges.find(e => e.node.locale === 'en') || node.translations.edges[0];
+                {sortedThemes.map((node) => {
+                    const translation =
+                        node.translations?.find((t) => t.localeCode === "en") ||
+                        node.translations?.[0];
                     if (!translation) return null;
 
-                    const options = safeParse(translation.node.options) || {};
+                    const options = safeParse(translation.options as any) || {};
                     if (Object.keys(options).length === 0) {
                         console.error("Error parsing options for", node.type);
-                        // return null; // Or continue
                     }
 
                     switch (node.type) {

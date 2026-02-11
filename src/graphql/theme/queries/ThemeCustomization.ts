@@ -1,24 +1,65 @@
 import { gql } from "@apollo/client";
 
 export const GET_THEME_CUSTOMIZATION = gql`
-  query themeCustomization($first: Int) {
-    themeCustomizations(first: $first) {
-      edges {
-        node {
-          id
-          type
-          name
-          status
-          sortOrder
-          translations {
-            edges {
-              node {
-                id
-                themeCustomizationId
-                locale
-                options
-              }
-            }
+  query themeCustomization {
+    themeCustomization {
+      id
+      themeCode
+      type
+      name
+      status
+      sortOrder
+      translations {
+        id
+        themeCustomizationId
+        localeCode
+        options {
+          title
+          css
+          html
+          links {
+            title
+            link
+            image
+            imageUrl
+            url
+            slug
+            type
+            id
+          }
+          images {
+            title
+            link
+            image
+            imageUrl
+            url
+            slug
+            type
+            id
+          }
+          filters {
+            key
+            value
+          }
+          column_1 {
+            url
+            title
+            sortOrder
+          }
+          column_2 {
+            url
+            title
+            sortOrder
+          }
+          column_3 {
+            url
+            title
+            sortOrder
+          }
+          services {
+            title
+            description
+            serviceIcon
           }
         }
       }

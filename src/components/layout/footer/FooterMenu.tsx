@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeOptions } from "@/types/types";
+import { ThemeCustomizationNode } from "@/types/theme/theme-customization";
 import { isArray } from "@/utils/type-guards";
 import { safeParse } from "@/utils/helper";
 
@@ -35,15 +36,18 @@ const FooterMenuItem = ({ item }: { item: ThemeOptions }) => {
 export default function FooterMenu({
   menu,
 }: {
-  menu: any;
+  menu: ThemeCustomizationNode[];
 }) {
   if (!menu || menu.length === 0) return null;
 
-  const firstMenu = menu[0]?.node;
-  const firstTranslation = firstMenu?.translations?.edges?.[0]?.node;
-  const channels = typeof firstTranslation?.options === 'string'
-    ? safeParse(firstTranslation.options)
-    : firstTranslation?.options;
+  const firstMenu = menu[0];
+  const translations = firstMenu?.translations || [];
+  const firstTranslation =
+    translations.find((t: any) => t.localeCode === "en") || translations[0];
+  const channels =
+    typeof firstTranslation?.options === "string"
+      ? safeParse(firstTranslation.options)
+      : firstTranslation?.options;
 
   return (
     <div className="flex justify-between gap-x-8 lg:gap-x-[50px]">

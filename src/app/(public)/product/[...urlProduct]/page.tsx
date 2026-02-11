@@ -6,8 +6,7 @@ import {
 } from "@/components/common/skeleton/ProductSkeleton";
 import {
   BASE_SCHEMA_URL,
-  baseUrl,
-  getImageUrl,
+  getProductImageUrl,
   NOT_IMAGE,
   PRODUCT_TYPE,
 } from "@/utils/constants";
@@ -18,7 +17,6 @@ import { ProductNode } from "@/components/catalog/type";
 import { RelatedProductsSection } from "@components/catalog/product/RelatedProductsSection";
 import ProductInfo from "@components/catalog/product/ProductInfo";
 import { LRUCache } from "@/utils/LRUCache";
-import { ProductVariant } from "@/types/category/type";
 import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
 
 const productCache = new LRUCache<ProductNode>(100, 10);
@@ -75,7 +73,7 @@ export default async function ProductPage({
   const product = await getSingleProduct(fullPath);
   if (!product) return notFound();
 
-  const imageUrl = getImageUrl(product?.baseImageUrl, baseUrl, NOT_IMAGE);
+  const imageUrl = getProductImageUrl(product);
   const productJsonLd = {
     "@context": BASE_SCHEMA_URL,
     "@type": PRODUCT_TYPE,
@@ -84,13 +82,9 @@ export default async function ProductPage({
     sku: product?.sku,
   };
 
-  const reviews = Array.isArray(product?.reviews?.edges)
-    ? product?.reviews.edges.map((e) => e.node)
-    : [];
+  const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
 
-  const VariantImages = isArray(product?.variants?.edges)
-    ? product?.variants.edges.map((edge: { node: ProductVariant }) => edge.node)
-    : [];
+  const VariantImages = isArray(product?.variants) ? product?.variants : [];
 
   return (
     <>
@@ -107,21 +101,17 @@ export default async function ProductPage({
             {isArray(VariantImages) ? (
               <HeroCarousel
                 images={
-                  VariantImages?.map(
-                    (image: { baseImageUrl: string; name: unknown }) => ({
-                      src:
-                        getImageUrl(image.baseImageUrl, baseUrl, NOT_IMAGE) ||
-                        "",
-                      altText: image?.name || "",
-                    })
-                  ) || []
+                  VariantImages?.map((variant: any) => ({
+                    src: getProductImageUrl(variant) || NOT_IMAGE,
+                    altText: variant?.name || "",
+                  })) || []
                 }
               />
             ) : (
               <HeroCarousel
                 images={[
                   {
-                    src: imageUrl || "",
+                    src: imageUrl || NOT_IMAGE,
                     altText: product?.name || "product image",
                   },
                 ]}

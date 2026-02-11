@@ -1,13 +1,7 @@
 export interface NavbarResponse {
-  categories: {
-    edges: {
-      node: {
-        translation: {
-          id: string;
-          name: string;
-          slug: string;
-        };
-      };
-    }[];
-  };
+  homeCategories: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
 }

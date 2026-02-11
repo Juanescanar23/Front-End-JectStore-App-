@@ -9,7 +9,7 @@ import TwitterIcon from "@components/common/icons/social-icon/TwitterIcon";
 import Subscribe from "./Subscribe";
 import FooterMenu from "./FooterMenu";
 import ServiceContent from "./ServiceContent";
-import { ThemeCustomizationTranslationEdge } from "@/types/theme/theme-customization";
+import { ThemeCustomizationTranslationNode } from "@/types/theme/theme-customization";
 const { COMPANY_NAME, SITE_NAME } = process.env;
 
 export default async function Footer() {
@@ -19,16 +19,16 @@ export default async function Footer() {
     "w-full h-6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700";
   const menu = await getThemeCustomization();
   const copyrightName = COMPANY_NAME || SITE_NAME || "";
-  const services = menu?.services_content?.themeCustomizations?.edges?.[0]?.node;
+  const services = menu?.services_content?.[0];
+  const serviceTranslations = services?.translations || [];
 
   return (
     <>
       <div className="mx-auto my-16 mt-16 sm:mt-0 w-full lg:my-12 md:my-20 md:max-w-4xl px-4 py-8">
-        {isObject(services) && services?.translations?.edges && (
-
+        {isObject(services) && serviceTranslations.length > 0 && (
           <ServiceContent
-            name={services?.name}
-            serviceData={services?.translations?.edges?.map((edge: ThemeCustomizationTranslationEdge) => edge.node)}
+            name={services?.name || undefined}
+            serviceData={serviceTranslations as ThemeCustomizationTranslationNode[]}
           />
         )}
       </div>
@@ -86,7 +86,7 @@ export default async function Footer() {
                 </div>
               }
             >
-              <FooterMenu menu={menu?.footer_links?.themeCustomizations?.edges} />
+              <FooterMenu menu={menu?.footer_links || []} />
             </Suspense>
             <Subscribe />
           </div>

@@ -1,32 +1,22 @@
 export interface ThemeTranslationNode {
   id: string;
-  themeCustomizationId: string;
-  locale: string;
-  options: string;
-}
-
-export interface ThemeTranslationEdge {
-  node: ThemeTranslationNode;
+  themeCustomizationId: number;
+  localeCode: string;
+  options: string | Record<string, unknown>;
 }
 
 export interface ThemeCustomizationNode {
   id: string;
-  type: string;
-  name: string;
-  status: string;
-  sortOrder: number;
-  themeCode?: string;
-  translations: {
-    edges: ThemeTranslationEdge[];
-  };
+  themeCode?: string | null;
+  type?: string | null;
+  name?: string | null;
+  status?: boolean | string | null;
+  sortOrder?: number | null;
+  translations: ThemeTranslationNode[];
 }
 
 export interface ThemeCustomizationResponse {
-  themeCustomizations: {
-    edges: {
-      node: ThemeCustomizationNode;
-    }[];
-  };
+  themeCustomization: ThemeCustomizationNode[];
 }
 
 
@@ -42,49 +32,23 @@ export interface FooterColumns {
   column_3?: ThemeOptions[];
 }
 export interface GetFooterResponse {
-  themeCustomizations: ThemeCustomizationConnection;
+  themeCustomization: ThemeCustomizationNode[];
 }
 
-export interface GetFooterVariables {
-  type?: string;
-}
-export interface ThemeCustomizationConnection {
-  edges: ThemeCustomizationEdge[];
-}
-
-export interface ThemeCustomizationEdge {
-  node: ThemeCustomizationFooterNode;
-}
-
-export interface ThemeCustomizationFooterNode {
-  id: string;
-  type: string;
-  name: string;
-  status: boolean;
-  themeCode?: string;
-  translations: ThemeCustomizationTranslationConnection;
-}
-export interface ThemeCustomizationTranslationConnection {
-  edges: ThemeCustomizationTranslationEdge[];
-}
+export interface GetFooterVariables {}
 
 export interface ThemeCustomizationTranslationNode {
   id: string;
-  themeCustomizationId: string;
-  locale: string;
-  options: string | FooterColumns;
+  themeCustomizationId: number;
+  localeCode: string;
+  options: string | FooterColumns | Record<string, unknown>;
 }
 
-
-export interface ThemeCustomizationTranslationEdge {
-  node: ThemeCustomizationTranslationNode;
-}
 export interface FooterMenuProps {
-  menu: ThemeCustomizationEdge[];
+  menu: ThemeCustomizationNode[];
 }
 
 export interface ThemeCustomizationResult {
-  footer_links: GetFooterResponse | null;
-  services_content: GetFooterResponse | null;
+  footer_links: ThemeCustomizationNode[] | null;
+  services_content: ThemeCustomizationNode[] | null;
 }
-

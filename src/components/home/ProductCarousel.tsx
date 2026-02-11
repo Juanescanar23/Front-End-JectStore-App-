@@ -17,33 +17,48 @@ interface ProductCarouselProps {
 const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 4, sortOrder }) => {
     const { filters, title } = options;
     try {
-        const { sort, limit, ...rest } = filters || {};
-        const filterObject: Record<string, string> = {};
+        const normalizedFilters = Array.isArray(filters)
+            ? filters.reduce<Record<string, string>>((acc, item) => {
+                if (item?.key) {
+                    acc[item.key] = String(item.value ?? "");
+                }
+                return acc;
+            }, {})
+            : (filters || {});
+
+        const { sort: _sort, limit, ...rest } = normalizedFilters as Record<string, any>;
+        const parsedLimit = Number.parseInt(String(limit), 10);
+        const input: Record<string, any> = {
+            page: 1,
+            limit: Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : itemCount,
+        };
         Object.entries(rest).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                filterObject[key] = String(value);
+            if (value === undefined || value === null || value === "") return;
+            switch (key) {
+                case "productId":
+                case "attributeFamily":
+                    {
+                        const numericValue = Number(value);
+                        if (Number.isFinite(numericValue)) {
+                            input[key] = numericValue;
+                        }
+                    }
+                    break;
+                case "type":
+                case "sku":
+                case "name":
+                case "channel":
+                    input[key] = String(value);
+                    break;
+                default:
+                    break;
             }
         });
-        const filterInput = Object.keys(filterObject).length > 0 ? JSON.stringify(filterObject) : undefined;
-
-        let sortKey = "CREATED_AT";
-        let reverse = true;
-
-        if (sort === "created_at-desc") {
-            sortKey = "CREATED_AT";
-            reverse = true;
-        } else if (sort === "price-desc") {
-            sortKey = "PRICE";
-            reverse = true;
-        }
 
         const data = await graphqlRequest<any>(
             GET_PRODUCTS,
             {
-                sortKey,
-                filter: filterInput,
-                first: limit ? parseInt(limit, 10) : itemCount,
-                reverse
+                input
             },
             {
                 tags: ["products"],
@@ -52,7 +67,7 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
         );
 
         const products =
-            data?.products?.edges?.slice(0, 8).map((edge: any) => edge.node) || [];
+            data?.products?.data?.slice(0, 8) || [];
 
         if (!products.length) {
             return null;

@@ -14,20 +14,19 @@ import UserAccount from "@components/customer/credentials";
 export default async function Navbar() {
   const data = await graphqlRequest<any>(
     GET_TREE_CATEGORIES,
-    { parentId: 1 },
+    { getCategoryTree: true },
     { tags: ["categories"], life: "days" }
   );
 
-  const categories = data?.treeCategories || [];
+  const categories = data?.homeCategories || [];
 
   const filteredCategories = categories
     .filter((cat: any) => cat.id !== "1")
     .map((cat: any) => {
-      const translation = cat.translation;
       return {
         id: cat.id,
-        name: translation?.name || "",
-        slug: translation?.slug || "",
+        name: cat.name || "",
+        slug: cat.slug || "",
       };
     })
     .filter((item: any) => item.name && item.slug);

@@ -7,20 +7,12 @@ export const GET_FILTER_OPTIONS = gql`
       id
       code
       options {
-        edges {
-          node {
-            id
-            adminName
-            translations {
-              edges {
-                node {
-                  id
-                  label
-                  locale
-                }
-              }
-            }
-          }
+        id
+        adminName
+        translations {
+          id
+          label
+          locale
         }
       }
     }
@@ -29,36 +21,18 @@ export const GET_FILTER_OPTIONS = gql`
 
 export const GET_FILTER_PRODUCTS = gql`
   ${PRODUCT_SECTION_FRAGMENT}
-  query getProducts(
-    $filter: String
-    $sortKey: String
-    $reverse: Boolean
-    $first: Int
-    $last: Int
-    $after: String
-    $before: String
-  ) {
-    products(
-      filter: $filter
-      sortKey: $sortKey
-      reverse: $reverse
-      first: $first
-      last: $last
-      after: $after
-      before: $before
-    ) {
-      totalCount
-
-      pageInfo {
-        endCursor
-        startCursor
-        hasNextPage
-        hasPreviousPage
+  query getProducts($input: FilterProductsInput!) {
+    products(input: $input) {
+      paginatorInfo {
+        count
+        currentPage
+        lastPage
+        perPage
+        total
+        hasMorePages
       }
-      edges {
-        node {
-          ...ProductSection
-        }
+      data {
+        ...ProductSection
       }
     }
   }

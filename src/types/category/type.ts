@@ -9,22 +9,11 @@ export interface ProductOptionNode {
   isValid?: boolean; 
 }
 
-
-export interface ProductOptionEdge {
-  node: ProductOptionNode;
-}
-
-
-export interface AttributeOptions {
-  edges: ProductOptionEdge[];
-}
-
-
 export interface ProductAttribute {
   id: string;
   code: string;
   adminName: string;
-  options: AttributeOptions;
+  options: ProductOptionNode[];
 }
 export type AttributeData = ProductAttribute;
 
@@ -44,11 +33,7 @@ export interface ProductReviewEdge {
 export interface ProductVariant {
   id: string;
   sku: string;
-  baseImageUrl: string;
-}
-
-export interface ProductVariantEdge {
-  node: ProductVariant;
+  images?: Array<{ url?: string | null; imageUrl?: string | null }>;
 }
 
 export interface ProductNode {
@@ -59,17 +44,12 @@ export interface ProductNode {
   urlKey: string;
   description?: string | null;
   shortDescription?: string | null;
-  price: number | string;
-  baseImageUrl?: string | null;
-  minimumPrice?: number | string | null;
-
-  variants?: {
-    edges: ProductVariantEdge[];
-  };
-
-  reviews?: {
-    edges: ProductReviewEdge[];
-  };
+  price: number | string | null;
+  specialPrice?: number | string | null;
+  images?: Array<{ url?: string | null; imageUrl?: string | null }>;
+  cacheBaseImage?: Array<{ originalImageUrl?: string | null; largeImageUrl?: string | null }>;
+  variants?: ProductVariant[] | null;
+  reviews?: ProductReview[] | null;
 }
 
 export interface SingleProductResponse {

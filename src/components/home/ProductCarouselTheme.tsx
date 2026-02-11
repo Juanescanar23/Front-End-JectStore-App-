@@ -1,6 +1,6 @@
 import { ProductCard } from "@components/catalog/product/ProductCard";
 import { ProductsSectionProps } from "@components/catalog/type";
-import { baseUrl, getImageUrl, NOT_IMAGE } from "@utils/constants";
+import { getProductImageUrl } from "@utils/constants";
 
 
 const Theme = ({ title, description, products }: ProductsSectionProps) => {
@@ -18,25 +18,25 @@ const Theme = ({ title, description, products }: ProductsSectionProps) => {
       <div className="w-full pb-6 pt-1">
         <ul className="m-0 grid grid-cols-2 justify-center gap-5 md:gap-11.5 p-0 xss:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
          {products.map((item, index) => {
-                 const imageUrl = getImageUrl(item?.baseImageUrl, baseUrl, NOT_IMAGE);
-                  const ProductPrice =
-                    item?.type === "configurable"
-                      ? item?.minimumPrice ?? "0"
-                      : item?.price ?? "0";
+                 const imageUrl = getProductImageUrl(item);
+                 const price = item?.price ?? "0";
+                 const specialPrice = item?.specialPrice ?? null;
 
             return (
               <ProductCard
                 key={item.id ?? index}
                 currency="USD"
                 imageUrl={imageUrl || ""}
-                price={String(ProductPrice)}
+                price={String(price)}
                 product={{
                   urlKey: item.urlKey || item.sku,
                   name: item?.name || item.sku,
                   id: item.id,
                   type: item.type,
                   isSaleable : item.isSaleable
-                }} specialPrice={""}            />
+                }}
+                specialPrice={specialPrice ? String(specialPrice) : undefined}
+              />
             );
           })}
         </ul>

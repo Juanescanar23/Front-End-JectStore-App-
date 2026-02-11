@@ -4,6 +4,7 @@ import { FC } from "react";
 import Link from "next/link";
 import { GridTileImage } from "@/components/theme/ui/grid/Tile";
 import { useMediaQuery } from "@utils/hooks/useMediaQueryHook";
+import { getProductImageUrl } from "@/utils/constants";
 
 interface ThreeItemGridProps {
     title: string;
@@ -12,9 +13,11 @@ interface ThreeItemGridProps {
         id: string;
         name: string;
         urlKey: string;
-        baseImageUrl: string;
+        baseImageUrl?: string;
+        images?: Array<{ url?: string | null; imageUrl?: string | null }>;
+        cacheBaseImage?: Array<{ originalImageUrl?: string | null; largeImageUrl?: string | null }>;
         price: string | number;
-        minimumPrice?: string | number;
+        specialPrice?: string | number;
         type: string;
     }>;
 }
@@ -24,6 +27,9 @@ function ThreeItemGridItem({ product, size, priority }: {
     size: 'full' | 'half';
     priority?: boolean;
 }) {
+    const imageUrl = getProductImageUrl(product);
+    const displayPrice = product?.specialPrice ?? product?.price ?? '0';
+
     return (
         <div
             className={
@@ -41,7 +47,7 @@ function ThreeItemGridItem({ product, size, priority }: {
                 }}
             >
                 <GridTileImage
-                    src={product.baseImageUrl}
+                    src={imageUrl}
                     className="object-cover "
                     fill
                     sizes={
@@ -54,7 +60,7 @@ function ThreeItemGridItem({ product, size, priority }: {
                     label={{
                         position: size === 'full' ? 'center' : 'bottom',
                         title: product.name,
-                        amount: product.type === 'configurable' ? (product.minimumPrice || '0') : (product.price || '0'),
+                        amount: displayPrice,
                         currencyCode: 'USD',
                     }}
                 />
@@ -69,6 +75,8 @@ function MobileThreeItemGridItem({ product, size, priority }: {
     size: 'full' | 'half';
     priority?: boolean;
 }) {
+    const imageUrl = getProductImageUrl(product);
+    const displayPrice = product?.specialPrice ?? product?.price ?? '0';
 
     return (
         <div
@@ -85,7 +93,7 @@ function MobileThreeItemGridItem({ product, size, priority }: {
                 }}
             >
                 <GridTileImage
-                    src={product.baseImageUrl}
+                    src={imageUrl}
                     className="object-cover "
                     fill
                     sizes={
@@ -98,7 +106,7 @@ function MobileThreeItemGridItem({ product, size, priority }: {
                     label={{
                         position: size === 'full' ? 'center' : 'bottom',
                         title: product.name,
-                        amount: product.type === 'configurable' ? (product.minimumPrice || '0') : (product.price || '0'),
+                        amount: displayPrice,
                         currencyCode: 'USD',
                     }}
                 />

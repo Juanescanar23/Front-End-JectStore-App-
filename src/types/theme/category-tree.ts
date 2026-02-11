@@ -1,25 +1,30 @@
 export interface TreeCategoriesVariables {
-  parentId?: number;
+  getCategoryTree?: boolean;
 }
 
 export interface CategoryNode {
   id: string;
-  position: number;
+  position?: number | null;
   logoPath?: string | null;
-  status: string;
-  translation: CategoryTranslationNode;
+  logoUrl?: string | null;
+  status?: boolean | null;
+  name: string;
+  slug: string;
+  urlPath?: string | null;
+  description?: string | null;
+  metaTitle?: string | null;
   children?: CategoryNode[];
 }
 
 
 export interface TreeCategoriesResponse {
-  treeCategories: CategoryNode[];
+  homeCategories: CategoryNode[];
 }
 
 export interface CategoryTranslationNode {
   name: string;
   slug: string;
-  urlPath: string;
+  urlPath?: string | null;
   description?: string | null;
   metaTitle?: string | null;
 }

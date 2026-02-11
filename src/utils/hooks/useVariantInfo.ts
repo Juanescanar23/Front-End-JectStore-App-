@@ -49,9 +49,7 @@ export const getVariantInfo = (
   }
 
   const variantAttributes = superAttributes.map((attr) => {
-    const rawOptions = Array.isArray(attr.options)
-      ? attr.options
-      : attr.options?.edges?.map((edge: any) => edge.node) || [];
+    const rawOptions = Array.isArray(attr.options) ? attr.options : [];
 
     return {
       ...attr,

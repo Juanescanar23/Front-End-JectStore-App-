@@ -129,7 +129,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({ options }) => {
                 onMouseUp={handleMouseUp}
             >
                 {images.map((img, index) => {
-                    const imageUrl = getFullImageUrl(img.image);
+                    const imageUrl = getFullImageUrl(img.image || img.imageUrl || "");
                     const isActive = index === currentIndex;
                     const altText = img.title || `Banner ${index + 1}`;
 

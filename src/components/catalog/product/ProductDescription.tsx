@@ -34,9 +34,7 @@ export function ProductDescription({
 
   const superAttributes = productSwatchReview?.superAttributeOptions
     ? safeParse(productSwatchReview.superAttributeOptions)
-    : productSwatchReview?.superAttributes?.edges?.map(
-      (e: { node: any }) => e.node
-    ) || [];
+    : productSwatchReview?.superAttributes || [];
 
   const variantInfo = getVariantInfo(
     product?.type === "configurable",
@@ -45,10 +43,7 @@ export function ProductDescription({
     productSwatchReview?.combinations
   );
 
-  const additionalData =
-    productSwatchReview?.attributeValues?.edges?.map(
-      (e: { node: any }) => e.node
-    ) || [];
+  const additionalData = productSwatchReview?.attributeValues || [];
 const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
     const handleReviewClick = () => {
   setExpandedKeys(new Set(["2"])); 
@@ -77,21 +72,11 @@ const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
                 As low as
               </p>
             )}
-            {product?.type === "simple" ? (
-              <>
-                <Price
-                  amount={String(product?.minimumPrice)}
-                  currencyCode={currencyCode}
-                  className="font-outfit text-xl md:text-2xl font-semibold"
-                />
-              </>
-            ) : (
-              <Price
-                amount={String(priceValue)}
-                currencyCode={currencyCode}
-                className="font-outfit text-xl md:text-2xl font-semibold"
-              />
-            )}
+            <Price
+              amount={String(priceValue)}
+              currencyCode={currencyCode}
+              className="font-outfit text-xl md:text-2xl font-semibold"
+            />
           </div>
 
           <Rating

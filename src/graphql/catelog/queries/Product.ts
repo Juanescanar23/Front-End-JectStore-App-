@@ -19,42 +19,18 @@ import {
 export const GET_PRODUCTS = gql`
   ${PRODUCT_CORE_FRAGMENT}
 
-  query GetProducts(
-    $query: String
-    $sortKey: String
-    $reverse: Boolean
-    $first: Int
-    $last: Int
-    $after: String
-    $before: String
-    $channel: String
-    $locale: String
-    $filter: String
-  ) {
-    products(
-      query: $query
-      sortKey: $sortKey
-      reverse: $reverse
-      first: $first
-      last: $last
-      after: $after
-      before: $before
-      channel: $channel
-      locale: $locale
-      filter: $filter
-    ) {
-      totalCount
-      pageInfo {
-        startCursor
-        endCursor
-        hasNextPage
-        hasPreviousPage
+  query GetProducts($input: FilterProductsInput!) {
+    products(input: $input) {
+      paginatorInfo {
+        count
+        currentPage
+        lastPage
+        perPage
+        total
+        hasMorePages
       }
-
-      edges {
-        node {
-          ...ProductCore
-        }
+      data {
+        ...ProductCore
       }
     }
   }
@@ -87,34 +63,21 @@ export const GET_PRODUCT_SWATCH_REVIEW = gql`
       combinations
       superAttributeOptions
       attributeValues {
-        edges {
-          cursor
-          node {
-            value
-            attribute {
-              adminName
-              code
-              isFilterable
-              isVisibleOnFront
-            }
-          }
+        value
+        attribute {
+          adminName
+          code
+          isFilterable
+          isVisibleOnFront
         }
       }
       superAttributes {
-        edges {
-          node {
-            id
-            code
-            adminName
-            options {
-              edges {
-                node {
-                  id
-                  adminName
-                }
-              }
-            }
-          }
+        id
+        code
+        adminName
+        options {
+          id
+          adminName
         }
       }
     }
@@ -127,39 +90,18 @@ export const GET_PRODUCT_SWATCH_REVIEW = gql`
  * Lightweight query for pagination controls
  */
 export const GET_PRODUCTS_PAGINATION = gql`
-  query GetProductsPagination(
-    $query: String
-    $sortKey: String
-    $reverse: Boolean
-    $first: Int
-    $last: Int
-    $channel: String
-    $locale: String
-    $after: String
-    $before: String
-  ) {
-    products(
-      query: $query
-      sortKey: $sortKey
-      reverse: $reverse
-      first: $first
-      last: $last
-      channel: $channel
-      locale: $locale
-      after: $after
-      before: $before
-    ) {
-      totalCount
-      pageInfo {
-        startCursor
-        endCursor
-        hasNextPage
-        hasPreviousPage
+  query GetProductsPagination($input: FilterProductsInput!) {
+    products(input: $input) {
+      paginatorInfo {
+        count
+        currentPage
+        lastPage
+        perPage
+        total
+        hasMorePages
       }
-      edges {
-        node {
-          id
-        }
+      data {
+        id
       }
     }
   }
@@ -173,16 +115,12 @@ export const GET_PRODUCTS_PAGINATION = gql`
 export const GET_RELATED_PRODUCTS = gql`
   ${PRODUCT_SECTION_FRAGMENT}
 
-  query GetRelatedProducts($urlKey: String, $first: Int) {
+  query GetRelatedProducts($urlKey: String) {
     product(urlKey: $urlKey) {
       id
       sku
-      relatedProducts(first: $first) {
-        edges {
-          node {
-            ...ProductSection
-          }
-        }
+      relatedProducts {
+        ...ProductSection
       }
     }
   }

@@ -327,31 +327,22 @@ export async function subsCribeUser(
 
 export async function getThemeCustomization(): Promise<ThemeCustomizationResult> {
   try {
-    const footerRes = await bagistoFetch<{
-      data: GetFooterResponse;
-      variables: GetFooterVariables
-    }>({
-      query: GET_FOOTER,
-      variables: { type: "footer_links" },
-      isCookies: false,
-      revalidate: 86400,
-    });
-
-    const servicesRes = await bagistoFetch<{
+    const res = await bagistoFetch<{
       data: GetFooterResponse;
       variables: GetFooterVariables;
     }>({
       query: GET_FOOTER,
-      variables: { type: "services_content" },
       isCookies: false,
       revalidate: 86400,
     });
 
-
+    const allThemes = res.body.data?.themeCustomization || [];
+    const footerLinks = allThemes.filter((t) => t.type === "footer_links");
+    const servicesContent = allThemes.filter((t) => t.type === "services_content");
 
     return {
-      footer_links: footerRes.body.data,
-      services_content: servicesRes.body.data,
+      footer_links: footerLinks,
+      services_content: servicesContent,
     };
   } catch (err) {
     console.error("ThemeCustomization Error:", err);

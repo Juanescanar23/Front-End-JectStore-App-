@@ -13,7 +13,6 @@ export async function RelatedProductsSection({
           GET_RELATED_PRODUCTS,
           {
             urlKey: urlKey,
-            first: 4,
           },
           {
             tags: ["related-products", `product-${urlKey}`],
@@ -37,8 +36,8 @@ export async function RelatedProductsSection({
 
     const fetchRelatedProducts = await getRelatedProduct(fullPath);
 
-    const relatedProducts = (fetchRelatedProducts?.relatedProducts != null ) && fetchRelatedProducts?.relatedProducts?.edges
-    ? fetchRelatedProducts.relatedProducts.edges.map((e : any) => e.node)
+    const relatedProducts = Array.isArray(fetchRelatedProducts?.relatedProducts)
+    ? fetchRelatedProducts.relatedProducts
     : [];
   return (
     <ProductsSection

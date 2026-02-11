@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
-    "types": ["next-auth"],
+    "types": [
+      "next-auth"
+    ],
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -20,14 +26,30 @@
       }
     ],
     "paths": {
-      "@components/*": ["./src/components/*"],
-      "@utils/*": ["./src/utils/*"],
-      "@/*": ["./src/*"],
-      "@lib/*": ["./lib/*"],
-      "@graphql/*": ["./graphql/*"],
-      "@types/*": ["./types/*"],
-      "@store/*": ["./store/*"],
-      "@provider/*": ["./provider/*"]
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ],
+      "@lib/*": [
+        "./lib/*"
+      ],
+      "@graphql/*": [
+        "./graphql/*"
+      ],
+      "@types/*": [
+        "./types/*"
+      ],
+      "@store/*": [
+        "./store/*"
+      ],
+      "@provider/*": [
+        "./provider/*"
+      ]
     }
   },
   "include": [
@@ -38,5 +60,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

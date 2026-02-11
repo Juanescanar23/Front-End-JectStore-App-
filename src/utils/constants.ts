@@ -44,9 +44,19 @@ export const BAGISTO_SESSION = process.env.BAGISTO_SESSION ?? "bagisto_session";
 export const TOKEN = "token";
 export const BASE_URL = process.env.NEXT_PUBLIC_NEXT_AUTH_URL;
 export const baseUrl = process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT;
-export const GRAPHQL_URL = typeof window === 'undefined'
-  ? `${process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT}/api/graphql`
-  : `${process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT}`;
+const normalizedBaseUrl = baseUrl?.replace(/\/+$/, "");
+const envGraphqlEndpoint = process.env.NEXT_PUBLIC_BAGISTO_GRAPHQL_ENDPOINT;
+const normalizedGraphqlEndpoint = envGraphqlEndpoint?.replace(/\/+$/, "");
+const isGraphqlEndpoint =
+  normalizedBaseUrl?.endsWith("/api/graphql") ||
+  normalizedBaseUrl?.endsWith("/graphql");
+export const GRAPHQL_URL = normalizedGraphqlEndpoint
+  ? normalizedGraphqlEndpoint
+  : normalizedBaseUrl
+  ? isGraphqlEndpoint
+    ? normalizedBaseUrl
+    : `${normalizedBaseUrl}/api/graphql`
+  : "";
 export const NEXT_AUTH_SECRET = process.env.NEXT_PUBLIC_NEXT_AUTH_SECRET;
 export const STOREFRONT_KEY = process.env.NEXT_PUBLIC_BAGISTO_STOREFRONT_KEY || ""
 
@@ -187,6 +197,39 @@ export function getImageUrl(url?: string, baseUrl?: string, fallback?: string) {
   }
 
   return `${baseUrl}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+export function getProductImageUrl(product?: {
+  baseImageUrl?: string | null;
+  images?: Array<{ url?: string | null; imageUrl?: string | null }>;
+  cacheBaseImage?: Array<{
+    smallImageUrl?: string | null;
+    mediumImageUrl?: string | null;
+    largeImageUrl?: string | null;
+    originalImageUrl?: string | null;
+  }>;
+  cacheGalleryImages?: Array<{
+    smallImageUrl?: string | null;
+    mediumImageUrl?: string | null;
+    largeImageUrl?: string | null;
+    originalImageUrl?: string | null;
+  }>;
+}) {
+  const directUrl =
+    product?.images?.[0]?.url ||
+    product?.images?.[0]?.imageUrl ||
+    product?.cacheBaseImage?.[0]?.originalImageUrl ||
+    product?.cacheBaseImage?.[0]?.largeImageUrl ||
+    product?.cacheBaseImage?.[0]?.mediumImageUrl ||
+    product?.cacheBaseImage?.[0]?.smallImageUrl ||
+    product?.cacheGalleryImages?.[0]?.originalImageUrl ||
+    product?.cacheGalleryImages?.[0]?.largeImageUrl ||
+    product?.cacheGalleryImages?.[0]?.mediumImageUrl ||
+    product?.cacheGalleryImages?.[0]?.smallImageUrl ||
+    product?.baseImageUrl ||
+    undefined;
+
+  return getImageUrl(directUrl, baseUrl, NOT_IMAGE);
 }
 
 
