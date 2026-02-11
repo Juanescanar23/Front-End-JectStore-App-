@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ThemeOptions } from "@/types/types";
-import { ThemeCustomizationNode } from "@/types/theme/theme-customization";
+import { FooterColumns, ThemeCustomizationNode } from "@/types/theme/theme-customization";
 import { isArray } from "@/utils/type-guards";
 import { safeParse } from "@/utils/helper";
 
@@ -49,14 +49,16 @@ export default function FooterMenu({
     typeof firstTranslation?.options === "string"
       ? safeParse(firstTranslation.options)
       : firstTranslation?.options;
+  const columns =
+    channels && typeof channels === "object" ? (channels as FooterColumns) : null;
 
   return (
     <div className="flex justify-between gap-x-8 lg:gap-x-[50px]">
       {/* Render columns 1 */}
-      {isArray(channels?.column_1) ? (
+      {isArray(columns?.column_1) ? (
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
-            {channels.column_1.map((item: ThemeOptions, index: number) => {
+            {columns.column_1.map((item: ThemeOptions, index: number) => {
               return <FooterMenuItem key={index} item={item} />;
             })}
           </ul>
@@ -64,10 +66,10 @@ export default function FooterMenu({
       ) : null}
 
       {/* Render columns 2 */}
-      {isArray(channels?.column_2) ? (
+      {isArray(columns?.column_2) ? (
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
-            {channels.column_2.map((item: ThemeOptions, index: number) => {
+            {columns.column_2.map((item: ThemeOptions, index: number) => {
               return <FooterMenuItem key={index} item={item} />;
             })}
           </ul>
@@ -75,10 +77,10 @@ export default function FooterMenu({
       ) : null}
 
       {/* Render columns 3 */}
-      {isArray(channels?.column_3) ? (
+      {isArray(columns?.column_3) ? (
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
-            {channels.column_3.map((item: ThemeOptions, index: number) => {
+            {columns.column_3.map((item: ThemeOptions, index: number) => {
               return <FooterMenuItem key={index} item={item} />;
             })}
           </ul>
