@@ -17,15 +17,17 @@ export default function AddToCartButton({
   productType?: string;
   productId: string;
   productUrlKey: string;
-  isSaleable?: string;
+  isSaleable?: boolean | string | null;
 }) {
+  const isSaleableValue =
+    isSaleable === true || isSaleable === "1" || isSaleable === "true";
   const { isCartLoading, onAddToCart } = useAddProduct();
   const { showToast } = useCustomToast();
   const { user } = useAppSelector((state) => state.user);
   const session = { user };
 
   const handleAddToCart = () => {
-    if (!isSaleable || isSaleable === "") {
+    if (!isSaleableValue) {
       showToast("This product is out of stock", "warning");
       return;
     }
@@ -57,11 +59,11 @@ export default function AddToCartButton({
     </Link>
   ) : (
     <button
-      aria-disabled={isCartLoading || !isSaleable || isSaleable === ""}
+      aria-disabled={isCartLoading || !isSaleableValue}
       aria-label={productUrlKey}
       className={clsx(buttonClasses, {
-        "hover:opacity-90": isSaleable && isSaleable !== "",
-        [disabledClasses]: isCartLoading || !isSaleable || isSaleable === "",
+        "hover:opacity-90": isSaleableValue,
+        [disabledClasses]: isCartLoading || !isSaleableValue,
       })}
       type="button"
       onClick={handleAddToCart}
