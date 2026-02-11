@@ -4,7 +4,8 @@ import { ThemeCustomizationNode } from "@/types/theme/theme-customization";
 import { isArray } from "@/utils/type-guards";
 import { safeParse } from "@/utils/helper";
 
-const getUrlparams = (url: string) => {
+const getUrlparams = (url?: string | null) => {
+  if (!url) return "/";
   const splitUrl = url.split("/");
 
   if (isArray(splitUrl)) {
