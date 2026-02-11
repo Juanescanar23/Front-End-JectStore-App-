@@ -15,7 +15,7 @@ export const ProductCard: FC<{
     name: string;
     id: string;
     type: string;
-    isSaleable?: string;
+    isSaleable?: boolean | string | null;
   };
 }> = ({ currency, price, specialPrice, imageUrl, product }) => {
   return (
