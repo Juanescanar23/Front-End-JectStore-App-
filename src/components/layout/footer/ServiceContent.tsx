@@ -65,14 +65,14 @@ const ServiceCarouselRender: FC<ServiceContenRenderTypes> = ({
   return (
     <div className="flex items-center justify-center gap-6 max-lg:flex-wrap max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-8 max-md:text-center md:gap-10 lg:gap-20">
       {services?.map((list, index: number) => {
-        const iconKey = list?.serviceIcon || list?.service_icon;
+        const iconKey = list?.serviceIcon || list?.service_icon || "";
 
         return (
           <div
             key={index}
             className="flex flex-col items-center justify-center gap-3 max-md:gap-3 max-md:px-4 max-md:py-2"
           >
-            {iconMapping[iconKey]}
+            {iconMapping[iconKey] ?? null}
             <p className="mt-2.5 max-w-[217px] text-center font-outfit text-sm font-medium max-md:mt-0 max-md:text-base max-sm:text-xs">
               {list.description}
             </p>
