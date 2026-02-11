@@ -41,9 +41,17 @@ const RenderThemeCustomization: FC<RenderThemeCustomizationProps> = ({ themeCust
                         case "product_carousel": {
                             productCarouselIndex++;
                             const opts = options as any;
-                            const limit = opts?.filters?.limit ? parseInt(opts.filters.limit, 10) : null;
+                            const limit = opts?.filters?.limit ? parseInt(opts.filters.limit, 10) : undefined;
                             const itemCount = limit || (productCarouselIndex === 1 ? 3 : 4);
-                            return <ProductCarousel key={node.id} options={{ ...options, title: node.name } as any} itemCount={itemCount} sortOrder={node?.sortOrder} />;
+                            const sortOrder = typeof node?.sortOrder === "number" ? node.sortOrder : undefined;
+                            return (
+                                <ProductCarousel
+                                    key={node.id}
+                                    options={{ ...options, title: node.name } as any}
+                                    itemCount={itemCount}
+                                    sortOrder={sortOrder}
+                                />
+                            );
                         }
                         case "category_carousel":
                             return (
