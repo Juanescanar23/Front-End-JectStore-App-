@@ -15,10 +15,10 @@ const normalizeBase = (value?: string | null) => {
   return value.replace(/\/+$/, "");
 };
 
-const resolveServerGraphqlUrl = () => {
+const resolveServerGraphqlUrl = async () => {
   if (!GRAPHQL_URL) return GRAPHQL_URL;
   if (!GRAPHQL_URL.startsWith("/")) return GRAPHQL_URL;
-  const headerStore = headers();
+  const headerStore = await headers();
   const host = headerStore.get("host");
   if (!host) return GRAPHQL_URL;
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
@@ -26,20 +26,20 @@ const resolveServerGraphqlUrl = () => {
   return `${proto}://${base}${GRAPHQL_URL}`;
 };
 
-function getClient() {
+async function getClient() {
   const ssrMode = typeof window === "undefined";
   if (!ssrMode) {
     return makeClient();
   }
 
-  const headerStore = headers();
+  const headerStore = await headers();
   const host = headerStore.get("host") ?? "default";
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
   const cacheKey = `${proto}://${host}`;
   const cached = serverClients.get(cacheKey);
   if (cached) return cached;
 
-  const client = makeClient({ uri: resolveServerGraphqlUrl() });
+  const client = makeClient({ uri: await resolveServerGraphqlUrl() });
   serverClients.set(cacheKey, client);
   return client;
 }
@@ -113,7 +113,7 @@ export async function graphqlRequest<
 ): Promise<TData> {
 
   if (options?.noCache) {
-    const client = getClient();
+    const client = await getClient();
     const result: ApolloQueryResult<TData> = await client.query({
       query,
       variables,
@@ -143,9 +143,9 @@ export async function graphqlRequest<
     variables,
   })}`;
 
+  const client = await getClient();
   const cachedQuery = unstable_cache(
     async (): Promise<TData> => {
-      const client = getClient();
       const result: ApolloQueryResult<TData> = await client.query({
         query,
         variables,

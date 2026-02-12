@@ -35,10 +35,10 @@ const normalizeBase = (value?: string) => {
   return value.replace(/\/+$/, "");
 };
 
-const resolveGraphqlUrl = () => {
+const resolveGraphqlUrl = async () => {
   if (!GRAPHQL_URL) return GRAPHQL_URL;
   if (!GRAPHQL_URL.startsWith("/")) return GRAPHQL_URL;
-  const headerStore = headers();
+  const headerStore = await headers();
   const host = headerStore.get("host");
   if (!host) return GRAPHQL_URL;
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
@@ -104,7 +104,7 @@ export async function bagistoFetch<T>({
       }
     }
 
-    const result = await fetch(resolveGraphqlUrl(), {
+    const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
       headers: baseHeaders,
       body: JSON.stringify({
@@ -145,7 +145,7 @@ export async function bagistoFetchNoSession<T>({
   revalidate?: number,
 }): Promise<{ status: number; body: T } | never> {
   try {
-    const result = await fetch(resolveGraphqlUrl(), {
+    const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
