@@ -19,9 +19,9 @@ const ReviewDetail: FC<ReviewDetailProps> = ({ reviewDetails, totalReview }) => 
     return (
       <div className="flex flex-col items-center justify-center pb-2">
         <ReviewIcon />
-        <h2 className="font-outfit text-xl tracking-wide">No Review found</h2>
+        <h2 className="font-outfit text-xl tracking-wide">No se encontraron reseñas</h2>
         <p className="font-outfit tracking-wide text-neutral-800 dark:text-white">
-          Be the first to review this product
+          Sé el primero en reseñar este producto
         </p>
       </div>
     );
@@ -57,8 +57,9 @@ const ReviewDetail: FC<ReviewDetailProps> = ({ reviewDetails, totalReview }) => 
                 <Tooltip
                   content={
                     <p className="text-center">
-                      {star} Star <br /> {count as number}{" "}
-                      {(count as number) >= 2 ? "Reviews" : "Review"}
+                      {star} estrella{Number(star) === 1 ? "" : "s"} <br />{" "}
+                      {count as number}{" "}
+                      {(count as number) >= 2 ? "reseñas" : "reseña"}
                     </p>
                   }
                   placement="top"
@@ -157,7 +158,7 @@ const ReviewDetail: FC<ReviewDetailProps> = ({ reviewDetails, totalReview }) => 
 
         {reviewDetails.length > visibleCount && (
           <Button
-            title="Load More"
+            title="Cargar más"
             onClick={() => setVisibleCount((prev) => prev + 5)}
             className="mx-auto"
           />
@@ -171,9 +172,9 @@ const ReviewDetail: FC<ReviewDetailProps> = ({ reviewDetails, totalReview }) => 
   ) : (
     <div className="flex flex-col items-center justify-center pb-2">
       <ReviewIcon />
-      <h2 className="font-outfit text-xl tracking-wide">No Review found</h2>
+      <h2 className="font-outfit text-xl tracking-wide">No se encontraron reseñas</h2>
       <p className="font-outfit tracking-wide text-neutral-800 dark:text-white">
-        Be the first to review this product
+        Sé el primero en reseñar este producto
       </p>
     </div>
   );

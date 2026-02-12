@@ -24,10 +24,10 @@ export const ProductCard: FC<{
       className="animate-fadeIn gap-y-4.5 flex flex-col"
     >
       <div className="group relative overflow-hidden rounded-lg">
-        <Link href={`/product/${product.urlKey}`} aria-label={`View ${product.name}`}>
+        <Link href={`/product/${product.urlKey}`} aria-label={`Ver ${product.name}`}>
           <div className="aspect-[353/283] h-auto truncate rounded-lg">
             <NextImage
-              alt={product?.name || "Product image"}
+              alt={product?.name || "Imagen del producto"}
               src={imageUrl}
               width={353}
               height={283}
@@ -55,7 +55,7 @@ export const ProductCard: FC<{
         <div className="flex items-center gap-2">
           {product?.type === "configurable" && (
             <span className="text-xs text-gray-600 dark:text-gray-400 md:text-sm">
-              As low as
+              Desde
             </span>
           )}
           {product?.type === "simple" && specialPrice ? (

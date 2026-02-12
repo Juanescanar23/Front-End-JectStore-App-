@@ -56,7 +56,9 @@ export default function MobileMenu({ menu }: { menu: any }) {
             <>
               <DrawerBody className="px-4 py-4 overflow-y-auto">
                 <MobileSearchBar onClose={onClose} />
-                <h1 className="text-2xl text-black dark:text-white px-2 font-semibold"> Category </h1>
+                <h1 className="text-2xl text-black dark:text-white px-2 font-semibold">
+                  Categorías
+                </h1>
                 <ul className="flex w-full flex-col">
                   {menu.map((item: any) => (
                     <li

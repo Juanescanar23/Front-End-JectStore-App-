@@ -48,8 +48,8 @@ export default function AddProductReview({
         title: reviewInfo.title,
         comment: reviewInfo.comment,
         rating: reviewInfo.rating,
-        name: "Guest User",
-        email: "guest@mail.com",
+        name: "Usuario invitado",
+        email: "invitado@mail.com",
       };
       if (imageFile) input.attachments = "";
       const fieldInputs = {
@@ -68,7 +68,7 @@ export default function AddProductReview({
       setImagePreview(null);
     } catch (error) {
       console.error("Error submitting review:", error);
-      showToast("Failed to submit review. Please try again.", "danger");
+      showToast("No se pudo enviar la reseña. Intenta de nuevo.", "danger");
     }
   };
 
@@ -81,7 +81,7 @@ export default function AddProductReview({
         type="button"
         onClick={onClose}
         className="absolute -top-7 -right-[9px] text-gray-500 hover:text-gray-700 transition-colors"
-        aria-label="Close review form"
+        aria-label="Cerrar formulario de reseña"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -108,7 +108,7 @@ export default function AddProductReview({
                   <div className="relative">
                     <Image
                       src={imagePreview}
-                      alt="Preview"
+                      alt="Vista previa"
                       className="w-full h-64 object-cover rounded-lg"
                     />
                     <button
@@ -162,9 +162,9 @@ export default function AddProductReview({
 
                     <div className="text-sm text-center">
                       <span className="font-medium text-primary-600">
-                        Upload an image
+                        Subir una imagen
                       </span>
-                      <p className="text-xs">or drag and drop</p>
+                      <p className="text-xs">o arrastra y suelta</p>
                     </div>
 
                     <input
@@ -190,7 +190,7 @@ export default function AddProductReview({
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium  mb-1">
-              Your Rating
+              Tu calificación
             </label>
             <AddRatingStar
               value={reviewInfo.rating}
@@ -203,8 +203,8 @@ export default function AddProductReview({
           </div>
 
           <Textarea
-            label="Title"
-            placeholder="Enter review title"
+            label="Título"
+            placeholder="Ingresa el título de la reseña"
             labelPlacement="outside"
             value={reviewInfo.title}
             onChange={(e) =>
@@ -220,8 +220,8 @@ export default function AddProductReview({
           />
 
           <Textarea
-            label="Description"
-            placeholder="Write your detailed review"
+            label="Descripción"
+            placeholder="Escribe tu reseña detallada"
             labelPlacement="outside"
             value={reviewInfo.comment}
             onChange={(e) =>
@@ -236,7 +236,7 @@ export default function AddProductReview({
           />
 
           <Button
-            title={isLoading ? "Submitting..." : "Submit Review"}
+            title={isLoading ? "Enviando..." : "Enviar reseña"}
             type="submit"
             disabled={isLoading}
             className="w-full mt-4"

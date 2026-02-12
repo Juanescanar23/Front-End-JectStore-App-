@@ -41,7 +41,7 @@ export function Button({
         {loading ? (
           <>
             <LoadingDots className="bg-white" />
-            <span>loading</span>
+            <span>Cargando</span>
           </>
         ) : (
           <span>{title}</span>

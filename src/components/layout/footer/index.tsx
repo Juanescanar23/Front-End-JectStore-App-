@@ -34,16 +34,16 @@ export default async function Footer() {
             <Link
               className="flex items-center gap-2 md:pt-1 cursor-pointer"
               href="/"
-              aria-label="Go to homepage"
-              title="Go to homepage"
+              aria-label="Ir al inicio"
+              title="Ir al inicio"
             >
               <LogoIcon />
-              <span className="sr-only">Go to homepage</span>
+              <span className="sr-only">Ir al inicio</span>
             </Link>
             <div className="flex gap-[14px]">
               <Link
                 href={"#"}
-                aria-label="Visit Bagisto Store on Facebook"
+                aria-label="Visitar la tienda Bagisto en Facebook"
                 title="Facebook"
                 target="_blank"
                 className="cursor-pointer">
@@ -52,7 +52,7 @@ export default async function Footer() {
               </Link>
               <Link
                 href={"#"}
-                aria-label="Visit Bagisto Store on Instagram"
+                aria-label="Visitar la tienda Bagisto en Instagram"
                 title="Instagram"
                 target="_blank"
                 className="cursor-pointer">
@@ -61,7 +61,7 @@ export default async function Footer() {
               </Link>
               <Link
                 href={"#"}
-                aria-label="Visit Bagisto Store on Twitter"
+                aria-label="Visitar la tienda Bagisto en Twitter"
                 title="Twitter"
                 target="_blank"
                 className="cursor-pointer">
@@ -91,7 +91,7 @@ export default async function Footer() {
           <div className="mx-auto flex w-full max-w-screen-2xl flex-col justify-center gap-1 px-4 md:flex-row">
             <p className="text-center">
               Hecho con ♥ en Latinoamérica - &copy; 2026 Todos los derechos
-              reservados - Power By{" "}
+              reservados - Impulsado por{" "}
               <Link
                 href="https://jectstore.com/"
                 target="_blank"

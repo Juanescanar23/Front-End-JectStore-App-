@@ -78,13 +78,14 @@ export default function CredentialModal({
       await resetGuestToken();
       dispatch(clearUser());
       dispatch(clearCart());
-      showToast("You are logged out successfully!", "success");
+      showToast("Sesión cerrada correctamente.", "success");
       setTimeout(() => {
         router.push("/customer/login");
         router.refresh();
       }, 100);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Logout failed";
+      const message =
+        err instanceof Error ? err.message : "No se pudo cerrar sesión.";
       showToast(message, "danger");
     }
   };
@@ -118,8 +119,8 @@ export default function CredentialModal({
               </div>
 
               <p className={clsx("text-default-500 dark:text-white", isDesktop ? "text-small pl-px" : "text-center mt-2")}>
-                Manage Cart, Orders
-                <span aria-label="confetti" className="px-2" role="img">
+                Gestiona tu carrito y pedidos
+                <span aria-label="confeti" className="px-2" role="img">
                   🎉
                 </span>
               </p>
@@ -139,11 +140,11 @@ export default function CredentialModal({
                 <div className="mx-1">
                   {isSubmitting ? (
                     <div className="flex items-center justify-center">
-                      <p>Loading</p>
+                      <p>Cargando</p>
                       <LoadingDots className="bg-white" />
                     </div>
                   ) : (
-                    <p> Log Out</p>
+                    <p> Cerrar sesión</p>
                   )}
                 </div>
               </button>
@@ -156,12 +157,12 @@ export default function CredentialModal({
             <div className="flex flex-col gap-y-2">
               <h4 className={clsx("font-bold leading-none text-black dark:text-white",
                 isDesktop ? "text-xl" : "text-3xl")}>
-                Welcome Guest
+                Bienvenido, invitado
               </h4>
               <p className={clsx("text-default-500 dark:text-neutral-400",
                 isDesktop ? "text-sm" : "text-lg")}>
-                Manage Cart, Orders
-                <span aria-label="confetti" className="px-2" role="img">
+                Gestiona tu carrito y pedidos
+                <span aria-label="confeti" className="px-2" role="img">
                   🎉
                 </span>
               </p>
@@ -169,7 +170,7 @@ export default function CredentialModal({
           </header>
 
           <footer className="flex gap-4">
-            <Link className="w-full" href="/customer/login" onClick={onClose} aria-label="Go to sign in page">
+            <Link className="w-full" href="/customer/login" onClick={onClose} aria-label="Ir a iniciar sesión">
               <button
                 className={clsx(
                   "w-full rounded-full bg-blue-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800",
@@ -180,11 +181,11 @@ export default function CredentialModal({
                 disabled={pathname === "/customer/login"}
                 type="button"
               >
-                Sign In
+                Iniciar sesión
               </button>
             </Link>
 
-            <Link className="w-full" href="/customer/register" onClick={onClose} aria-label="Go to create account page">
+            <Link className="w-full" href="/customer/register" onClick={onClose} aria-label="Ir a crear cuenta">
               <button
                 className={clsx(
                   "w-full rounded-full bg-[#1e293b] px-5 py-3 text-sm font-medium text-white hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700",
@@ -195,7 +196,7 @@ export default function CredentialModal({
                 disabled={pathname === "/customer/register"}
                 type="button"
               >
-                Sign Up
+                Registrarse
               </button>
             </Link>
           </footer>
@@ -217,7 +218,7 @@ export default function CredentialModal({
         <PopoverTrigger>
           <button
             type="button"
-            aria-label="Open account"
+            aria-label="Abrir cuenta"
             className={clsx(className, "cursor-pointer bg-transparent")}
           >
             {children ? children : <OpenAuth />}
@@ -234,7 +235,7 @@ export default function CredentialModal({
     <>
       <button
         type="button"
-        aria-label="Open account"
+        aria-label="Abrir cuenta"
         className={clsx(className, "cursor-pointer bg-transparent")}
         onClick={handleOpen}
       >
@@ -258,7 +259,7 @@ export default function CredentialModal({
             <>
               <DrawerHeader className="flex flex-col gap-1 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="flex items-center justify-between">
-                  <p className="text-xl font-semibold">Account</p>
+                  <p className="text-xl font-semibold">Cuenta</p>
                 </div>
               </DrawerHeader>
 

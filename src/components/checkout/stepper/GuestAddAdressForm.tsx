@@ -183,7 +183,7 @@ export const GuestAddAdressForm: FC<{
           <div className="flex flex-col justify-between px-2 w-full">
             <div className="flex">
               <p className="w-[184px] text-base font-normal text-black/60 dark:text-white/60">
-                Billing Address
+                Dirección de facturación
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
                 <div className="flex flex-col">
@@ -210,7 +210,7 @@ export const GuestAddAdressForm: FC<{
             </div>
             <div className="flex">
               <p className="w-[184px] text-base font-normal text-black/60 dark:text-white/60">
-                Shipping Address
+                Dirección de envío
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
                 <div className="flex flex-col">
@@ -241,14 +241,14 @@ export const GuestAddAdressForm: FC<{
             onClick={() => setIsOpen(false)}
             className="cursor-pointer text-base font-normal text-black/[60%] underline dark:text-neutral-300"
           >
-            Change
+            Cambiar
           </button>
         </div>
         <div className="mt-4 flex sm:hidden items-start justify-between relative">
           <div className="flex flex-col justify-between px-2 w-full">
             <div className="flex justify-between justify-between  flex-1 wrap">
               <p className="w-[184px] text-base font-normal text-black/60 dark:text-white/60">
-                Billing Address
+                Dirección de facturación
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
                 <div className="flex flex-col">
@@ -275,7 +275,7 @@ export const GuestAddAdressForm: FC<{
             </div>
             <div className="flex justify-between justify-between  flex-1 wrap">
               <p className="w-[184px] text-base font-normal text-black/60 dark:text-white/60">
-                Shipping Address
+                Dirección de envío
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
                 <div className="flex flex-col">
@@ -307,7 +307,7 @@ export const GuestAddAdressForm: FC<{
             className="cursor-pointer absolute right-0 text-base font-normal text-black/[60%] underline dark:text-neutral-300"
             style={{ top: "-36px" }}
           >
-            Change
+            Cambiar
           </button>
         </div>
       </>
@@ -319,87 +319,87 @@ export const GuestAddAdressForm: FC<{
       <div className="my-7 grid grid-cols-6 gap-4">
         <InputText
           {...register("billing.firstName", {
-            required: "First name is required",
+            required: "El nombre es obligatorio",
             pattern: {
               value: IS_VALID_INPUT,
-              message: "Invalid First Name",
+              message: "Nombre inválido",
             },
           })}
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.firstName?.message}
-          label="First Name *"
+          label="Nombre *"
           size="md"
         />
         <InputText
           {...register("billing.lastName", {
-            required: "Last name is required",
+            required: "El apellido es obligatorio",
             pattern: {
               value: IS_VALID_INPUT,
-              message: "Invalid Last Name",
+              message: "Apellido inválido",
             },
           })}
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.lastName?.message}
-          label="Last Name *"
+          label="Apellido *"
           size="md"
         />
         <InputText
           {...register("billing.companyName", {
             pattern: {
               value: IS_VALID_INPUT,
-              message: "Invalid Company Name",
+              message: "Nombre de empresa inválido",
             },
           })}
           className="col-span-6 mb-2"
           errorMsg={errors?.billing?.companyName?.message}
-          label="Company Name"
+          label="Empresa"
           size="md"
         />
         <InputText
           {...register("billing.address", {
-            required: "Address field is required",
+            required: "La dirección es obligatoria",
             pattern: {
               value: IS_VALID_ADDRESS,
-              message: "Invalid Address",
+              message: "Dirección inválida",
             },
           })}
           className="col-span-6 mb-4"
           errorMsg={errors?.billing?.address?.message}
-          label="Street Address *"
+          label="Dirección *"
           size="md"
         />
         <InputText
           {...register("billing.city", {
-            required: "City field is required",
+            required: "La ciudad es obligatoria",
             pattern: {
               value: IS_VALID_INPUT,
-              message: "Invalid City",
+              message: "Ciudad inválida",
             },
           })}
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.city?.message}
-          label="City *"
+          label="Ciudad *"
           size="md"
         />
         <InputText
           {...register("billing.postcode", {
-            required: "Postcode field is required",
+            required: "El código postal es obligatorio",
             pattern: {
               value: IS_VALID_INPUT,
-              message: "Invalid Postcode",
+              message: "Código postal inválido",
             },
           })}
           className="col-span-6 xxs:col-span-3"
           errorMsg={errors?.billing?.postcode?.message}
-          label="Zip Code *"
+          label="Código postal *"
           size="md"
         />
         <InputText
           {...register("billing.phone", {
-            required: "Phone field is required",
+            required: "El teléfono es obligatorio",
             pattern: {
               value: IS_VALID_PHONE,
-              message: "Enter Valid Phone Number",
+              message: "Ingresa un número de teléfono válido",
             },
           })}
           type="tel"
@@ -407,14 +407,14 @@ export const GuestAddAdressForm: FC<{
           autoComplete="tel"
           className="col-span-6"
           errorMsg={errors?.billing?.phone?.message}
-          label="Phone *"
+          label="Teléfono *"
           size="md"
         />
         <CheckBox
           className="col-span-6 mt-3"
           defaultValue={watchUseForShipping}
           id="useForShipping"
-          label="Use the same address for shipping?"
+          label="¿Usar la misma dirección para envío?"
           {...register("useForShipping")}
         />
       </div>
@@ -423,99 +423,99 @@ export const GuestAddAdressForm: FC<{
         <div className="my-7 grid grid-cols-6 gap-4">
           <InputText
             {...register("shipping.firstName", {
-              required: "First name is required",
+              required: "El nombre es obligatorio",
               pattern: {
                 value: IS_VALID_INPUT,
-                message: "Invalid First Name",
+                message: "Nombre inválido",
               },
             })}
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.firstName?.message}
-            label="First Name *"
+            label="Nombre *"
             size="md"
           />
           <InputText
             {...register("shipping.lastName", {
-              required: "Last name is required",
+              required: "El apellido es obligatorio",
               pattern: {
                 value: IS_VALID_INPUT,
-                message: "Invalid Last Name",
+                message: "Apellido inválido",
               },
             })}
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.lastName?.message}
-            label="Last Name *"
+            label="Apellido *"
             size="md"
           />
           <InputText
             {...register("shipping.companyName", {
               pattern: {
                 value: IS_VALID_INPUT,
-                message: "Invalid Company Name",
+                message: "Nombre de empresa inválido",
               },
             })}
             className="col-span-6 mb-4"
             errorMsg={errors?.shipping?.companyName?.message}
-            label="Company Name"
+            label="Empresa"
             size="md"
           />
           <InputText
             {...register("shipping.address", {
-              required: "Address field is required",
+              required: "La dirección es obligatoria",
               pattern: {
                 value: IS_VALID_ADDRESS,
-                message: "Invalid Address",
+                message: "Dirección inválida",
               },
             })}
             className="col-span-6 mb-4"
             errorMsg={errors?.shipping?.address?.message}
-            label="Street Address *"
+            label="Dirección *"
             size="md"
           />
           <InputText
             {...register("shipping.city", {
-              required: "City field is required",
+              required: "La ciudad es obligatoria",
               pattern: {
                 value: IS_VALID_INPUT,
-                message: "Invalid City",
+                message: "Ciudad inválida",
               },
             })}
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.city?.message}
-            label="City *"
+            label="Ciudad *"
             size="md"
           />
           <InputText
             {...register("shipping.postcode", {
-              required: "Postcode field is required",
+              required: "El código postal es obligatorio",
               pattern: {
                 value: IS_VALID_INPUT,
-                message: "Invalid Postcode",
+                message: "Código postal inválido",
               },
             })}
             className="col-span-3"
             errorMsg={errors?.shipping?.postcode?.message}
-            label="Zip Code *"
+            label="Código postal *"
             size="md"
           />
           <InputText
             {...register("shipping.phone", {
-              required: "Phone field is required",
+              required: "El teléfono es obligatorio",
               pattern: {
                 value: IS_VALID_PHONE,
-                message: "Enter Valid Phone Number",
+                message: "Ingresa un número de teléfono válido",
               },
             })}
             className="col-span-6"
             errorMsg={errors?.shipping?.phone?.message}
-            label="Phone *"
+            label="Teléfono *"
             size="md"
           />
         </div>
       )}
 
       <div className="justify-self-end">
-        <ProceedToCheckout buttonName="Next" pending={isLoadingToSave} />
+        <ProceedToCheckout buttonName="Siguiente" pending={isLoadingToSave} />
       </div>
     </form>
   );

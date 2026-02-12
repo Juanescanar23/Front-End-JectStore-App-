@@ -34,21 +34,21 @@ export default function RegistrationForm() {
 
   const onSubmit: SubmitHandler<RegisterInputs> = async (data) => {
     if (data.password !== data.passwordConfirmation) {
-      showToast("The Passwords do not match.", "warning");
+      showToast("Las contraseñas no coinciden.", "warning");
       return;
     }
 
     await createUser(data)
       .then((res) => {
         if (res?.success) {
-          showToast("User created successfully", "success");
+          showToast("Usuario creado correctamente", "success");
           router.replace("/customer/login");
         } else {
-          showToast(res?.error?.message || "Failed to create user", "warning");
+          showToast(res?.error?.message || "No se pudo crear el usuario", "warning");
         }
       })
       .catch((error) => {
-        showToast(error.message || "An error occurred", "warning");
+        showToast(error.message || "Ocurrió un error", "warning");
       });
   };
 
@@ -57,10 +57,10 @@ export default function RegistrationForm() {
       <div className="relative flex w-full max-w-[583px] flex-col gap-y-4 lg:gap-y-12">
         <div className="font-outfit">
           <h2 className="py-1 text-2xl font-semibold sm:text-4xl">
-            Become User
+            Crea tu cuenta
           </h2>
           <p className="mt-2 text-base md:text-lg font-normal text-black/[60%] dark:text-neutral-400 sm:mt-2">
-            You are new to our store, we are glad to have you as a member.
+            Si eres nuevo en nuestra tienda, nos alegra tenerte como miembro.
           </p>
         </div>
 
@@ -73,10 +73,10 @@ export default function RegistrationForm() {
             <div className="flex w-full gap-2.5 lg:gap-[18px]">
               <InputText
                 {...register("firstName", {
-                  required: "First name is required",
+                  required: "El nombre es obligatorio",
                   pattern: {
                     value: IS_VALID_INPUT,
-                    message: "Invalid First Name",
+                    message: "Nombre inválido",
                   },
                 })}
                 className="w-full"
@@ -85,19 +85,19 @@ export default function RegistrationForm() {
                     ? [errors.firstName.message]
                     : undefined
                 }
-                label="First Name"
+                label="Nombre"
                 labelPlacement="outside"
                 name="firstName"
-                placeholder="Enter first name"
+                placeholder="Ingresa tu nombre"
                 size="lg"
               />
               <InputText
                 {...register("lastName",
                   {
-                    required: "Last name is required",
+                    required: "El apellido es obligatorio",
                     pattern: {
                       value: IS_VALID_INPUT,
-                      message: "Invalid Last Name",
+                      message: "Apellido inválido",
                     },
                   })}
                 className="w-full"
@@ -106,53 +106,53 @@ export default function RegistrationForm() {
                     ? [errors.lastName.message]
                     : undefined
                 }
-                label="Last Name"
+                label="Apellido"
                 labelPlacement="outside"
                 name="lastName"
-                placeholder="Enter last name"
+                placeholder="Ingresa tu apellido"
                 size="lg"
               />
             </div>
 
             <InputText
               {...register("email", {
-                required: "Email is required",
+                required: "El correo es obligatorio",
                 pattern: {
                   value: EMAIL_REGEX,
-                  message: "Please enter a valid email.",
+                  message: "Ingresa un correo válido.",
                 },
               })}
               errorMsg={errors.email?.message}
-              label="Email"
+              label="Correo electrónico"
               labelPlacement="outside"
               name="email"
-              placeholder="Enter email address"
+              placeholder="Ingresa tu correo electrónico"
               size="lg"
             />
 
             <InputText
               {...register("password", {
-                required: "Password is required",
+                required: "La contraseña es obligatoria",
                 minLength: {
                   value: 8,
-                  message: "Must be at least 8 characters",
+                  message: "Debe tener al menos 8 caracteres",
                 },
                 validate: (val) => {
                   if (!/[A-Z]/.test(val))
-                    return "Must contain at least one uppercase letter";
+                    return "Debe contener al menos una mayúscula";
                   if (!/[a-z]/.test(val))
-                    return "Must contain at least one lowercase letter";
+                    return "Debe contener al menos una minúscula";
                   if (!/[0-9]/.test(val))
-                    return "Must contain at least one number";
-                  if (/\s/.test(val)) return "Cannot contain spaces";
+                    return "Debe contener al menos un número";
+                  if (/\s/.test(val)) return "No puede contener espacios";
 
                   return true;
                 },
               })}
-              label="Password"
+              label="Contraseña"
               labelPlacement="outside"
               name="password"
-              placeholder="Enter password"
+              placeholder="Ingresa tu contraseña"
               typeName="password"
               size="lg"
               errorMsg={
@@ -162,12 +162,12 @@ export default function RegistrationForm() {
 
             <InputText
               {...register("passwordConfirmation", {
-                required: "Please confirm your password",
+                required: "Confirma tu contraseña",
               })}
-              label="Confirm Password"
+              label="Confirmar contraseña"
               labelPlacement="outside"
               name="passwordConfirmation"
-              placeholder="Enter confirm password"
+              placeholder="Confirma tu contraseña"
               size="lg"
               typeName="password"
             />
@@ -177,13 +177,13 @@ export default function RegistrationForm() {
             <Button
               disabled={isSubmitting}
               loading={isSubmitting}
-              title="Sign Up"
+              title="Registrarse"
               type="submit"
             />
             <span className="mx-auto md:mx-0 font-outfit">
-              Already have an account?{" "}
-              <Link className="text-blue-600 underline" href="/customer/login" aria-label="Go to sign in page">
-                Sign In
+              ¿Ya tienes cuenta?{" "}
+              <Link className="text-blue-600 underline" href="/customer/login" aria-label="Ir a iniciar sesión">
+                Iniciar sesión
               </Link>
             </span>
           </div>
@@ -194,7 +194,7 @@ export default function RegistrationForm() {
         <Image
           fill
           priority
-          alt="Sign Up Image"
+          alt="Imagen de registro"
           className="h-full w-full object-cover transition duration-300 ease-in-out group-hover:scale-105"
           sizes="(min-width: 768px) 66vw, 100vw"
           src={SIGNUP_IMG}

@@ -76,8 +76,8 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
         if (sortOrder === 2) {
             return (
                 <ThreeItemGrid
-                    title={title || "Products"}
-                    description="Discover the latest trends! Fresh products just added—shop new styles, tech, and essentials before they're gone."
+                    title={title || "Productos"}
+                    description="Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten."
                     products={products.slice(0, 3)}
                 />
             );
@@ -86,8 +86,8 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
         return (
 
             <Theme
-                title={title || "Products"}
-                description="Discover the latest trends! Fresh products just added—shop new styles, tech, and essentials before they're gone."
+                title={title || "Productos"}
+                description="Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten."
                 products={products}
             />
         );

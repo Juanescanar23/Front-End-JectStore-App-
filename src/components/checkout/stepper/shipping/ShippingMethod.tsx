@@ -35,13 +35,13 @@ export default function ShippingMethod({
 
   const onSubmit = async (data: FieldValues) => {
     if (!data?.method) {
-      showToast("Please Choose the Shipping Method", "warning");
+      showToast("Selecciona el método de envío", "warning");
       return;
     }
     try {
       await saveCheckoutShipping(data?.method);
     } catch {
-      showToast("Failed to save shipping method. Please try again.");
+      showToast("No se pudo guardar el método de envío. Intenta de nuevo.");
     }
   };
 
@@ -54,7 +54,7 @@ export default function ShippingMethod({
              <div className="mt-4  justify-between hidden sm:flex">
             <div className="flex">
               <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
-                Shipping Method
+                Método de envío
               </p>
               <p className="text-base font-normal">{selectedMethodTitle} (${selectedMethodPrice})</p>
             </div>
@@ -63,7 +63,7 @@ export default function ShippingMethod({
               onClick={() => setIsOpen(!isOpen)}
               className="cursor-pointer text-base font-normal text-black/[60%] underline dark:text-neutral-300"
             >
-              Change
+              Cambiar
             </button>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function ShippingMethod({
             <div className="mt-4 block sm:hidden flex flex-col justify-between sm:flex-row relative  ">
             <div className="flex justify-between  flex-1 wrap">
               <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
-                Shipping Method
+                Método de envío
               </p>
               <p className="text-base font-normal">{selectedMethodTitle} (${selectedMethodPrice})</p>
             </div>
@@ -81,7 +81,7 @@ export default function ShippingMethod({
               className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline dark:text-neutral-300"
               style={{ top: "-36px" }}
             >
-              Change
+              Cambiar
             </button>
           </div>
           </>
@@ -119,7 +119,7 @@ export default function ShippingMethod({
             </div>
 
             <div className="my-6 justify-self-end">
-              <ProceedToCheckout buttonName="Next" pending={isSaving} />
+              <ProceedToCheckout buttonName="Siguiente" pending={isSaving} />
             </div>
           </form>
         )
@@ -160,7 +160,7 @@ export default function ShippingMethod({
           </div>
 
           <div className="my-6 justify-self-end">
-            <ProceedToCheckout buttonName="Next" pending={isSaving} />
+            <ProceedToCheckout buttonName="Siguiente" pending={isSaving} />
           </div>
         </form>
       )}

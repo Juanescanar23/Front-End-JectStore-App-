@@ -41,14 +41,14 @@ export default function PaymentMethod({
 
   const onSubmit = async (data: FieldValues) => {
     if (!data?.method) {
-      showToast("Please Choose the Payment Method", "warning");
+      showToast("Selecciona el método de pago", "warning");
       return;
     }
     try {
       await saveCheckoutPayment(data.method);
       setIsOpen(false);
     } catch {
-      showToast("Failed to save payment method. Please try again.");
+      showToast("No se pudo guardar el método de pago. Intenta de nuevo.");
     }
   };
   return (
@@ -58,7 +58,7 @@ export default function PaymentMethod({
         <div className="mt-4  justify-between hidden sm:flex ">
           <div className="flex">
             <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
-              Payment Method
+              Método de pago
             </p>
             <p className="text-base font-normal">
               {selectedMethodLabelPrior as string}
@@ -71,13 +71,13 @@ export default function PaymentMethod({
             }}
             className="cursor-pointer text-base font-normal text-black/60 underline dark:text-neutral-300"
          >
-            Change
+            Cambiar
           </button>
         </div>
         <div className="mt-4 flex sm:hidden justify-between relative">
           <div className="flex justify-between justify-between  flex-1 wrap">
             <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
-              Payment Method
+              Método de pago
             </p>
             <p className="text-base font-normal">
               {selectedMethodLabelPrior as string}
@@ -91,7 +91,7 @@ export default function PaymentMethod({
             className="cursor-pointer absolute right-0 text-base font-normal text-black/60 underline dark:text-neutral-300"
           style={{ top: "-36px" }}
          >
-            Change
+            Cambiar
           </button>
         </div>
         </>
@@ -127,8 +127,8 @@ export default function PaymentMethod({
             />
 
             <div className="my-6 justify-self-end">
-              <ProceedToCheckout
-                buttonName="Pay Now"
+                <ProceedToCheckout
+                buttonName="Pagar ahora"
                 pending={isPaymentLoading}
               />
             </div>

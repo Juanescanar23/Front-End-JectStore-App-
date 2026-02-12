@@ -146,7 +146,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({ options }) => {
                                 <Link
                                     href={`/search/${img.link}`}
                                     className="block h-full w-full"
-                                    aria-label={`View ${altText}`}
+                                    aria-label={`Ver ${altText}`}
                                 >
                                     <div className="relative h-full w-full">
                                         <Shimmer className="h-full w-full" />

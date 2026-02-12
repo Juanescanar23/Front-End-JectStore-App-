@@ -72,7 +72,7 @@ const SortOrder: FC<{
           selectedKeys={[sort]}
           isMultiline={false}
           items={sortOrders}
-          placeholder="Select a Sort Order"
+          placeholder="Selecciona un orden"
           classNames={{
             value: "text-neutral-800 dark:text-neutral-200",
           }}
@@ -108,7 +108,7 @@ const SortOrder: FC<{
           onPress={onOpen}
         >
           <SortIcon />
-          <span className="font-outfit text-base tracking-wide"> Sort</span>
+          <span className="font-outfit text-base tracking-wide"> Ordenar</span>
         </Button>
       </div>
 
@@ -125,14 +125,14 @@ const SortOrder: FC<{
               <DrawerHeader className="flex flex-col gap-1 pb-4 pt-2">
                 <div className="mx-auto h-1 w-10 rounded-full bg-neutral-300 dark:bg-neutral-700" />
                 <div className="flex items-center justify-between mt-2 px-2">
-                  <h2 className="text-2xl font-bold tracking-tight">Sort</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">Ordenar</h2>
                   <div className="flex items-center gap-4">
                     {Array.from(searchParams.keys()).some((key) => key !== "q") && (
                       <button
                         onClick={clearFilters}
                         className="text-sm font-medium underline underline-offset-4 text-neutral-600 dark:text-neutral-400"
                       >
-                        Clear all filters
+                        Limpiar filtros
                       </button>
                     )}
                     <Button
@@ -142,7 +142,7 @@ const SortOrder: FC<{
                       className="px-6 font-semibold"
                       onPress={applySort}
                     >
-                      Apply Filter
+                      Aplicar filtro
                     </Button>
                   </div>
                 </div>
@@ -150,10 +150,10 @@ const SortOrder: FC<{
               <DrawerBody className="px-6 pb-12 pt-2">
                 <div className="flex flex-col gap-4">
                   <p className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
-                    Sort By
+                    Ordenar por
                   </p>
                   <Select
-                    aria-label="Sort options"
+                    aria-label="Opciones de orden"
                     selectedKeys={[tempSort]}
                     className="w-full"
                     variant="flat"

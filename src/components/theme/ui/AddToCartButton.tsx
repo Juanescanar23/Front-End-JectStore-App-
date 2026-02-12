@@ -28,7 +28,7 @@ export default function AddToCartButton({
 
   const handleAddToCart = () => {
     if (!isSaleableValue) {
-      showToast("This product is out of stock", "warning");
+      showToast("Este producto está agotado", "warning");
       return;
     }
 

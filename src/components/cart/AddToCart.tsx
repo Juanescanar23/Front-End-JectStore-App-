@@ -29,12 +29,12 @@ function SubmitButton({
     return (
       <button
         aria-disabled
-        aria-label="Out of stock"
+        aria-label="Agotado"
         type="button"
         disabled
         className={clsx(buttonClasses, " opacity-60 !cursor-not-allowed")}
       >
-        Out of Stock
+        Agotado
       </button>
     );
   }
@@ -43,12 +43,12 @@ function SubmitButton({
     return (
       <button
         aria-disabled
-        aria-label="Please select an option"
+        aria-label="Selecciona una opción"
         type="button"
         disabled={!selectedVariantId}
         className={clsx(buttonClasses, " opacity-60 !cursor-not-allowed")}
       >
-        Add To Cart
+        Agregar al carrito
       </button>
     );
   }
@@ -56,7 +56,7 @@ function SubmitButton({
   return (
     <button
       aria-disabled={pending}
-      aria-label="Add to cart"
+      aria-label="Agregar al carrito"
       type="submit"
       className={clsx(buttonClasses, {
         "hover:opacity-90": true,
@@ -69,7 +69,7 @@ function SubmitButton({
       <div className="absolute left-0 ml-4">
         {pending ? <LoadingDots className="mb-3 bg-white" /> : ""}
       </div>
-      Add To Cart
+      Agregar al carrito
     </button>
   );
 }
@@ -143,14 +143,14 @@ export function AddToCart({
     <>
       {!checkStock && type === "configurable" && userInteracted && (
         <div className="gap-1 px-2 py-1 my-2 font-bold">
-          <h1>NO STOCK AVAILABLE</h1>
+          <h1>NO HAY STOCK DISPONIBLE</h1>
         </div>
       )}
       <form className="flex gap-x-4" onSubmit={handleSubmit(actionWithVariant)}>
         <div className="flex items-center justify-center">
           <div className="flex items-center rounded-full border-2 border-blue-500">
             <div
-              aria-label="Decrease quantity"
+              aria-label="Disminuir cantidad"
               role="button"
               className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-l-full text-gray-600 transition-colors hover:text-gray-800 dark:text-white hover:dark:text-white/[80%]"
               onClick={decrement}
@@ -168,7 +168,7 @@ export function AddToCart({
             </div>
 
             <div
-              aria-label="Increase quantity"
+              aria-label="Aumentar cantidad"
               role="button"
               className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-r-full text-gray-600 transition-colors hover:text-gray-800 dark:text-white hover:dark:text-white/[80%]"
               onClick={increment}

@@ -20,7 +20,7 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
       <div className="hidden h-full min-h-[100dvh] flex-col justify-between py-4 pl-4 pr-8 lg:flex">
         <div className="">
           <h1 className="p-6 font-outfit text-xl font-medium text-black dark:text-neutral-300">
-            Order Summary
+            Resumen del pedido
           </h1>
           <ul className="m-0 flex max-h-[calc(100dvh-292px)] flex-col gap-y-6 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-500 dark:scrollbar-thumb-neutral-300 lg:h-[calc(100dvh-124px)] lg:overflow-hidden lg:overflow-y-auto">
             {Array.isArray(cart) &&
@@ -61,7 +61,7 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
                             </p>
                           ) : null}
                           <span className="font-normal text-black dark:text-white">
-                            Quantity : {item?.node?.quantity}
+                            Cantidad: {item?.node?.quantity}
                           </span>
                           <div className="block h-16 xl:hidden">
                             <Price
@@ -99,7 +99,7 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
           <div className="mb-3 flex items-center justify-between pb-1 pt-1">
             <p className="text-black[60%] font-outfit text-base font-normal">
               {" "}
-              Shipping
+              Envío
             </p>
             {cartItems?.shippingAmount ? (
               <Price
@@ -108,12 +108,12 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
                 currencyCode={"USD"}
               />
             ) : (
-              <p className="text-right text-base">Calculated at Next Step</p>
+              <p className="text-right text-base">Calculado en el siguiente paso</p>
             )}
           </div>
           <div className="my-6 flex items-center justify-between">
             <p className="font-outfit text-2xl font-normal text-black/[60%] dark:text-white">
-              Grand Total
+              Total general
             </p>
             <Price
               amount={(cartItems as any)?.grandTotal || "0"}

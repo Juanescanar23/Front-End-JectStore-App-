@@ -38,11 +38,11 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
       <section className="pt-8 sm:pt-12 lg:pt-20">
         <div className="md:max-w-4.5xl mx-auto mb-10 w-auto text-center md:px-36">
           <h2 className="mb-2 text-xl md:text-4xl  font-semibold">
-            Shop by Category
+            Compra por categoría
           </h2>
           <p className="text-sm md:text-base font-normal text-black/60 dark:text-neutral-300">
-            Discover the latest trends! Fresh products just added—shop new
-            styles, tech, and essentials before they&apos;re gone.
+            Descubre las últimas tendencias. Productos recién agregados: nuevas
+            tendencias, tecnología y esenciales antes de que se agoten.
           </p>
         </div>
         <div className="w-full overflow-x-auto overflow-y-hidden">
@@ -55,11 +55,11 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
                 <Link
                   className="relative h-full w-full"
                   href={`/search/${category.slug}`}
-                  aria-label={`Shop ${category.name} category`}
+                  aria-label={`Comprar categoría ${category.name}`}
                 >
                   <GridTileImage
                     fill
-                    alt={`${category.name} category image`}
+                    alt={`Imagen de la categoría ${category.name}`}
                     className={
                       "relative rounded-[18px] overflow-hidden object-cover transition duration-300 ease-in-out group-hover:scale-105"
                     }

@@ -55,7 +55,7 @@ const Subscribe = () => {
       showToast(status?.apiRes?.msg, "warning");
     }
     if (status?.apiRes?.status === true) {
-      showToast("Successfully Subscribed", "success");
+      showToast("Suscripción exitosa", "success");
     }
   }, [status]);
 
@@ -65,20 +65,20 @@ const Subscribe = () => {
       className="mt-4 md:mt-0 md:px-0 relative"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <p className="mb-1 text-base font-semibold">Newsletter</p>
+      <p className="mb-1 text-base font-semibold">Boletín</p>
       <p className="font-sm font-normal">
-        Subscribe to our newsletter for exclusive offers!
+        Suscríbete a nuestro boletín para ofertas exclusivas.
       </p>
 
       <div className="mt-4 flex gap-x-3">
         <input
           type="email"
-          aria-label="Email Address"
+          aria-label="Correo electrónico"
           {...register("email", {
-            required: "Email is required",
+            required: "El correo electrónico es obligatorio",
             pattern: {
               value: EMAIL_REGEX,
-              message: "Enter a valid email",
+              message: "Ingresa un correo válido",
             },
           })}
           className={clsx(
@@ -87,7 +87,7 @@ const Subscribe = () => {
               ? "border-red-500 dark:border-red-500"
               : "border-gray-300 dark:border-neutral-200"
           )}
-          placeholder="Email Address"
+          placeholder="Correo electrónico"
         />
         <Button
           className={clsx(
@@ -99,7 +99,7 @@ const Subscribe = () => {
           )}
           disabled={loading || isSubmitting}
           loading={loading || isSubmitting}
-          title="Subscribe"
+          title="Suscribirme"
           type="submit"
         />
       </div>

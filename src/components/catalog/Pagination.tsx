@@ -111,7 +111,7 @@ export default function Pagination({
     <ul
       className="mx-auto h-10 gap-x-2 text-base flex justify-center"
       role="navigation"
-      aria-label="Pagination"
+      aria-label="Paginación"
     >
       <li
         key="prev"
@@ -126,7 +126,7 @@ export default function Pagination({
             "ml-0 flex h-10 items-center justify-center px-2 leading-tight",
             currentPage > 0 ? "cursor-pointer" : "cursor-not-allowed"
           )}
-          aria-label="Previous page"
+          aria-label="Página anterior"
           disabled={currentPage <= 0}
         >
           <ChevronLeftIcon className="h-5" />
@@ -148,7 +148,7 @@ export default function Pagination({
             "ml-0 flex h-10 items-center justify-center px-2 leading-tight",
             currentPage < pageCount - 1 ? "cursor-pointer" : "cursor-not-allowed"
           )}
-          aria-label="Next page"
+          aria-label="Página siguiente"
           disabled={currentPage >= pageCount - 1}
         >
           <ChevronRightIcon className="h-5" />

@@ -21,7 +21,7 @@ export const CartSkeleton = ({ className }: { className: string }) => {
       <div>
         <div className="my-6 animate-pulse" role="status">
           <div className="h-12 w-1/2 rounded-md bg-gray-200 dark:bg-gray-700" />
-          <span className="sr-only">Loading...</span>
+          <span className="sr-only">Cargando...</span>
         </div>
 
         {Array(2)

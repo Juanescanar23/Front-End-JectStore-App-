@@ -8,7 +8,7 @@ const SuccessPage = () => {
       <div className="flex w-full flex-col items-center justify-center overflow-hidden">
         <CheckSign className="h-28 w-28 sm:h-38 sm:w-38" />
         <OrderDetail />
-        <ClearCartButton buttonName="Continue shopping" redirect="/" />
+        <ClearCartButton buttonName="Seguir comprando" redirect="/" />
       </div>
     </div>
   );

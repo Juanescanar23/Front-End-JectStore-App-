@@ -13,14 +13,14 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        username: { label: "Correo", type: "text" },
+        password: { label: "Contraseña", type: "password" },
       },
 
 
       authorize: async (credentials): Promise<any> => {
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("Email and password are required.");
+          throw new Error("El correo y la contraseña son obligatorios.");
         }
 
         const input = {
@@ -38,7 +38,7 @@ export const authOptions: NextAuthOptions = {
         const data = res?.body?.data?.createCustomerLogin?.customerLogin;
 
         if (!data || !data.success || !data.token) {
-          throw new Error(data?.message || "Invalid credentials.");
+          throw new Error(data?.message || "Credenciales inválidas.");
         }
 
         return {

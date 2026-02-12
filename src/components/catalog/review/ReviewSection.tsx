@@ -29,8 +29,10 @@ export default function ReviewSection({ productId}: ReviewSectionProps) {
                 <div className="flex flex-col items-center gap-4 py-8">
                     <div className="flex flex-col items-center gap-4">
                         <NoReviewIcon />
-                        <h2 className="font-outfit text-2xl font-semibold tracking-wide mt-4">Ratings</h2>
-                        <p className="text-lg mt-2">No reviews yet. Be the first to share your experience</p>
+                        <h2 className="font-outfit text-2xl font-semibold tracking-wide mt-4">Calificaciones</h2>
+                        <p className="text-lg mt-2">
+                          Aún no hay reseñas. Sé el primero en compartir tu experiencia
+                        </p>
                     </div>
                     <ReviewButton setShowForm={setShowForm} />
                 </div>
@@ -53,7 +55,7 @@ export const ReviewButton = ({setShowForm , className}: {setShowForm: (show: boo
 
     return (
         <Button
-                        title="Add a Review"
+                        title="Agregar reseña"
                         onClick={handleAddReview}
                         className={`relative flex w-full min-w-[18rem] max-w-[20rem] cursor-pointer h-fit items-center justify-center rounded-full bg-blue-600 p-4 tracking-wide text-white mt-6 ${className}`}
                     /> 

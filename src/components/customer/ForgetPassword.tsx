@@ -61,7 +61,7 @@ export default function ForgetPasswordForm() {
         );
       }
     } catch {
-      showToast("Something went wrong. Please try again later.", "danger");
+      showToast("Algo salió mal. Intenta más tarde.", "danger");
     } finally {
       setLoading(false);
     }
@@ -72,11 +72,11 @@ export default function ForgetPasswordForm() {
       <div className="flex w-full flex-col gap-y-4 lg:max-w-[583px] lg:gap-y-12">
         <div className="font-outfit">
           <h2 className="py-1 text-2xl font-semibold sm:text-4xl">
-            Recover Password
+            Recuperar contraseña
           </h2>
           <p className="mt-2 text-base md:text-lg font-normal text-black/60 dark:text-neutral-400">
-            If you forgot your password, recover it by entering your email
-            address.
+            Si olvidaste tu contraseña, recupérala ingresando tu correo
+            electrónico.
           </p>
         </div>
 
@@ -87,17 +87,17 @@ export default function ForgetPasswordForm() {
         >
           <InputText
             {...register("email", {
-              required: "Email is required",
+              required: "El correo es obligatorio",
               pattern: {
                 value: EMAIL_REGEX,
-                message: "Please enter a valid email address.",
+                message: "Ingresa un correo válido.",
               },
             })}
             errorMsg={errors?.email?.message ? [errors.email.message] : undefined}
-            label="Enter Your Email Address"
+            label="Ingresa tu correo electrónico"
             labelPlacement="outside"
             name="email"
-            placeholder="Enter email address"
+            placeholder="Ingresa tu correo electrónico"
             size="lg"
             typeName="email"
           />
@@ -106,13 +106,13 @@ export default function ForgetPasswordForm() {
             <Button
               disabled={loading || isSubmitting}
               loading={loading || isSubmitting}
-              title="Reset Password"
+              title="Restablecer contraseña"
               type="submit"
             />
             <span className="px-1 mx-auto md:mx-0 font-outfit">
-              Back to sign in?{" "}
-              <Link className="text-blue-600 underline" href="/customer/login" aria-label="Go to sign in page">
-                Sign In
+              ¿Volver a iniciar sesión?{" "}
+              <Link className="text-blue-600 underline" href="/customer/login" aria-label="Ir a iniciar sesión">
+                Iniciar sesión
               </Link>
             </span>
           </div>
@@ -123,7 +123,7 @@ export default function ForgetPasswordForm() {
         <Image
           fill
           priority
-          alt="Forget Password Illustration"
+          alt="Ilustración de recuperación de contraseña"
           className={clsx(
             "relative h-full w-full object-fill",
             "transition duration-300 ease-in-out group-hover:scale-105"

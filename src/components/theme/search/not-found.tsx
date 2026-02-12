@@ -8,10 +8,10 @@ const NotFound = ({ msg }: { msg: string }) => {
       </div>
 
       <h1 className="mt-4 font-outfit text-2xl sm:text-3xl lg:text-4xl font-semibold">
-        Oops!, No products available in this category
+        ¡Ups! No hay productos disponibles en esta categoría
       </h1>
       <p className="text-black/60 dark:text-white">{msg}</p>
-      <EventButton buttonName="Back to Home" redirect="/" />
+      <EventButton buttonName="Volver al inicio" redirect="/" />
     </div>
   );
 };

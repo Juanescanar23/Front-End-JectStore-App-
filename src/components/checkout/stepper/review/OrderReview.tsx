@@ -32,7 +32,7 @@ export default function OrderReview({
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <tbody>
               <tr className="">
-                <td className="py-4">Contact</td>
+                <td className="py-4">Contacto</td>
                 <th
                   className="break-all px-6 py-4 font-medium text-gray-900 dark:text-white"
                   scope="row"
@@ -41,7 +41,7 @@ export default function OrderReview({
                 </th>
               </tr>
               <tr className="">
-                <td className="py-4">Billing to</td>
+                <td className="py-4">Facturación</td>
                 <th
                   className="break-all px-6 py-4 font-medium text-gray-900 dark:text-white"
                   scope="row"
@@ -53,7 +53,7 @@ export default function OrderReview({
                 </th>
               </tr>
               <tr className="">
-                <td className="py-4">Ship to</td>
+                <td className="py-4">Envío</td>
                 <th
                   className="break-all px-6 py-4 font-medium text-gray-900 dark:text-white"
                   scope="row"
@@ -65,7 +65,7 @@ export default function OrderReview({
                 </th>
               </tr>
               <tr className="">
-                <td className="py-4">Method</td>
+                <td className="py-4">Método</td>
                 <th
                   className="break-all px-6 py-4 font-medium text-gray-900 dark:text-white"
                   scope="row"
@@ -74,7 +74,7 @@ export default function OrderReview({
                 </th>
               </tr>
               <tr className="">
-                <td className="py-4">Payment</td>
+                <td className="py-4">Pago</td>
                 <th
                   className="break-all px-6 py-4 font-medium text-gray-900 dark:text-white"
                   scope="row"
@@ -90,7 +90,7 @@ export default function OrderReview({
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="justify-self-end">
             <ProceedToCheckout
-              buttonName="Place Order"
+              buttonName="Realizar pedido"
               pending={isPlaceOrder}
             />
           </div>

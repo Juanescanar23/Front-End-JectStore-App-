@@ -14,7 +14,7 @@ function SubmitButton({
   return (
     <button
       aria-disabled={loading}
-      aria-label="Remove cart item"
+      aria-label="Eliminar producto del carrito"
       className={clsx(
         "ease flex h-[17px] w-[17px] cursor-pointer items-center justify-center rounded-full  transition-all duration-200",
         {

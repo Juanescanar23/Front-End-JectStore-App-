@@ -46,7 +46,7 @@ export async function generateMetadata({
 
   return {
     title: categoryItem.metaTitle || categoryItem.name,
-    description: categoryItem.description || `${categoryItem.name} products`,
+    description: categoryItem.description || `${categoryItem.name} productos`,
   };
 }
 
@@ -141,11 +141,11 @@ export default async function CategoryPage({
         </Suspense>
         <div className="my-10 hidden gap-4 md:flex md:items-baseline md:justify-between w-full max-w-screen-2xl mx-auto px-4">
           <FilterList filterAttributes={filterAttributes} />
-          <SortOrder sortOrders={SortByFields} title="Sort by" />
+          <SortOrder sortOrders={SortByFields} title="Ordenar por" />
         </div>
         <div className="flex items-center justify-between gap-4 py-8 md:hidden w-full max-w-screen-2xl mx-auto px-4">
           <MobileFilter filterAttributes={filterAttributes} />
-          <SortOrder sortOrders={SortByFields} title="Sort by" />
+          <SortOrder sortOrders={SortByFields} title="Ordenar por" />
         </div>
 
         {isArray(filteredProducts) && filteredProducts.length > 0 ? (
@@ -156,14 +156,16 @@ export default async function CategoryPage({
         ) : (
           <div className="px-4">
             <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-neutral-300">
-              <p className="text-neutral-500">No products found in this category.</p>
+              <p className="text-neutral-500">
+                No se encontraron productos en esta categoría.
+              </p>
             </div>
           </div>
         )}
 
         {isArray(filteredProducts) && totalCount > itemsPerPage && (
           <nav
-            aria-label="Collection pagination"
+            aria-label="Paginación de productos"
             className="my-10 block items-center sm:flex"
           >
             <Pagination

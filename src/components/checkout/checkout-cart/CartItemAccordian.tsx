@@ -54,8 +54,8 @@ export default function CartItemAccordion({
     heading: "px-4", 
     content: "px-4" 
   }}
-          aria-label="Accordion 1"
-          title="Order Summary"
+          aria-label="Resumen del pedido"
+          title="Resumen del pedido"
           subtitle={
             <Price
               className=""
@@ -96,7 +96,7 @@ export default function CartItemAccordion({
                             {item?.node?.name}
                           </span>
                           <span className="font-normal text-black dark:text-white">
-                            Quantity : {item.node.quantity}
+                            Cantidad: {item.node.quantity}
                           </span>
                           {item.name !== DEFAULT_OPTION ? (
                             <p className="text-sm lowercase line-clamp-1 text-neutral-500 dark:text-neutral-400">
@@ -130,7 +130,7 @@ export default function CartItemAccordion({
               </div>
               <div className="mb-3 flex items-center justify-between pb-1 pt-1">
                 <p className="text-black[60%] font-outfit text-base font-normal dark:text-white">
-                  Shipping
+                  Envío
                 </p>
                 {cartItems?.shippingAmount ? (
                   <Price
@@ -140,7 +140,7 @@ export default function CartItemAccordion({
                   />
                 ) : (
                   <p className="text-right text-base">
-                    Calculated at Next Step
+                    Calculado en el siguiente paso
                   </p>
                 )}
               </div>

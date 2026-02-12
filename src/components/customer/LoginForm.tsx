@@ -53,10 +53,10 @@ export default function LoginForm() {
       });
 
       if (!result?.ok) {
-        showToast(result?.error || "Invalid login credentials.", "warning");
+        showToast(result?.error || "Credenciales inválidas.", "warning");
         return;
       }
-      showToast("Welcome! Successfully logged in.", "success");
+      showToast("¡Bienvenido! Sesión iniciada correctamente.", "success");
       setLocalStorage("email", data?.username)
 
       const session = await getSession();
@@ -93,7 +93,7 @@ export default function LoginForm() {
 
     } catch (error) {
       console.error(error);
-      showToast("Something went wrong. Please try again.", "danger");
+      showToast("Algo salió mal. Intenta de nuevo.", "danger");
     }
   };
 
@@ -102,10 +102,10 @@ export default function LoginForm() {
       <div className="flex w-full max-w-[583px] flex-col gap-y-4 lg:gap-y-12">
         <div className="font-outfit">
           <h2 className="py-1 text-2xl font-semibold sm:text-4xl">
-            Sign in to your account
+            Inicia sesión en tu cuenta
           </h2>
           <p className="mt-2  text-base md:text-lg font-normal text-black/60 dark:text-neutral-400">
-            If you have an account, sign in with your email address.
+            Si ya tienes una cuenta, inicia sesión con tu correo electrónico.
           </p>
         </div>
 
@@ -117,19 +117,19 @@ export default function LoginForm() {
           <div className="flex flex-col gap-y-2.5 lg:gap-4">
             <InputText
               {...register("username", {
-                required: "Email is required",
+                required: "El correo es obligatorio",
                 pattern: {
                   value: EMAIL_REGEX,
-                  message: "Please enter a valid email.",
+                  message: "Ingresa un correo válido.",
                 },
               })}
               errorMsg={
                 errors.username?.message ? [errors.username.message] : undefined
               }
-              label="Enter Your Email Address"
+              label="Ingresa tu correo electrónico"
               labelPlacement="outside"
               name="username"
-              placeholder="Enter your email address"
+              placeholder="Ingresa tu correo electrónico"
               rounded="md"
               size="lg"
               typeName="email"
@@ -137,14 +137,14 @@ export default function LoginForm() {
 
             <InputText
               {...register("password", {
-                required: "Password is required",
+                required: "La contraseña es obligatoria",
                 minLength: {
                   value: 2,
-                  message: "Be at least 2 characters long",
+                  message: "Debe tener al menos 2 caracteres",
                 },
                 validate: (value) => {
                   if (!/[0-2]/.test(value))
-                    return "Contain at least one number.";
+                    return "Debe contener al menos un número.";
 
                   return true;
                 },
@@ -152,10 +152,10 @@ export default function LoginForm() {
               errorMsg={
                 errors.password?.message ? [errors.password.message] : undefined
               }
-              label="Enter Password"
+              label="Ingresa tu contraseña"
               labelPlacement="outside"
               name="password"
-              placeholder="Enter your password"
+              placeholder="Ingresa tu contraseña"
               rounded="md"
               size="lg"
               typeName="password"
@@ -164,9 +164,9 @@ export default function LoginForm() {
             <Link
               className="text-end text-sm font-medium text-blue-600 underline hover:text-blue-500 underline"
               href="/customer/forget-password"
-              aria-label="Go to forgot password page"
+              aria-label="Ir a recuperar contraseña"
             >
-              Forgot your password ?
+              ¿Olvidaste tu contraseña?
             </Link>
           </div>
 
@@ -175,17 +175,17 @@ export default function LoginForm() {
               className="cursor-pointer"
               disabled={isSubmitting}
               loading={isSubmitting}
-              title="Sign In"
+              title="Iniciar sesión"
               type="submit"
             />
             <span className="mx-auto font-outfit sm:mx-0">
-              New customer?{" "}
+              ¿Nuevo cliente?{" "}
               <Link
                 className="font-medium text-blue-600 hover:text-blue-500 underline"
                 href="/customer/register"
-                aria-label="Go to create account page"
+                aria-label="Ir a crear cuenta"
               >
-                Create your account
+                Crea tu cuenta
               </Link>
             </span>
           </div>
@@ -196,7 +196,7 @@ export default function LoginForm() {
         <Image
           fill
           priority
-          alt="Sign In Image"
+          alt="Imagen de inicio de sesión"
           className={clsx(
             "relative h-full w-full object-fill",
             "transition duration-300 ease-in-out group-hover:scale-105"

@@ -54,7 +54,7 @@ function FilterItemList({
 
   const formatLabel = (str?: string) =>
     str ? str.charAt(0) + str.slice(1).toLowerCase() : "";
-  const placeHolder = `Select a ${formatLabel(list?.adminName)}`;
+  const placeHolder = `Selecciona ${formatLabel(list?.adminName)}`;
 
   return (
     <div className="min-w-48 w-full">
@@ -153,7 +153,7 @@ export default function FilterList({
           onClick={handleClearAll}
           className="text-nowrap relative top-0 my-2 inline-flex w-fit cursor-pointer items-center text-base underline ml-0 max-md:ml-auto  md:my-0"
         >
-          Clear all filters
+          Limpiar filtros
         </button>
       ) : null}
     </div>

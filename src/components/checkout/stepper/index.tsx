@@ -50,14 +50,14 @@ export default function Stepper(
       {
         id: 1,
         key: "email",
-        title: "Email",
+        title: "Correo",
         href: "/checkout",
         component: <Email />,
       },
       {
         id: 2,
         key: "address",
-        title: "Address",
+        title: "Dirección",
         href: "/checkout",
         component:
           <GuestAddAdressForm
@@ -68,7 +68,7 @@ export default function Stepper(
       {
         id: 3,
         key: "shipping",
-        title: "Shipping",
+        title: "Envío",
         href: "/checkout?step=address",
         component: <Shipping
           selectedShippingRate={selectedShippingRate}
@@ -77,7 +77,7 @@ export default function Stepper(
       {
         id: 4,
         key: "payment",
-        title: "Payment",
+        title: "Pago",
         href: "/checkout?step=shipping",
         component: (
           <Payment
@@ -90,7 +90,7 @@ export default function Stepper(
       {
         id: 5,
         key: "review",
-        title: "Review",
+        title: "Revisión",
         href: "/checkout?step=payment",
         component: (
           <Review
@@ -158,7 +158,7 @@ export default function Stepper(
         >
           <LogoIcon />
         </Link>
-        <h1 className="text-xl px-2 font-semibold block lg:hidden">Checkout</h1>
+        <h1 className="text-xl px-2 font-semibold block lg:hidden">Finalizar compra</h1>
       </header>
 
       <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-500 dark:scrollbar-thumb-neutral-300 h-[calc(100dvh-300px)] overflow-y-auto lg:h-[calc(100dvh-124px)]">

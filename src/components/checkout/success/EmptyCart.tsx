@@ -13,7 +13,7 @@ const OrderDetail = dynamic(() => import("@/components/cart/OrderDetail"), {
   loading: () => (
     <div className="max-w-sm animate-pulse" role="status">
       <div className="mb-4 h-8 w-48 rounded-full bg-gray-200 dark:bg-gray-700" />
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">Cargando...</span>
     </div>
   )
 });
@@ -23,7 +23,7 @@ const EmptyCartPage = () => {
       <div className="flex w-full flex-col items-center justify-center overflow-hidden">
         <CheckSign className="sm:h-38 sm:w-38 h-28 w-28" />
         <OrderDetail />
-        <ClearCartButton buttonName="Continue shopping" redirect="/" />
+        <ClearCartButton buttonName="Seguir comprando" redirect="/" />
       </div>
     </div>
   );

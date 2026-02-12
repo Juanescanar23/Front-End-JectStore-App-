@@ -32,7 +32,7 @@ export default async function Navbar() {
     .filter((item: any) => item.name && item.slug);
 
   const menuData = [
-    { id: "all", name: "All", slug: "" },
+    { id: "all", name: "Todo", slug: "" },
     ...filteredCategories.slice(0, 3),
   ];
 
@@ -48,7 +48,7 @@ export default async function Navbar() {
               <Link
                 className="flex h-9 w-full scale-95 items-center md:h-9 md:w-auto lg:h-10"
                 href="/"
-                aria-label="Go to homepage"
+                aria-label="Ir al inicio"
               >
                 <LogoIcon />
               </Link>
@@ -60,7 +60,7 @@ export default async function Navbar() {
                         className="text-nowrap relative text-neutral-500 before:absolute before:bottom-0 before:left-0 before:h-px before:w-0 before:bg-current before:transition-all before:duration-300 before:content-[''] hover:text-black hover:before:w-full dark:text-neutral-400 dark:hover:text-neutral-300"
                         href={item.slug ? `/search/${item.slug}` : "/search"}
                         prefetch={true}
-                        aria-label={`Browse ${item.name} products`}
+                        aria-label={`Ver productos de ${item.name}`}
                       >
                         {item.name}
                       </Link>

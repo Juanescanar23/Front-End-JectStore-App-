@@ -22,7 +22,7 @@ function SubmitButton({
   if (!availableForSale) {
     return (
       <button aria-disabled className={clsx(buttonClasses, disabledClasses)}>
-        Processing...
+        Procesando...
       </button>
     );
   }
@@ -30,7 +30,7 @@ function SubmitButton({
   return (
     <button
       aria-disabled={pending}
-      aria-label="Proceed to checkout"
+      aria-label="Continuar con el pago"
       className={clsx(
         buttonClasses,
         {

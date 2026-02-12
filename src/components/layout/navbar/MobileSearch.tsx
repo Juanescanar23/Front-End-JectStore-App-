@@ -12,7 +12,7 @@ const MobileSearch = () => {
       <Suspense fallback={<OpenCart />}>
         <button
           onClick={() => setSearch(!search)}
-          aria-label="Open cart"
+          aria-label="Abrir búsqueda"
           className="size-9 lg:size-11 flex cursor-pointer items-center justify-center rounded-sm border border-solid border-neutral-200 dark:border-neutral-700 md:hidden"
         >
           <svg

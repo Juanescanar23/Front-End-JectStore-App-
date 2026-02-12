@@ -41,8 +41,8 @@ export async function RelatedProductsSection({
     : [];
   return (
     <ProductsSection
-      title="Related Products"
-      description="Discover the latest trends! Fresh products just added—shop new styles, tech, and essentials before they're gone."
+      title="Productos relacionados"
+      description="Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten."
       products={relatedProducts}
     />
   );

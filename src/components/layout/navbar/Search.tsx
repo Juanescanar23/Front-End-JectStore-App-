@@ -89,7 +89,7 @@ export default function Search({
         autoComplete="off"
         className="input w-full rounded-lg border border-neutral-200 bg-white py-2 pl-3 pr-10 text-sm text-black outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-neutral-300 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400 md:pl-4"
         name="search"
-        placeholder="Search for products..."
+        placeholder="Buscar productos..."
         type="text"
       />
 

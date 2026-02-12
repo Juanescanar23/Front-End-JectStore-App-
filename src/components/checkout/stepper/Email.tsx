@@ -57,7 +57,7 @@ const Email = () => {
           <div className="mt-4  justify-between hidden sm:flex">
             <div className="flex">
               <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
-                Email Address
+                Correo electrónico
               </p>
               <p className="font-normal block text-base text-black/60 dark:text-white/60">{email}</p>
             </div>
@@ -65,13 +65,13 @@ const Email = () => {
               onClick={() => setIsOpen(!isOpen)}
               className="cursor-pointer text-base font-normal text-black/[60%] underline dark:text-neutral-300"
             >
-              Change
+              Cambiar
             </button>
           </div>
           <div className=" relative mt-4 flex sm:hidden flex-col justify-end gap-y-2 sm:flex-row sm:justify-between sm:gap-y-0">
             <div className="flex justify-between  flex-1 flex-wrap">
               <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
-                Email Address
+                Correo electrónico
               </p>
               <p className="font-normal block text-base text-black/60 dark:text-white/60">{email}</p>
             </div>
@@ -80,7 +80,7 @@ const Email = () => {
               className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline dark:text-neutral-300"
               style={{ top: "-36px" }}
             >
-              Change
+              Cambiar
             </button>
           </div>
         </>
@@ -104,34 +104,34 @@ function EmailForm({
         id="email"
         size="md"
         {...register("email", {
-          required: "Email is required",
+          required: "El correo es obligatorio",
           pattern: {
             value: EMAIL_REGEX,
-            message: "Please enter a valid email address",
+            message: "Ingresa un correo válido",
           }
         })}
         errorMsg={errors?.email?.message as string}
-        label="Enter Email *"
-        placeholder="example@gmail.com"
+        label="Ingresa correo *"
+        placeholder="ejemplo@correo.com"
         readOnly={!isGuest}
       />
 
       {isGuest && (
         <p className="mb-4 mt-6 font-outfit text-base font-normal text-black/[60%] dark:text-neutral-300">
-          Already have an account? No worries, just{" "}
+          ¿Ya tienes cuenta? No pasa nada, solo{" "}
           <br className="block sm:hidden" />
           <Link
-            aria-label="Go to Login Page"
+            aria-label="Ir a iniciar sesión"
             className="text-base font-normal text-primary"
             href="/customer/login"
           >
-            log in.
+            inicia sesión.
           </Link>
         </p>
       )}
 
       <div className="mt-6 justify-self-end">
-        <ProceedToCheckout buttonName="Next" pending={isSubmitting} />
+        <ProceedToCheckout buttonName="Siguiente" pending={isSubmitting} />
       </div>
     </div>
   );

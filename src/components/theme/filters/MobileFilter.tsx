@@ -96,7 +96,7 @@ export default function MobileFilter({
           onPress={() => onOpen()}
         >
           <AdjustmentsHorizontalIcon className="h-6 w-8 fill-none stroke-black dark:stroke-white" />{" "}
-          <span className="font-outfit text-base tracking-wide">Filter</span>
+          <span className="font-outfit text-base tracking-wide">Filtrar</span>
         </Button>
       </div>
 
@@ -112,7 +112,7 @@ export default function MobileFilter({
               <DrawerHeader className="flex flex-col gap-1 pb-4 pt-2">
                 <div className="mx-auto h-1 w-10 rounded-full bg-neutral-300 dark:bg-neutral-700" />
                 <div className="flex items-center justify-between mt-2 px-2">
-                  <h2 className="text-2xl font-bold tracking-tight">Filters</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">Filtros</h2>
                   <div className="flex items-center gap-4">
                     {Array.from(searchParams.keys()).some(
                       (key) => key !== QUERY && key !== SORT
@@ -121,7 +121,7 @@ export default function MobileFilter({
                           onClick={clearAllFilters}
                           className="text-sm font-medium underline underline-offset-4 text-neutral-600 dark:text-neutral-400"
                         >
-                          Clear all filters
+                          Limpiar filtros
                         </button>
                       )}
                     <Button
@@ -131,7 +131,7 @@ export default function MobileFilter({
                       className="px-6 font-semibold"
                       onPress={applyFilters}
                     >
-                      Apply Filter
+                      Aplicar filtro
                     </Button>
                   </div>
                 </div>
@@ -141,13 +141,13 @@ export default function MobileFilter({
                   {filterAttributes?.map((attr: any) => (
                     <div key={attr.id} className="flex flex-col gap-2">
                       <p className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
-                        Select {formatLabel(attr.adminName)}
+                        Selecciona {formatLabel(attr.adminName)}
                       </p>
                       <Select
                         isMultiline
                         items={attr.options}
-                        aria-label={`Select ${attr.adminName}`}
-                        placeholder={`All ${formatLabel(attr.adminName)}s`}
+                        aria-label={`Selecciona ${attr.adminName}`}
+                        placeholder={`Todas las opciones de ${formatLabel(attr.adminName)}`}
                         selectedKeys={tempFilters[attr.code] || new Set()}
                         selectionMode="multiple"
                         variant="flat"

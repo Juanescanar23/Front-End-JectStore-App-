@@ -200,12 +200,13 @@ export default function NotFound() {
       </div>
 
       <h1 className="font-outfit text-center text-2xl font-semibold md:text-4xl">
-        Well!, this page is as broken as our couch!
+        ¡Ups! Esta página está tan rota como nuestro sofá.
       </h1>
       <p className="my-0 text-center text-black/60 dark:text-white md:my-1.5">
-        Missing Page, but your next favourite chair is just a click away.
+        Página no encontrada, pero tu próxima silla favorita está a un clic de
+        distancia.
       </p>
-      <EventButton buttonName="Back to Home" redirect="/" />
+      <EventButton buttonName="Volver al inicio" redirect="/" />
     </div>
   );
 }

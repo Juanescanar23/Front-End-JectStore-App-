@@ -47,8 +47,8 @@ export const ProductMoreDetails: FC<{
               <ChevronRightIcon className="h-5 w-5 stroke-neutral-800 dark:stroke-white" />
             )
           }
-          aria-label="Description"
-          title="Description"
+          aria-label="Descripción"
+          title="Descripción"
         >
           <Prose className="pb-2" html={description} />
         </AccordionItem>
@@ -68,8 +68,8 @@ export const ProductMoreDetails: FC<{
                 <ChevronRightIcon className="h-5 w-5 stroke-neutral-800 dark:stroke-white" />
               )
             }
-            aria-label="Additional Information"
-            title="Additional Information"
+            aria-label="Información adicional"
+            title="Información adicional"
           >
             <div className="grid max-w-max grid-cols-[auto_1fr] gap-x-8 gap-y-4 px-1 pb-2">
               {filterAdditionalData?.map((item) => (
@@ -103,8 +103,8 @@ export const ProductMoreDetails: FC<{
               <ChevronRightIcon className="h-5 w-5 stroke-neutral-800 dark:stroke-white" />
             )
           }
-          aria-label="Ratings"
-          title="Ratings"
+          aria-label="Calificaciones"
+          title="Calificaciones"
         >
           {totalReview > 0 ? (
             <>

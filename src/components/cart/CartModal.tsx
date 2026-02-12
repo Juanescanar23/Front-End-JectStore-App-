@@ -71,7 +71,7 @@ export default function CartModal({
     <>
       <button
         type="button"
-        aria-label="Open cart"
+        aria-label="Abrir carrito"
         className={clsx(className, isLoading ? "cursor-wait" : "cursor-pointer")}
         disabled={isLoading}
         onClick={handleOpen}
@@ -98,9 +98,9 @@ export default function CartModal({
                 <>
                   <DrawerHeader className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-lg font-semibold">My Cart</p>
+                      <p className="text-lg font-semibold">Mi carrito</p>
                       <button
-                        aria-label="Close cart"
+                        aria-label="Cerrar carrito"
                         className="cursor-pointer"
                         onClick={onClose}
                       >
@@ -114,7 +114,7 @@ export default function CartModal({
                       <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
                         <ShoppingCartIcon className="h-16" />
                         <p className="mt-6 text-center text-2xl font-bold">
-                          Your cart is empty.
+                          Tu carrito está vacío.
                         </p>
                       </div>
                     ) : (
@@ -202,7 +202,7 @@ export default function CartModal({
                         <div className="border-0 border-t border-solid border-neutral-200 dark:border-dark-grey py-4 text-sm text-neutral-500 dark:text-neutral-400">
                          { (cartDetail as any)?.cart?.taxAmount > 0 && <div className="mb-3 flex items-center justify-between">
                             <p className="text-base font-normal text-black/[60%] dark:text-white">
-                              Taxes
+                              Impuestos
                             </p>
                             <Price
                               amount={(cartDetail as any)?.cart?.taxAmount}
@@ -266,7 +266,7 @@ export default function CartModal({
                 <>
                   <DrawerHeader className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-xl font-semibold">My Cart</p>
+                      <p className="text-xl font-semibold">Mi carrito</p>
                     </div>
                   </DrawerHeader>
 
@@ -275,7 +275,7 @@ export default function CartModal({
                       <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
                         <ShoppingCartIcon className="h-16" />
                         <p className="mt-6 text-center text-2xl font-bold">
-                          Your cart is empty.
+                          Tu carrito está vacío.
                         </p>
                       </div>
                     ) : (
@@ -363,7 +363,7 @@ export default function CartModal({
                         <div className="border-0 border-t border-solid border-neutral-200 dark:border-dark-grey py-4 text-sm text-neutral-500 dark:text-neutral-400">
                          { (cartDetail as any)?.cart?.taxAmount > 0 && <div className="mb-3 flex items-center justify-between">
                             <p className="text-base font-normal text-black/[60%] dark:text-white">
-                              Taxes
+                              Impuestos
                             </p>
                             <Price
                               amount={(cartDetail as any)?.cart?.taxAmount}
@@ -455,10 +455,9 @@ function CheckoutButton(
       >
         {
           pending ? <LoadingDots className="bg-white" /> :
-            "Proceed to Checkout"
+            "Continuar con el pago"
         }
       </button>
     </>
   );
 }
-
