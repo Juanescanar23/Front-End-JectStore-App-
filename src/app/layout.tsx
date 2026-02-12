@@ -12,6 +12,15 @@ import { staticSeo } from "@utils/metadata";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { SpeculationRules } from "@components/theme/SpeculationRules";
 import clsx from "clsx";
+import { headers } from "next/headers";
+import PortalShell from "@/app/portal/PortalShell";
+
+const LANDLORD_HOST = "app.jectstore.com";
+
+function isLandlordHost() {
+  const host = headers().get("host") ?? "";
+  return host.replace(/:\d+$/, "") === LANDLORD_HOST;
+}
 
 export const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -30,6 +39,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const landlord = isLandlordHost();
+
   return (
     <html lang="en" suppressHydrationWarning>
         <head>
@@ -71,7 +82,11 @@ export default function RootLayout({
             <ToastProvider>
               <ReactQueryProvider>
                 <ReduxProvider>
-                  <AppWrapper>{children}</AppWrapper>
+                  {landlord ? (
+                    <PortalShell />
+                  ) : (
+                    <AppWrapper>{children}</AppWrapper>
+                  )}
                 </ReduxProvider>
               </ReactQueryProvider>
             </ToastProvider>
