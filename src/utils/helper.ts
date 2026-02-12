@@ -2,7 +2,7 @@ import { ReadonlyURLSearchParams } from "next/navigation";
 import { Metadata } from "next";
 import { CartItem, FilterDataTypes } from "@/types/types";
 import { isArray } from "./type-guards";
-import { BASE_URL, baseUrl } from "./constants";
+import { BASE_URL } from "./constants";
 import { ProductData, ReviewDatatypes } from "@components/catalog/type";
 import { useAddress } from "@utils/useAddress";
 import { CheckoutAddressNode, MappedCheckoutAddress } from "@/types/checkout/type";
@@ -247,7 +247,7 @@ export async function generateMetadataForPage(
   };
 
   return {
-    metadataBase: new URL(baseUrl || BASE_URL || "http://localhost:3000"),
+    metadataBase: new URL(BASE_URL || "http://localhost:3000"),
 
     title,
     description,

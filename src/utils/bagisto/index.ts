@@ -38,10 +38,12 @@ const normalizeBase = (value?: string) => {
 const resolveGraphqlUrl = () => {
   if (!GRAPHQL_URL) return GRAPHQL_URL;
   if (!GRAPHQL_URL.startsWith("/")) return GRAPHQL_URL;
-  const base = normalizeBase(
-    process.env.BAGISTO_SERVER_ENDPOINT || process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT
-  );
-  return base ? `${base}${GRAPHQL_URL}` : GRAPHQL_URL;
+  const headerStore = headers();
+  const host = headerStore.get("host");
+  if (!host) return GRAPHQL_URL;
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+  const base = normalizeBase(host);
+  return `${proto}://${base}${GRAPHQL_URL}`;
 };
 
 export async function bagistoFetch<T>({

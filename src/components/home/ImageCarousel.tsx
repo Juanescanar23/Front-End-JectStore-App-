@@ -28,14 +28,10 @@ const ImageCarousel: FC<ImageCarouselProps> = ({ options }) => {
         if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
             return imagePath;
         }
+        if (typeof window === "undefined") return imagePath;
 
-        const backendUrl = process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT;
-        if (!backendUrl) return "";
-
-        const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-        const cleanBase = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
-
-        return `${cleanBase}/${cleanPath}`;
+        const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+        return `${window.location.origin}${cleanPath}`;
     }, []);
 
     const startAutoplay = useCallback(() => {

@@ -43,20 +43,11 @@ export const PRODUCT_OFFER_TYPE = "AggregateOffer";
 export const BAGISTO_SESSION = process.env.BAGISTO_SESSION ?? "bagisto_session";
 export const TOKEN = "token";
 export const BASE_URL = process.env.NEXT_PUBLIC_NEXT_AUTH_URL;
-export const baseUrl = process.env.NEXT_PUBLIC_BAGISTO_ENDPOINT;
-const normalizedBaseUrl = baseUrl?.replace(/\/+$/, "");
 const envGraphqlEndpoint = process.env.NEXT_PUBLIC_BAGISTO_GRAPHQL_ENDPOINT;
 const normalizedGraphqlEndpoint = envGraphqlEndpoint?.replace(/\/+$/, "");
-const isGraphqlEndpoint =
-  normalizedBaseUrl?.endsWith("/api/graphql") ||
-  normalizedBaseUrl?.endsWith("/graphql");
 export const GRAPHQL_URL = normalizedGraphqlEndpoint
   ? normalizedGraphqlEndpoint
-  : normalizedBaseUrl
-  ? isGraphqlEndpoint
-    ? normalizedBaseUrl
-    : `${normalizedBaseUrl}/api/graphql`
-  : "";
+  : BAGISTO_GRAPHQL_API_ENDPOINT;
 export const NEXT_AUTH_SECRET = process.env.NEXT_PUBLIC_NEXT_AUTH_SECRET;
 export const STOREFRONT_KEY = process.env.NEXT_PUBLIC_BAGISTO_STOREFRONT_KEY || ""
 
@@ -196,7 +187,9 @@ export function getImageUrl(url?: string, baseUrl?: string, fallback?: string) {
     return url;
   }
 
-  return `${baseUrl}${url.startsWith("/") ? url : `/${url}`}`;
+  const normalizedPath = url.startsWith("/") ? url : `/${url}`;
+  if (!baseUrl) return normalizedPath;
+  return `${baseUrl}${normalizedPath}`;
 }
 
 export function getProductImageUrl(product?: {
@@ -229,7 +222,9 @@ export function getProductImageUrl(product?: {
     product?.baseImageUrl ||
     undefined;
 
-  return getImageUrl(directUrl, baseUrl, NOT_IMAGE);
+  const runtimeBaseUrl =
+    typeof window !== "undefined" ? window.location.origin : "";
+  return getImageUrl(directUrl, runtimeBaseUrl, NOT_IMAGE);
 }
 
 

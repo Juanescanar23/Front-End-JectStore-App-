@@ -1,18 +1,47 @@
 import { unstable_cache } from "next/cache";
+import { headers } from "next/headers";
 import { print, type DocumentNode } from "graphql";
 import {
   type ApolloQueryResult,
   type OperationVariables,
 } from "@apollo/client";
 import makeClient from "./apollo-client";
+import { GRAPHQL_URL } from "@/utils/constants";
 
-let serverClient: ReturnType<typeof makeClient> | null = null;
+const serverClients = new Map<string, ReturnType<typeof makeClient>>();
+
+const normalizeBase = (value?: string | null) => {
+  if (!value) return "";
+  return value.replace(/\/+$/, "");
+};
+
+const resolveServerGraphqlUrl = () => {
+  if (!GRAPHQL_URL) return GRAPHQL_URL;
+  if (!GRAPHQL_URL.startsWith("/")) return GRAPHQL_URL;
+  const headerStore = headers();
+  const host = headerStore.get("host");
+  if (!host) return GRAPHQL_URL;
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+  const base = normalizeBase(host);
+  return `${proto}://${base}${GRAPHQL_URL}`;
+};
 
 function getClient() {
-  if (!serverClient) {
-    serverClient = makeClient();
+  const ssrMode = typeof window === "undefined";
+  if (!ssrMode) {
+    return makeClient();
   }
-  return serverClient;
+
+  const headerStore = headers();
+  const host = headerStore.get("host") ?? "default";
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+  const cacheKey = `${proto}://${host}`;
+  const cached = serverClients.get(cacheKey);
+  if (cached) return cached;
+
+  const client = makeClient({ uri: resolveServerGraphqlUrl() });
+  serverClients.set(cacheKey, client);
+  return client;
 }
 
 
