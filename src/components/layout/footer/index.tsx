@@ -10,15 +10,11 @@ import Subscribe from "./Subscribe";
 import FooterMenu from "./FooterMenu";
 import ServiceContent from "./ServiceContent";
 import { ThemeCustomizationTranslationNode } from "@/types/theme/theme-customization";
-const { COMPANY_NAME, SITE_NAME } = process.env;
 
 export default async function Footer() {
-  const currentYear = new Date().getFullYear();
-  const copyrightDate = 2010 + (currentYear > 2010 ? `-${currentYear}` : "");
   const skeleton =
     "w-full h-6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700";
   const menu = await getThemeCustomization();
-  const copyrightName = COMPANY_NAME || SITE_NAME || "";
   const services = menu?.services_content?.[0];
   const serviceTranslations = services?.translations || [];
 
@@ -94,14 +90,17 @@ export default async function Footer() {
         <div className="border-t border-neutral-200 py-6 text-sm dark:border-neutral-700">
           <div className="mx-auto flex w-full max-w-screen-2xl flex-col justify-center gap-1 px-4 md:flex-row">
             <p className="text-center">
-              &copy; {copyrightDate} {copyrightName}
-              {copyrightName.length && !copyrightName.endsWith(".")
-                ? "."
-                : ""}{" "}
-              All rights reserved.
+              Hecho con ♥ en Latinoamérica - &copy; 2026 Todos los derechos
+              reservados - Power By{" "}
+              <Link
+                href="https://jectstore.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4"
+              >
+                JectStore
+              </Link>
             </p>
-            <hr className="mx-4 hidden h-4 w-[1px] border-l border-neutral-400 md:inline-block" />
-            <p className="text-center">Designed in Bagisto</p>
           </div>
         </div>
       </footer>
