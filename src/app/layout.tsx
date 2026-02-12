@@ -17,8 +17,9 @@ import PortalShell from "@/app/portal/PortalShell";
 
 const LANDLORD_HOST = "app.jectstore.com";
 
-function isLandlordHost() {
-  const host = headers().get("host") ?? "";
+async function isLandlordHost() {
+  const headerList = await headers();
+  const host = headerList.get("host") ?? "";
   return host.replace(/:\d+$/, "") === LANDLORD_HOST;
 }
 
@@ -34,12 +35,12 @@ export async function generateMetadata() {
   return generateMetadataForPage("", staticSeo.default);
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const landlord = isLandlordHost();
+  const landlord = await isLandlordHost();
 
   return (
     <html lang="en" suppressHydrationWarning>
