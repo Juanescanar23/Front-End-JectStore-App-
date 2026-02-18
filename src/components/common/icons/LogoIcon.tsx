@@ -6,6 +6,7 @@ export default function LogoIcon() {
           src="/brand/jectstore-logo.png"
           alt="JectStore"
           className="h-6 w-auto"
+          loading="eager"
         />
       </div>
       <p className="text-sm font-semibold text-black dark:text-white">
