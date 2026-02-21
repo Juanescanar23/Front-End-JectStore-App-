@@ -4,31 +4,36 @@ import { Rating } from "@/components/common/Rating";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { VariantSelector } from "./VariantSelector";
 import { ProductMoreDetails } from "./ProductMoreDetail";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { getVariantInfo } from "@utils/hooks/useVariantInfo";
 import { useSearchParams } from "next/navigation";
 import Prose from "@components/theme/search/Prose";
 import { ProductData, ProductReviewNode } from "../type";
 import { safeCurrencyCode, safePriceValue, safeParse } from "@utils/helper";
 import Link from "next/link";
+import { buildProductWhatsAppUrl, TenantWhatsAppConfig } from "@/utils/whatsapp";
 
 export function ProductDescription({
   product,
+  slug,
   reviews,
   totalReview,
   productSwatchReview,
+  tenantWhatsApp,
 }: {
   product: ProductData;
   slug: string;
   reviews: ProductReviewNode[];
   totalReview: number;
   productSwatchReview: any;
+  tenantWhatsApp: TenantWhatsAppConfig | null;
 }) {
   const priceValue = safePriceValue(product);
   const currencyCode = safeCurrencyCode(product);
-  const configurableProductIndexData = (safeParse(
-    productSwatchReview?.combinations
-  ) || []) as never[];
+  const configurableProductIndexData =
+    safeParse<Record<string, Record<string, number>>>(
+      productSwatchReview?.combinations
+    ) || {};
   const searchParams = useSearchParams();
   const [userInteracted, setUserInteracted] = useState(false);
 
@@ -44,10 +49,22 @@ export function ProductDescription({
   );
 
   const additionalData = productSwatchReview?.attributeValues || [];
-const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
-    const handleReviewClick = () => {
-  setExpandedKeys(new Set(["2"])); 
-};
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+
+  const handleReviewClick = () => {
+    setExpandedKeys(new Set(["2"]));
+  };
+
+  const whatsappProductUrl = useMemo(() => {
+    const productPath = `/product/${(slug || product?.urlKey || "").replace(/^\/+/, "")}`;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+    return buildProductWhatsAppUrl(tenantWhatsApp, {
+      productName: product?.name || "Producto",
+      productPath,
+      origin,
+    });
+  }, [tenantWhatsApp, product?.name, product?.urlKey, slug]);
 
   return (
     <>
@@ -104,6 +121,7 @@ const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
         productId={product?.id || ""}
         productSwatchReview={productSwatchReview}
         userInteracted={userInteracted}
+        whatsappUrl={whatsappProductUrl}
       />
 
       <ProductMoreDetails

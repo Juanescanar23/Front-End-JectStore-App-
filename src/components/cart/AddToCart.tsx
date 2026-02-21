@@ -4,7 +4,6 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useSearchParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
-import { ConfigurableProductIndexData } from "@/types/types";
 import { useAddProduct } from "@utils/hooks/useAddToCart";
 import LoadingDots from "@components/common/icons/LoadingDots";
 import { getVariantInfo } from "@utils/hooks/useVariantInfo";
@@ -22,7 +21,7 @@ function SubmitButton({
   isSaleable: string;
 }) {
   const buttonClasses =
-    "relative flex w-full max-w-[16rem] cursor-pointer h-fit items-center justify-center rounded-full bg-blue-600 p-4 tracking-wide text-white";
+    "relative flex h-fit w-full items-center justify-center rounded-full bg-blue-600 p-4 text-sm font-semibold tracking-wide text-white sm:w-auto sm:min-w-[12rem]";
   const disabledClasses = "cursor-wait opacity-60";
 
   if (!isSaleable || isSaleable === "") {
@@ -32,7 +31,7 @@ function SubmitButton({
         aria-label="Agotado"
         type="button"
         disabled
-        className={clsx(buttonClasses, " opacity-60 !cursor-not-allowed")}
+        className={clsx(buttonClasses, "opacity-60 !cursor-not-allowed")}
       >
         Agotado
       </button>
@@ -46,7 +45,7 @@ function SubmitButton({
         aria-label="Selecciona una opción"
         type="button"
         disabled={!selectedVariantId}
-        className={clsx(buttonClasses, " opacity-60 !cursor-not-allowed")}
+        className={clsx(buttonClasses, "opacity-60 !cursor-not-allowed")}
       >
         Agregar al carrito
       </button>
@@ -74,16 +73,36 @@ function SubmitButton({
   );
 }
 
+function WhatsAppButton({ href }: { href?: string | null }) {
+  if (!href) {
+    return null;
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Consultar por WhatsApp"
+      className="inline-flex h-fit w-full items-center justify-center rounded-full border border-neutral-900 bg-white px-6 py-4 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-900 hover:text-white sm:w-auto sm:min-w-[10rem]"
+    >
+      WhatsApp
+    </a>
+  );
+}
+
 export function AddToCart({
   productSwatchReview,
   index,
   productId,
   userInteracted,
+  whatsappUrl,
 }: {
   productSwatchReview: any;
   productId: string;
-  index: ConfigurableProductIndexData[];
+  index: Record<string, Record<string, number>>;
   userInteracted: boolean;
+  whatsappUrl?: string | null;
 }) {
   const isSaleable = productSwatchReview?.isSaleable || "";
   const { onAddToCart, isCartLoading } = useAddProduct();
@@ -142,11 +161,14 @@ export function AddToCart({
   return (
     <>
       {!checkStock && type === "configurable" && userInteracted && (
-        <div className="gap-1 px-2 py-1 my-2 font-bold">
+        <div className="my-2 gap-1 px-2 py-1 font-bold">
           <h1>NO HAY STOCK DISPONIBLE</h1>
         </div>
       )}
-      <form className="flex gap-x-4" onSubmit={handleSubmit(actionWithVariant)}>
+      <form
+        className="flex flex-wrap items-center gap-3"
+        onSubmit={handleSubmit(actionWithVariant)}
+      >
         <div className="flex items-center justify-center">
           <div className="flex items-center rounded-full border-2 border-blue-500">
             <div
@@ -177,12 +199,15 @@ export function AddToCart({
             </div>
           </div>
         </div>
+
         <SubmitButton
           pending={isCartLoading}
           selectedVariantId={buttonStatus}
           type={type || ""}
           isSaleable={isSaleable}
         />
+
+        <WhatsAppButton href={whatsappUrl} />
       </form>
     </>
   );
