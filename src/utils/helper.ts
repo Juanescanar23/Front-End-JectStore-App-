@@ -217,6 +217,7 @@ export async function generateMetadataForPage(
     description?: string;
     image?: string;
     canonical?: string;
+    baseUrl?: string;
     other?: Record<string, string>;
   }
 ): Promise<Metadata> {
@@ -225,6 +226,7 @@ export async function generateMetadataForPage(
     description?: string;
     image?: string;
     canonical?: string;
+    baseUrl?: string;
     other?: Record<string, string>;
   } = {};
 
@@ -237,8 +239,12 @@ export async function generateMetadataForPage(
   const description =
     seo.description || fallback?.description || "Default page description.";
   const ogImage = seo.image || fallback?.image || "/default-og.png";
-  const canonicalUrl =
-    seo.canonical || fallback?.canonical || `${BASE_URL}/${slug}`;
+  const metadataBaseUrl = seo.baseUrl || fallback?.baseUrl || BASE_URL || "http://localhost:3000";
+  const normalizedSlug = slug ? `/${slug.replace(/^\/+/, "")}` : "";
+  const canonicalCandidate = seo.canonical || fallback?.canonical || normalizedSlug || "/";
+  const canonicalUrl = /^https?:\/\//i.test(canonicalCandidate)
+    ? canonicalCandidate
+    : `${metadataBaseUrl}${canonicalCandidate.startsWith("/") ? canonicalCandidate : `/${canonicalCandidate}`}`;
 
   const otherMeta = {
     ...DEFAULT_OTHER,
@@ -247,7 +253,7 @@ export async function generateMetadataForPage(
   };
 
   return {
-    metadataBase: new URL(BASE_URL || "http://localhost:3000"),
+    metadataBase: new URL(metadataBaseUrl),
 
     title,
     description,

@@ -12,31 +12,97 @@ import {
 } from "@/utils/constants";
 import HeroCarousel from "@/components/common/slider/HeroCarousel";
 import { GET_PRODUCT_BY_URL_KEY, graphqlRequest } from "@/graphql";
-import { isArray } from "@/utils/type-guards";
-import { ProductNode } from "@/components/catalog/type";
+import { ProductNode, ProductsResponse } from "@/components/catalog/type";
 import { RelatedProductsSection } from "@components/catalog/product/RelatedProductsSection";
 import ProductInfo from "@components/catalog/product/ProductInfo";
-import { LRUCache } from "@/utils/LRUCache";
 import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
+import { buildStorefrontFilterInput } from "@/utils/storefront-filters";
 
-const productCache = new LRUCache<ProductNode>(100, 10);
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export interface SingleProductResponse {
-  product: ProductNode;
+  products: ProductsResponse["products"];
 }
 
-async function getSingleProduct(urlKey: string) {
-  const cachedProduct = productCache.get(urlKey);
-  if (cachedProduct) {
-    return cachedProduct;
+const normalizeImageUrl = (value?: string | null) => {
+  if (!value) return null;
+  if (value.startsWith("http://") || value.startsWith("https://")) return value;
+  return value.startsWith("/") ? value : `/${value}`;
+};
+
+const toArray = <T,>(value?: T | T[] | null): T[] => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+const pickPreferredImage = (image?: {
+  originalImageUrl?: string | null;
+  largeImageUrl?: string | null;
+  mediumImageUrl?: string | null;
+  smallImageUrl?: string | null;
+} | null) =>
+  image?.originalImageUrl ||
+  image?.largeImageUrl ||
+  image?.mediumImageUrl ||
+  image?.smallImageUrl ||
+  null;
+
+const collectProductImageUrls = (product?: ProductNode | null): string[] => {
+  if (!product) return [];
+
+  const uniqueImages = new Set<string>();
+
+  const addNormalized = (image?: string | null) => {
+    const normalized = normalizeImageUrl(image);
+    if (normalized) {
+      uniqueImages.add(normalized);
+    }
+  };
+
+  // Prefer explicit gallery images from the product payload.
+  for (const image of toArray(product.images)) {
+    addNormalized(image?.url);
+    addNormalized(image?.imageUrl);
   }
 
+  if (uniqueImages.size > 0) {
+    return Array.from(uniqueImages);
+  }
+
+  for (const image of toArray(product.cacheGalleryImages)) {
+    addNormalized(pickPreferredImage(image));
+  }
+
+  if (uniqueImages.size > 0) {
+    return Array.from(uniqueImages);
+  }
+
+  for (const image of toArray(product.cacheBaseImage)) {
+    addNormalized(pickPreferredImage(image));
+  }
+
+  if (uniqueImages.size > 0) {
+    return Array.from(uniqueImages);
+  }
+
+  addNormalized(product.baseImageUrl);
+  return Array.from(uniqueImages);
+};
+
+async function getSingleProduct(urlKey: string) {
   try {
+    const input = buildStorefrontFilterInput({
+      base: {
+        page: 1,
+        limit: 1,
+        url_key: urlKey,
+      },
+    });
+
     const dataById = await graphqlRequest<SingleProductResponse>(
       GET_PRODUCT_BY_URL_KEY,
       {
-        urlKey: urlKey,
+        input,
       },
       {
         tags: ["products", `product-${urlKey}`],
@@ -44,11 +110,7 @@ async function getSingleProduct(urlKey: string) {
       }
     );
 
-    const product = dataById?.product || null;
-    if (product) {
-      productCache.set(urlKey, product);
-    }
-    return product;
+    return dataById?.products?.data?.[0] || null;
   } catch (error) {
     if (error instanceof Error) {
       console.error("Error fetching product:", {
@@ -74,6 +136,32 @@ export default async function ProductPage({
   if (!product) return notFound();
 
   const imageUrl = getProductImageUrl(product);
+  const productImages = collectProductImageUrls(product).map((src) => ({
+    src,
+    altText: product?.name || "product image",
+  }));
+
+  const variantImages = Array.isArray(product?.variants)
+    ? product.variants.flatMap((variant) =>
+        collectProductImageUrls(variant).map((src) => ({
+          src,
+          altText: variant?.name || product?.name || "product image",
+        }))
+      )
+    : [];
+
+  const heroImages =
+    variantImages.length > 0
+      ? variantImages
+      : productImages.length > 0
+        ? productImages
+        : [
+            {
+              src: imageUrl || NOT_IMAGE,
+              altText: product?.name || "product image",
+            },
+          ];
+
   const productJsonLd = {
     "@context": BASE_SCHEMA_URL,
     "@type": PRODUCT_TYPE,
@@ -84,11 +172,9 @@ export default async function ProductPage({
 
   const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
 
-  const VariantImages = isArray(product?.variants) ? product?.variants : [];
-
   return (
     <>
-      <MobileSearchBar/>
+      <MobileSearchBar />
       <script
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productJsonLd),
@@ -98,25 +184,7 @@ export default async function ProductPage({
       <div className="flex flex-col gap-y-4 rounded-lg pb-0 pt-4 sm:gap-y-6 md:py-7.5 lg:flex-row w-full max-w-screen-2xl mx-auto px-4 xss:px-7.5 lg:gap-8">
         <div className="h-full w-full max-w-[885px] max-1366:max-w-[650px] max-lg:max-w-full">
           <Suspense fallback={<ProductDetailSkeleton />}>
-            {isArray(VariantImages) ? (
-              <HeroCarousel
-                images={
-                  VariantImages?.map((variant: any) => ({
-                    src: getProductImageUrl(variant) || NOT_IMAGE,
-                    altText: variant?.name || "",
-                  })) || []
-                }
-              />
-            ) : (
-              <HeroCarousel
-                images={[
-                  {
-                    src: imageUrl || NOT_IMAGE,
-                    altText: product?.name || "product image",
-                  },
-                ]}
-              />
-            )}
+            <HeroCarousel images={heroImages} />
           </Suspense>
         </div>
         <div className="basis-full lg:basis-4/6">

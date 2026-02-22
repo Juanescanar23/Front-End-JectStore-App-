@@ -1,8 +1,13 @@
 import { FC } from "react";
-import { graphqlRequest } from "../../lib/graphql-fetch";
+import { graphqlRequestNoCache } from "../../lib/graphql-fetch";
 import { GET_PRODUCTS } from "@/graphql/catelog/queries/Product";
 import { ThreeItemGrid } from "./ThreeItemGrid";
 import Theme from "./ProductCarouselTheme";
+import {
+  buildStorefrontFilterInput,
+  resolveSortToStorefrontFilters,
+} from "@/utils/storefront-filters";
+import { ProductsResponse } from "@/components/catalog/type";
 
 
 interface ProductCarouselProps {
@@ -26,54 +31,49 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
             }, {})
             : (filters || {});
 
-        const { sort: _sort, limit, ...rest } = normalizedFilters as Record<string, any>;
+        const { sort, limit, ...rest } = normalizedFilters as Record<string, any>;
         const parsedLimit = Number.parseInt(String(limit), 10);
-        const input: Record<string, any> = {
+
+        const input = buildStorefrontFilterInput({
+            base: {
             page: 1,
             limit: Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : itemCount,
-        };
-        Object.entries(rest).forEach(([key, value]) => {
-            if (value === undefined || value === null || value === "") return;
-            switch (key) {
-                case "productId":
-                case "attributeFamily":
-                    {
-                        const numericValue = Number(value);
-                        if (Number.isFinite(numericValue)) {
-                            input[key] = numericValue;
-                        }
-                    }
-                    break;
-                case "type":
-                case "sku":
-                case "name":
-                case "channel":
-                    input[key] = String(value);
-                    break;
-                default:
-                    break;
-            }
+            ...resolveSortToStorefrontFilters(
+              typeof sort === "string" ? sort : undefined
+            ),
+            ...rest,
+          },
         });
 
-        const data = await graphqlRequest<any>(
+        const data = await graphqlRequestNoCache<ProductsResponse>(
             GET_PRODUCTS,
-            {
-                input
-            },
-            {
-                tags: ["products"],
-                life: "days",
-            }
+            { input }
         );
 
-        const products =
-            data?.products?.data?.slice(0, 8) || [];
+        const products = (data?.products?.data || [])
+          .slice(0, 8)
+          .map((product) => ({
+            id: product.id,
+            sku: product.sku,
+            name: product.name || product.sku,
+            urlKey: product.urlKey || product.sku,
+            baseImageUrl: product.baseImageUrl ?? undefined,
+            images: Array.isArray(product.images) ? product.images : undefined,
+            cacheBaseImage: Array.isArray(product.cacheBaseImage)
+              ? product.cacheBaseImage
+              : product.cacheBaseImage
+                ? [product.cacheBaseImage]
+                : undefined,
+            price: product.price ?? "0",
+            specialPrice: product.specialPrice ?? undefined,
+            type: product.type || "simple",
+          }));
 
         if (!products.length) {
             return null;
         }
 
-        if (sortOrder === 2) {
+        if (sortOrder === 2 && products.length >= 3) {
             return (
                 <ThreeItemGrid
                     title={title || "Productos"}

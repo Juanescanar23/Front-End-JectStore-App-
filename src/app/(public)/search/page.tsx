@@ -3,7 +3,6 @@ import Grid from "@/components/theme/ui/grid/Grid";
 import NotFound from "@/components/theme/search/not-found";
 import { isArray } from "@/utils/type-guards";
 import {
-  GET_FILTER_OPTIONS,
   graphqlRequest,
 } from "@/graphql";
 import { GET_PRODUCTS } from "@/graphql";
@@ -13,10 +12,14 @@ import { SortByFields } from "@/utils/constants";
 import MobileFilter from "@/components/theme/filters/MobileFilter";
 import FilterList from "@/components/theme/filters/FilterList";
 import {
-  ProductFilterAttributeResponse,
   ProductsResponse,
 } from "@/components/catalog/type";
 import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
+import {
+  buildStorefrontFilterInput,
+  resolveSortToStorefrontFilters,
+} from "@/utils/storefront-filters";
+import { getRequestBaseUrl } from "@/utils/server/request-base-url";
 const Pagination = dynamicImport(
   () => import("@/components/catalog/Pagination")
 );
@@ -38,6 +41,7 @@ export async function generateMetadata({
 }) {
   const params = await searchParams;
   const searchQuery = params?.q as string | undefined;
+  const baseUrl = await getRequestBaseUrl();
 
   return generateMetadataForPage("search", {
     title: searchQuery ? `Búsqueda: ${searchQuery}` : "Buscar productos",
@@ -45,6 +49,7 @@ export async function generateMetadata({
       ? `Resultados de búsqueda para "${searchQuery}"`
       : "Busca productos en nuestra tienda",
     image: "/search-og.jpg",
+    baseUrl: baseUrl ?? undefined,
   });
 }
 
@@ -57,6 +62,7 @@ export default async function SearchPage({
   const {
     q: searchValue,
     page,
+    sort,
   } = (params || {}) as {
     [key: string]: string;
   };
@@ -64,50 +70,31 @@ export default async function SearchPage({
   const itemsPerPage = 12;
   const parsedPage = page ? parseInt(page, 10) : 1;
   const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const dataPromise = graphqlRequest<ProductsResponse>(GET_PRODUCTS, {
-    input: {
+  const input = buildStorefrontFilterInput({
+    base: {
       page: currentPage,
       limit: itemsPerPage,
       ...(searchValue ? { name: searchValue } : {}),
+      ...resolveSortToStorefrontFilters(sort),
     },
+    searchParams: params || {},
   });
 
-  const [data, colorFilterData, sizeFilterData, brandFilterData] = await Promise.all([
-    dataPromise,
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, {
-      id: "23",
-      locale: "en",
-    }),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, {
-      id: "24",
-      locale: "en",
-    }),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, {
-      id: "25",
-      locale: "en",
-    }),
-  ]);
+  const data = await graphqlRequest<ProductsResponse>(
+    GET_PRODUCTS,
+    { input },
+    {
+      tags: ["products"],
+      life: "minutes",
+    }
+  );
 
-  const filterAttributes = [
-    colorFilterData?.attribute,
-    sizeFilterData?.attribute,
-    brandFilterData?.attribute,
-  ]
-    .filter(Boolean)
-    .map((attr) => ({
-      id: attr.id,
-      code: attr.code,
-      adminName: attr.code.toUpperCase(),
-      options: (attr.options || []).map((o) => {
-        const translation =
-          o.translations?.find((t) => t.locale === "en") ||
-          o.translations?.[0];
-        return {
-          id: o.id,
-          adminName: translation?.label || o.adminName,
-        };
-      }),
-    }));
+  const filterAttributes: Array<{
+    id: string;
+    code: string;
+    adminName: string;
+    options: Array<{ id: string; adminName: string }>;
+  }> = [];
 
   const products = data?.products?.data || [];
   const pageInfo = data?.products?.paginatorInfo;

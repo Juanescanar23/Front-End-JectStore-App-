@@ -24,6 +24,12 @@ import FilterListSkeleton from "@components/common/skeleton/FilterSkeleton";
 import { TreeCategoriesResponse } from "@/types/theme/category-tree";
 import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
 import { extractNumericId, findCategoryBySlug } from "@utils/helper";
+import {
+  buildStorefrontFilterInput,
+  resolveSortToStorefrontFilters,
+} from "@/utils/storefront-filters";
+import { pickTranslationByLocale } from "@/utils/theme-translation";
+import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
 
 export async function generateMetadata({
@@ -36,7 +42,7 @@ export async function generateMetadata({
   const treeData = await graphqlRequest<TreeCategoriesResponse>(
     GET_TREE_CATEGORIES,
     { getCategoryTree: true },
-    { tags: ["categories"], life: "days" }
+    { tags: ["categories"], life: "hours" }
   );
 
   const categories = treeData?.homeCategories || [];
@@ -59,16 +65,22 @@ export default async function CategoryPage({
 }) {
   const { collection: categorySlug } = await params;
   const resolvedParams = await searchParams;
+  const localeCode = await getStorefrontLocaleCode();
 
-  const [treeData, colorFilterData, sizeFilterData, brandFilterData] = await Promise.all([
+  const [treeData, filterOptionsData] = await Promise.all([
     graphqlRequest<TreeCategoriesResponse>(
       GET_TREE_CATEGORIES,
       { getCategoryTree: true },
-      { tags: ["categories"], life: "days" }
+      { tags: ["categories"], life: "hours" }
     ),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "23", locale: "en" }),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "24", locale: "en" }),
-    graphqlRequest<ProductFilterAttributeResponse>(GET_FILTER_OPTIONS, { id: "25", locale: "en" }),
+    graphqlRequest<ProductFilterAttributeResponse>(
+      GET_FILTER_OPTIONS,
+      { categorySlug },
+      {
+        tags: ["products", "categories"],
+        life: "hours",
+      }
+    ),
   ]);
 
   const categories = treeData?.homeCategories || [];
@@ -81,6 +93,7 @@ export default async function CategoryPage({
   const {
     q: searchValue,
     page,
+    sort,
   } = (resolvedParams || {}) as {
     [key: string]: string;
   };
@@ -88,30 +101,38 @@ export default async function CategoryPage({
   const itemsPerPage = 12;
   const parsedPage = page ? parseInt(page, 10) : 1;
   const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const [data] = await Promise.all([
-    graphqlRequest<ProductsResponse>(GET_FILTER_PRODUCTS, {
-      input: {
+
+  const input = buildStorefrontFilterInput({
+    base: {
         page: currentPage,
         limit: itemsPerPage,
         ...(searchValue ? { name: searchValue } : {}),
-      },
-    }),
-  ]);
+      ...(numericId ? { category_id: numericId } : {}),
+      ...resolveSortToStorefrontFilters(sort),
+    },
+    searchParams: resolvedParams || {},
+  });
 
-  const filterAttributes = [
-    colorFilterData?.attribute,
-    sizeFilterData?.attribute,
-    brandFilterData?.attribute,
-  ]
-    .filter(Boolean)
-    .map((attr) => ({
+  const data = await graphqlRequest<ProductsResponse>(
+    GET_FILTER_PRODUCTS,
+    { input },
+    {
+      tags: ["products", "categories", `category-${categorySlug}`],
+      life: "minutes",
+    }
+  );
+
+  const filterAttributes = (
+    filterOptionsData?.getFilterAttribute?.filterAttributes || []
+  ).map((attr: any) => ({
       id: attr.id,
       code: attr.code,
-      adminName: attr.code.toUpperCase(),
-      options: (attr.options || []).map((o) => {
-        const translation =
-          o.translations?.find((t) => t.locale === "en") ||
-          o.translations?.[0];
+      adminName: attr.adminName || attr.code.toUpperCase(),
+      options: (attr.options || []).map((o: any) => {
+        const translation = pickTranslationByLocale<{ label?: string; locale?: string }>(
+          o.translations,
+          localeCode
+        );
         return {
           id: o.id,
           adminName: translation?.label || o.adminName,
@@ -122,14 +143,7 @@ export default async function CategoryPage({
   const products = data?.products?.data || [];
   const pageInfo = data?.products?.paginatorInfo;
   const totalCount = pageInfo?.total || products.length;
-  const categoryId = numericId || categoryItem.id;
-  const filteredProducts = categoryId
-    ? products.filter((product) =>
-      (product.categories || []).some(
-        (category) => String(category?.id) === String(categoryId)
-      )
-    )
-    : products;
+
   return (
     <>
       <MobileSearchBar />
@@ -148,10 +162,10 @@ export default async function CategoryPage({
           <SortOrder sortOrders={SortByFields} title="Ordenar por" />
         </div>
 
-        {isArray(filteredProducts) && filteredProducts.length > 0 ? (
+        {isArray(products) && products.length > 0 ? (
           <Grid className="grid-cols-2 lg:grid-cols-4 gap-5 md:gap-11.5 w-full max-w-screen-2xl mx-auto px-4"
           >
-            <ProductGridItems products={filteredProducts} />
+            <ProductGridItems products={products} />
           </Grid>
         ) : (
           <div className="px-4">
@@ -163,7 +177,7 @@ export default async function CategoryPage({
           </div>
         )}
 
-        {isArray(filteredProducts) && totalCount > itemsPerPage && (
+        {isArray(products) && totalCount > itemsPerPage && (
           <nav
             aria-label="Paginación de productos"
             className="my-10 block items-center sm:flex"

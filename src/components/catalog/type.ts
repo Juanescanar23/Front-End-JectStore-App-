@@ -11,11 +11,12 @@ export interface ProductSectionNode {
   type: string;
   urlKey?: string;
   name?: string;
+  baseImageUrl?: string | null;
   price?: number | string | null;
   specialPrice?: number | string | null;
   isSaleable?: boolean | null;
-  cacheBaseImage?: CacheImage[];
-  cacheGalleryImages?: CacheImage[];
+  cacheBaseImage?: CacheImage[] | CacheImage | null;
+  cacheGalleryImages?: CacheImage[] | CacheImage | null;
   images?: Array<{ url?: string | null; imageUrl?: string | null }>;
   categories?: Array<{ id?: string | number; slug?: string | null; name?: string | null }>;
 }
@@ -35,9 +36,9 @@ export interface PaginatorInfo {
   count: number;
   currentPage: number;
   lastPage: number;
-  perPage: number;
+  perPage?: number;
   total: number;
-  hasMorePages: boolean;
+  hasMorePages?: boolean;
 }
 
 export interface ProductsResponse {
@@ -54,19 +55,33 @@ export type ProductsSectionProps = {
 };
 
 export interface ProductFilterAttributeResponse {
-  attribute: {
-    id: string;
-    code: string;
-    options: Array<{
+  getFilterAttribute?: {
+    id?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    filterAttributes?: Array<{
       id: string;
-      adminName: string;
-      translations: Array<{
+      code: string;
+      adminName?: string;
+      options: Array<{
         id: string;
-        label: string;
-        locale: string;
+        adminName: string;
+        translations: Array<{
+          id: string;
+          label: string;
+          locale: string;
+        }>;
       }>;
     }>;
-  };
+    sortOrders?: Array<{
+      key?: string;
+      title?: string;
+      value?: string;
+      sort?: string;
+      order?: string;
+      position?: string;
+    }>;
+  } | null;
 }
 
 export interface ProductReviewNode {

@@ -2,11 +2,15 @@ import { GRAPHQL_URL, STOREFRONT_KEY } from "@/utils/constants";
 import { ApolloClient, HttpLink, InMemoryCache, from } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { getSession } from "next-auth/react";
+import { resolveTenantScopedGraphqlUrl } from "@/utils/graphql-endpoint";
 
 export default function initializeApollo(options?: { uri?: string }) {
   const ssrMode = typeof window === "undefined";
   const cache = new InMemoryCache();
-  const graphqlUri = options?.uri ?? GRAPHQL_URL;
+  const runtimeHost = typeof window !== "undefined" ? window.location.host : "";
+  const configuredUri = options?.uri ?? GRAPHQL_URL;
+  const graphqlUri =
+    resolveTenantScopedGraphqlUrl(configuredUri, runtimeHost) ?? configuredUri;
 
   const httpLink = new HttpLink({
     uri: graphqlUri,

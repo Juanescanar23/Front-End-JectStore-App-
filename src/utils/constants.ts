@@ -95,7 +95,7 @@ export const configHeader = [
     headers: [
       {
         key: "Cache-Control",
-        value: "public, s-maxage=3600, stale-while-revalidate=86400",
+        value: "no-store, no-cache, must-revalidate, max-age=0",
       },
     ],
   },
@@ -104,7 +104,7 @@ export const configHeader = [
     headers: [
       {
         key: "Cache-Control",
-        value: "public, s-maxage=3600, stale-while-revalidate=86400",
+        value: "no-store, no-cache, must-revalidate, max-age=0",
       },
       {
         key: "Vary",
@@ -195,30 +195,57 @@ export function getImageUrl(url?: string, baseUrl?: string, fallback?: string) {
 export function getProductImageUrl(product?: {
   baseImageUrl?: string | null;
   images?: Array<{ url?: string | null; imageUrl?: string | null }>;
-  cacheBaseImage?: Array<{
-    smallImageUrl?: string | null;
-    mediumImageUrl?: string | null;
-    largeImageUrl?: string | null;
-    originalImageUrl?: string | null;
-  }>;
-  cacheGalleryImages?: Array<{
-    smallImageUrl?: string | null;
-    mediumImageUrl?: string | null;
-    largeImageUrl?: string | null;
-    originalImageUrl?: string | null;
-  }>;
+  cacheBaseImage?:
+    | Array<{
+        smallImageUrl?: string | null;
+        mediumImageUrl?: string | null;
+        largeImageUrl?: string | null;
+        originalImageUrl?: string | null;
+      }>
+    | {
+        smallImageUrl?: string | null;
+        mediumImageUrl?: string | null;
+        largeImageUrl?: string | null;
+        originalImageUrl?: string | null;
+      }
+    | null;
+  cacheGalleryImages?:
+    | Array<{
+        smallImageUrl?: string | null;
+        mediumImageUrl?: string | null;
+        largeImageUrl?: string | null;
+        originalImageUrl?: string | null;
+      }>
+    | {
+        smallImageUrl?: string | null;
+        mediumImageUrl?: string | null;
+        largeImageUrl?: string | null;
+        originalImageUrl?: string | null;
+      }
+    | null;
 }) {
+  const cacheBaseImages = Array.isArray(product?.cacheBaseImage)
+    ? product.cacheBaseImage
+    : product?.cacheBaseImage
+      ? [product.cacheBaseImage]
+      : [];
+  const cacheGalleryImages = Array.isArray(product?.cacheGalleryImages)
+    ? product.cacheGalleryImages
+    : product?.cacheGalleryImages
+      ? [product.cacheGalleryImages]
+      : [];
+
   const directUrl =
     product?.images?.[0]?.url ||
     product?.images?.[0]?.imageUrl ||
-    product?.cacheBaseImage?.[0]?.originalImageUrl ||
-    product?.cacheBaseImage?.[0]?.largeImageUrl ||
-    product?.cacheBaseImage?.[0]?.mediumImageUrl ||
-    product?.cacheBaseImage?.[0]?.smallImageUrl ||
-    product?.cacheGalleryImages?.[0]?.originalImageUrl ||
-    product?.cacheGalleryImages?.[0]?.largeImageUrl ||
-    product?.cacheGalleryImages?.[0]?.mediumImageUrl ||
-    product?.cacheGalleryImages?.[0]?.smallImageUrl ||
+    cacheBaseImages[0]?.originalImageUrl ||
+    cacheBaseImages[0]?.largeImageUrl ||
+    cacheBaseImages[0]?.mediumImageUrl ||
+    cacheBaseImages[0]?.smallImageUrl ||
+    cacheGalleryImages[0]?.originalImageUrl ||
+    cacheGalleryImages[0]?.largeImageUrl ||
+    cacheGalleryImages[0]?.mediumImageUrl ||
+    cacheGalleryImages[0]?.smallImageUrl ||
     product?.baseImageUrl ||
     undefined;
 

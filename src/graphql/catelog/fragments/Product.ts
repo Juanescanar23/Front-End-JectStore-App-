@@ -10,6 +10,21 @@ export const PRODUCT_CORE_FRAGMENT = gql`
     price
     specialPrice
     isSaleable
+    images {
+      url
+    }
+    cacheBaseImage {
+      smallImageUrl
+      mediumImageUrl
+      largeImageUrl
+      originalImageUrl
+    }
+    cacheGalleryImages {
+      smallImageUrl
+      mediumImageUrl
+      largeImageUrl
+      originalImageUrl
+    }
     categories {
       id
       slug
@@ -37,7 +52,6 @@ export const PRODUCT_REVIEW_FRAGMENT = gql`
   fragment ProductReview on Review {
     rating
     id
-    _id
     name
     title
     comment
@@ -54,6 +68,21 @@ export const PRODUCT_SECTION_FRAGMENT = gql`
     price
     specialPrice
     isSaleable
+    images {
+      url
+    }
+    cacheBaseImage {
+      smallImageUrl
+      mediumImageUrl
+      largeImageUrl
+      originalImageUrl
+    }
+    cacheGalleryImages {
+      smallImageUrl
+      mediumImageUrl
+      largeImageUrl
+      originalImageUrl
+    }
     categories {
       id
       slug

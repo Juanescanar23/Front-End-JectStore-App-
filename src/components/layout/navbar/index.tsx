@@ -15,7 +15,7 @@ export default async function Navbar() {
   const data = await graphqlRequest<any>(
     GET_TREE_CATEGORIES,
     { getCategoryTree: true },
-    { tags: ["categories"], life: "days" }
+    { tags: ["categories"], life: "hours" }
   );
 
   const categories = data?.homeCategories || [];

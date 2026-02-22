@@ -2,6 +2,7 @@ import { gql } from "@apollo/client";
 import {
   PRODUCT_CORE_FRAGMENT,
   PRODUCT_DETAILED_FRAGMENT,
+  PRODUCT_REVIEW_FRAGMENT,
   PRODUCT_SECTION_FRAGMENT,
 } from "../fragments";
 
@@ -19,15 +20,13 @@ import {
 export const GET_PRODUCTS = gql`
   ${PRODUCT_CORE_FRAGMENT}
 
-  query GetProducts($input: FilterProductsInput!) {
-    products(input: $input) {
+  query GetProducts($input: [FilterHomeCategoriesInput!]) {
+    products: allProducts(input: $input) {
       paginatorInfo {
         count
         currentPage
         lastPage
-        perPage
         total
-        hasMorePages
       }
       data {
         ...ProductCore
@@ -42,42 +41,123 @@ export const GET_PRODUCTS = gql`
  */
 export const GET_PRODUCT_BY_URL_KEY = gql`
   ${PRODUCT_DETAILED_FRAGMENT}
+  ${PRODUCT_REVIEW_FRAGMENT}
 
-  query GetProductById($urlKey: String!) {
-    product(urlKey: $urlKey) {
-      ...ProductDetailed
+  query GetProductByUrlKey($input: [FilterHomeCategoriesInput!]) {
+    products: allProducts(input: $input) {
+      data {
+        ...ProductDetailed
+        images {
+          url
+        }
+        cacheBaseImage {
+          smallImageUrl
+          mediumImageUrl
+          largeImageUrl
+          originalImageUrl
+        }
+        cacheGalleryImages {
+          smallImageUrl
+          mediumImageUrl
+          largeImageUrl
+          originalImageUrl
+        }
+        categories {
+          id
+          slug
+          name
+        }
+        reviews {
+          ...ProductReview
+        }
+        variants {
+          id
+          sku
+          type
+          name
+          urlKey
+          price
+          specialPrice
+          isSaleable
+          images {
+            url
+          }
+          cacheBaseImage {
+            smallImageUrl
+            mediumImageUrl
+            largeImageUrl
+            originalImageUrl
+          }
+          cacheGalleryImages {
+            smallImageUrl
+            mediumImageUrl
+            largeImageUrl
+            originalImageUrl
+          }
+        }
+      }
     }
   }
 `;
 
 export const GET_PRODUCT_SWATCH_REVIEW = gql`
-  query ProductSwatchReview($urlKey: String!) {
-    product(urlKey: $urlKey) {
-      id
-      name
-      sku
-      type
-      urlKey
-      price
-      isSaleable
-      combinations
-      superAttributeOptions
-      attributeValues {
-        value
-        attribute {
-          adminName
-          code
-          isFilterable
-          isVisibleOnFront
-        }
-      }
-      superAttributes {
+  query ProductSwatchReview($input: [FilterHomeCategoriesInput!]) {
+    products: allProducts(input: $input) {
+      data {
         id
-        code
-        adminName
-        options {
+        name
+        sku
+        type
+        urlKey
+        price
+        isSaleable
+        attributeValues {
           id
+          textValue
+          booleanValue
+          integerValue
+          floatValue
+          dateTimeValue
+          dateValue
+          jsonValue
+          attribute {
+            adminName
+            code
+            isFilterable
+            isVisibleOnFront
+          }
+        }
+        superAttributes {
+          id
+          code
           adminName
+          options {
+            id
+            adminName
+          }
+        }
+        configutableData {
+          attributes {
+            id
+            code
+            label
+            swatchType
+            options {
+              id
+              label
+              swatchType
+              swatchValue
+              products
+            }
+          }
+          index {
+            id
+            attributeOptionIds {
+              attributeId
+              attributeCode
+              attributeOptionId
+            }
+          }
         }
       }
     }
@@ -90,15 +170,13 @@ export const GET_PRODUCT_SWATCH_REVIEW = gql`
  * Lightweight query for pagination controls
  */
 export const GET_PRODUCTS_PAGINATION = gql`
-  query GetProductsPagination($input: FilterProductsInput!) {
-    products(input: $input) {
+  query GetProductsPagination($input: [FilterHomeCategoriesInput!]) {
+    products: allProducts(input: $input) {
       paginatorInfo {
         count
         currentPage
         lastPage
-        perPage
         total
-        hasMorePages
       }
       data {
         id
@@ -115,12 +193,14 @@ export const GET_PRODUCTS_PAGINATION = gql`
 export const GET_RELATED_PRODUCTS = gql`
   ${PRODUCT_SECTION_FRAGMENT}
 
-  query GetRelatedProducts($urlKey: String) {
-    product(urlKey: $urlKey) {
-      id
-      sku
-      relatedProducts {
-        ...ProductSection
+  query GetRelatedProducts($input: [FilterHomeCategoriesInput!]) {
+    products: allProducts(input: $input) {
+      data {
+        id
+        sku
+        relatedProducts {
+          ...ProductSection
+        }
       }
     }
   }

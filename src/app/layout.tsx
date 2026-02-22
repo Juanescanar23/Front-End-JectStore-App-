@@ -14,6 +14,7 @@ import { SpeculationRules } from "@components/theme/SpeculationRules";
 import clsx from "clsx";
 import { headers } from "next/headers";
 import PortalShell from "@/app/portal/PortalShell";
+import { getRequestBaseUrl } from "@/utils/server/request-base-url";
 
 const LANDLORD_HOST = "app.jectstore.com";
 
@@ -32,7 +33,11 @@ export const outfit = Outfit({
 });
 
 export async function generateMetadata() {
-  return generateMetadataForPage("", staticSeo.default);
+  const baseUrl = await getRequestBaseUrl();
+  return generateMetadataForPage("", {
+    ...staticSeo.default,
+    baseUrl: baseUrl ?? undefined,
+  });
 }
 
 export default async function RootLayout({

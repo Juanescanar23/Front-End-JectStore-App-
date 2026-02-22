@@ -56,7 +56,7 @@ export const ProductMoreDetails: FC<{
         {filterAdditionalData.length > 0
           ?
           <AccordionItem
-            key="2"
+            key="3"
             classNames={{
               title: "text-start",
               trigger: "cursor-pointer",
@@ -91,7 +91,7 @@ export const ProductMoreDetails: FC<{
 
           : null}
         <AccordionItem
-          key={filterAdditionalData.length > 0 ? "3" : "2"}
+          key="2"
           classNames={{
             title: "text-start",
             trigger: "cursor-pointer",

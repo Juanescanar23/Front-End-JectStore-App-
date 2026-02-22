@@ -1,4 +1,4 @@
-import { FC, Suspense } from "react";
+import { Suspense } from "react";
 import { safeParse } from "@utils/helper";
 import { ThemeCustomizationResponse } from "@/types/theme/theme-customization";
 import ImageCarousel from "./ImageCarousel";
@@ -6,13 +6,25 @@ import ProductCarousel from "./ProductCarousel";
 import CategoryCarousel from "./CategoryCarousel";
 import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
 import { CategoryCarouselSkeleton } from "@components/common/skeleton/CategoryCarouselSkeleton";
+import { pickTranslationByLocale } from "@/utils/theme-translation";
+import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
 interface RenderThemeCustomizationProps {
     themeCustomizations: ThemeCustomizationResponse["themeCustomization"] | undefined;
 }
 
-const RenderThemeCustomization: FC<RenderThemeCustomizationProps> = ({ themeCustomizations }) => {
+const isEnabled = (status?: string | boolean | null) => {
+    if (typeof status === "boolean") return status;
+    if (typeof status === "string") return status !== "0";
+    return true;
+};
+
+const RenderThemeCustomization = async ({
+    themeCustomizations
+}: RenderThemeCustomizationProps) => {
     if (!themeCustomizations?.length) return null;
+
+    const localeCode = await getStorefrontLocaleCode();
 
     let productCarouselIndex = 0;
 
@@ -25,9 +37,12 @@ const RenderThemeCustomization: FC<RenderThemeCustomizationProps> = ({ themeCust
             <MobileSearchBar />
             <section className="w-full max-w-screen-2xl mx-auto pb-4 px-4 xss:px-7.5">
                 {sortedThemes.map((node) => {
-                    const translation =
-                        node.translations?.find((t) => t.localeCode === "en") ||
-                        node.translations?.[0];
+                    if (!isEnabled(node.status)) return null;
+
+                    const translation = pickTranslationByLocale(
+                        node.translations,
+                        localeCode
+                    );
                     if (!translation) return null;
 
                     const options = safeParse(translation.options as any) || {};
@@ -49,7 +64,7 @@ const RenderThemeCustomization: FC<RenderThemeCustomizationProps> = ({ themeCust
                                     key={node.id}
                                     options={{ ...options, title: node.name } as any}
                                     itemCount={itemCount}
-                                    sortOrder={sortOrder}
+                                    sortOrder={productCarouselIndex === 1 ? 2 : sortOrder}
                                 />
                             );
                         }

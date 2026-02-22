@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import {
   BagistoCreateUserOperation,
@@ -349,7 +349,8 @@ export async function getThemeCustomization(): Promise<ThemeCustomizationResult>
     }>({
       query: GET_FOOTER,
       isCookies: false,
-      revalidate: 86400,
+      cache: "no-store",
+      revalidate: 0,
     });
 
     const allThemes = res.body.data?.themeCustomization || [];
@@ -395,9 +396,19 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   if (isProductUpdate) {
+    revalidateTag("products", "max");
+    revalidateTag("related-products", "max");
+    revalidateTag("swatch-and-reviews", "max");
+    revalidateTag("categories", "max");
     revalidatePath("/", "layout");
+    revalidatePath("/search", "page");
+    revalidatePath("/product/[...urlProduct]", "page");
   } else if (isCollectionUpdate) {
+    revalidateTag("categories", "max");
+    revalidateTag("products", "max");
     revalidatePath("/", "layout");
+    revalidatePath("/search", "page");
+    revalidatePath("/search/[collection]", "page");
   }
 
   return NextResponse.json({
@@ -412,12 +423,23 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
 export async function getPage(
   input: { urlKey: string }
 ): Promise<any> {
-  const res = await bagistoFetch<any>({
-    query: PAGE_BY_URL_KEY,
-    cache: "no-store",
-    isCookies: false,
-    variables: { pageByUrlKey: input.urlKey },
-  });
+  try {
+    const res = await bagistoFetch<any>({
+      query: PAGE_BY_URL_KEY,
+      cache: "no-store",
+      isCookies: false,
+      variables: { pageByUrlKey: input.urlKey },
+    });
 
-  return res.body.data?.pageByUrlKeypages;
+    return res.body.data?.pageByUrlKeypages;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("getPage Error:", {
+        message: error.message,
+        urlKey: input.urlKey,
+      });
+    }
+
+    return [];
+  }
 }

@@ -2,18 +2,32 @@ import { gql } from "@apollo/client";
 import { PRODUCT_SECTION_FRAGMENT } from "../fragments";
 
 export const GET_FILTER_OPTIONS = gql`
-  query FetchAttribute($id: ID!) {
-    attribute(id: $id) {
+  query FetchFilterAttribute($categorySlug: String!) {
+    getFilterAttribute(categorySlug: $categorySlug) {
       id
-      code
-      options {
+      minPrice
+      maxPrice
+      filterAttributes {
         id
+        code
         adminName
-        translations {
+        options {
           id
-          label
-          locale
+          adminName
+          translations {
+            id
+            label
+            locale
+          }
         }
+      }
+      sortOrders {
+        key
+        title
+        value
+        sort
+        order
+        position
       }
     }
   }
@@ -21,15 +35,13 @@ export const GET_FILTER_OPTIONS = gql`
 
 export const GET_FILTER_PRODUCTS = gql`
   ${PRODUCT_SECTION_FRAGMENT}
-  query getProducts($input: FilterProductsInput!) {
-    products(input: $input) {
+  query getProducts($input: [FilterHomeCategoriesInput!]) {
+    products: allProducts(input: $input) {
       paginatorInfo {
         count
         currentPage
         lastPage
-        perPage
         total
-        hasMorePages
       }
       data {
         ...ProductSection

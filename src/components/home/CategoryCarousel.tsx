@@ -1,6 +1,6 @@
 import { FC } from "react";
 import Link from "next/link";
-import { graphqlRequest } from "../../lib/graphql-fetch";
+import { graphqlRequestNoCache } from "../../lib/graphql-fetch";
 import { GET_HOME_CATEGORIES } from "@/graphql/catelog/queries/HomeCategories";
 import { GridTileImage } from "../theme/ui/grid/Tile";
 import { NOT_IMAGE } from "@/utils/constants";
@@ -15,22 +15,17 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
   options: _options,
 }) => {
   try {
-    const data = await graphqlRequest<any>(
+    const data = await graphqlRequestNoCache<any>(
       GET_HOME_CATEGORIES,
-      { getCategoryTree: false },
-      {
-        tags: ["categories"],
-        life: "days",
-      }
+      { getCategoryTree: true }
     );
 
-    const categories =
-      data?.homeCategories || [];
+    const categories = data?.homeCategories || [];
 
     const topCategories = categories
       .filter((category: any) => category.id !== "1")
       .sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
-      .slice(1, 4);
+      .slice(0, 3);
 
     if (!topCategories.length) return null;
 
@@ -69,7 +64,7 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
                       amount: "0",
                       currencyCode: "USD",
                     }}
-                    src={category.logoUrl || NOT_IMAGE}
+                    src={category.logoUrl || category.bannerUrl || NOT_IMAGE}
                   />
                 </Link>
               </li>

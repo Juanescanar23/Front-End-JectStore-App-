@@ -1,0 +1,10 @@
+{
+  "protocol": "https",
+  "storefrontKey": "default",
+  "timeoutMs": 15000,
+  "tenants": [
+    "cuki.jectstore.com",
+    "app.jectstore.com"
+  ]
+}
+

@@ -3,6 +3,8 @@ import { ThemeOptions } from "@/types/types";
 import { FooterColumns, ThemeCustomizationNode } from "@/types/theme/theme-customization";
 import { isArray } from "@/utils/type-guards";
 import { safeParse } from "@/utils/helper";
+import { pickTranslationByLocale } from "@/utils/theme-translation";
+import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
 const getUrlparams = (url?: string | null) => {
   if (!url) return "/";
@@ -34,17 +36,18 @@ const FooterMenuItem = ({ item }: { item: ThemeOptions }) => {
   );
 };
 
-export default function FooterMenu({
+export default async function FooterMenu({
   menu,
 }: {
   menu: ThemeCustomizationNode[];
 }) {
   if (!menu || menu.length === 0) return null;
 
+  const localeCode = await getStorefrontLocaleCode();
+
   const firstMenu = menu[0];
   const translations = firstMenu?.translations || [];
-  const firstTranslation =
-    translations.find((t: any) => t.localeCode === "en") || translations[0];
+  const firstTranslation = pickTranslationByLocale(translations, localeCode);
   const channels =
     typeof firstTranslation?.options === "string"
       ? safeParse(firstTranslation.options)

@@ -9,3 +9,7 @@ GET_THEME_CUSTOMIZATION
 export {
     PAGE_BY_URL_KEY
 } from "./PageByUrlKey"
+
+export {
+    GET_DEFAULT_CHANNEL
+} from "./DefaultChannel"

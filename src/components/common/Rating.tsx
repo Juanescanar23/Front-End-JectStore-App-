@@ -10,39 +10,42 @@ export const Rating = ({
   reviewCount,
   onReviewClick,
 }: RatingTypes) => {
-  const rating = star ?? 0;
-  const reviewCountToShow = reviewCount ?? star > 0;
+  const rating = Number.isFinite(Number(star)) ? Number(star) : 0;
+  const filledStars = Math.max(0, Math.min(length, Math.round(rating)));
+  const totalReviews =
+    typeof reviewCount === "number" && reviewCount > 0 ? reviewCount : 0;
+  const hasReviews = totalReviews > 0;
 
   return (
-   <div className={clsx("flex items-center gap-x-2", className)}>
-  {reviewCountToShow ? (
-    <>
-  <div className="flex gap-x-0.5">
-    {Array.from({ length }).map((_, index) => (
-      <StarIcon
-        key={index}
-        className={clsx(
-          size,
-          index < rating
-            ? "fill-yellow-500 dark:fill-yellow-500"
-            : "fill-black dark:fill-gray-900",
-          "fill-black dark:stroke-white"
-        )}
-      />
-    ))}
-  </div>
-    <span className="text-sm text-gray-600 dark:text-gray-400">
-      ({reviewCountToShow} {reviewCountToShow === 1 ? 'Review' : 'Reviews'})
-    </span>
-    </>
-  ) : (
-    <span 
-    className="text-sm text-blue-600 underline cursor-pointer"
-    onClick={onReviewClick}
-    >
-      Write a review
-    </span>
-  )}
-</div>
+    <div className={clsx("flex items-center gap-x-2", className)}>
+      {hasReviews ? (
+        <>
+          <div className="flex gap-x-0.5">
+            {Array.from({ length }).map((_, index) => (
+              <StarIcon
+                key={index}
+                className={clsx(
+                  size,
+                  index < filledStars
+                    ? "fill-yellow-500"
+                    : "fill-neutral-300 dark:fill-neutral-600"
+                )}
+              />
+            ))}
+          </div>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            ({totalReviews} {totalReviews === 1 ? "reseña" : "reseñas"})
+          </span>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="text-sm text-blue-600 underline cursor-pointer"
+          onClick={onReviewClick}
+        >
+          Escribir una reseña
+        </button>
+      )}
+    </div>
   );
 };

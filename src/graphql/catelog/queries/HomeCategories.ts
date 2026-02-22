@@ -5,6 +5,7 @@ export const GET_HOME_CATEGORIES = gql`
     homeCategories(getCategoryTree: $getCategoryTree) {
       id
       logoUrl
+      bannerUrl
       position
       name
       slug
