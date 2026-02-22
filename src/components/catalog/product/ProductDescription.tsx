@@ -56,7 +56,7 @@ export function ProductDescription({
   };
 
   const whatsappProductUrl = useMemo(() => {
-    const productPath = `/product/${(slug || product?.urlKey || "").replace(/^\/+/, "")}`;
+    const productPath = `/product/${(slug || "").replace(/^\/+/, "")}`;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
 
     return buildProductWhatsAppUrl(tenantWhatsApp, {
@@ -64,7 +64,7 @@ export function ProductDescription({
       productPath,
       origin,
     });
-  }, [tenantWhatsApp, product?.name, product?.urlKey, slug]);
+  }, [tenantWhatsApp, product?.name, slug]);
 
   return (
     <>
