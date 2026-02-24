@@ -440,16 +440,50 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
 
 export async function getPage(
   input: { urlKey: string }
-): Promise<any> {
+): Promise<any[]> {
   try {
     const res = await bagistoFetch<any>({
       query: PAGE_BY_URL_KEY,
       cache: "no-store",
       isCookies: false,
-      variables: { pageByUrlKey: input.urlKey },
+      variables: {
+        input: { urlKey: input.urlKey },
+        first: 1,
+        page: 1,
+      },
     });
 
-    return res.body.data?.pageByUrlKeypages;
+    const cmsPagesPayload = res.body.data?.cmsPages;
+    const pages = Array.isArray(cmsPagesPayload)
+      ? cmsPagesPayload
+      : cmsPagesPayload?.data ?? [];
+
+    return pages
+      .map((page: any) => {
+        if (page?.translation) {
+          return page;
+        }
+
+        const translations = Array.isArray(page?.translations)
+          ? page.translations
+          : [];
+
+        const translation =
+          translations.find(
+            (entry: any) =>
+              entry?.urlKey?.toLowerCase() === input.urlKey.toLowerCase()
+          ) ?? translations[0];
+
+        if (!translation) {
+          return null;
+        }
+
+        return {
+          ...page,
+          translation,
+        };
+      })
+      .filter(Boolean);
   } catch (error) {
     if (error instanceof Error) {
       console.error("getPage Error:", {
