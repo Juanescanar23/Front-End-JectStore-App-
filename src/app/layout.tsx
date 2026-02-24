@@ -15,6 +15,7 @@ import clsx from "clsx";
 import { headers } from "next/headers";
 import PortalShell from "@/app/portal/PortalShell";
 import { getRequestBaseUrl } from "@/utils/server/request-base-url";
+import { getStorefrontSeoPayload } from "@/utils/server/storefront-seo";
 
 const LANDLORD_HOST = "app.jectstore.com";
 
@@ -34,8 +35,19 @@ export const outfit = Outfit({
 
 export async function generateMetadata() {
   const baseUrl = await getRequestBaseUrl();
+  const landlord = await isLandlordHost();
+  const runtimeHost = baseUrl ? new URL(baseUrl).host.replace(/:\d+$/, "") : "";
+  const tenantHostTitle = runtimeHost || "JectStore";
+  const tenantSeo = landlord ? null : await getStorefrontSeoPayload();
+
   return generateMetadataForPage("", {
     ...staticSeo.default,
+    title: tenantSeo?.title || (landlord ? staticSeo.default.title : tenantHostTitle),
+    description:
+      tenantSeo?.description ||
+      (landlord ? staticSeo.default.description : `Tienda online en ${tenantHostTitle}`),
+    image: tenantSeo?.image || staticSeo.default.image,
+    siteName: tenantSeo?.siteName || tenantSeo?.title || tenantHostTitle,
     baseUrl: baseUrl ?? undefined,
   });
 }

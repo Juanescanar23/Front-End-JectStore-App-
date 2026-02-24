@@ -216,6 +216,7 @@ export async function generateMetadataForPage(
     title?: string;
     description?: string;
     image?: string;
+    siteName?: string;
     canonical?: string;
     baseUrl?: string;
     other?: Record<string, string>;
@@ -225,6 +226,7 @@ export async function generateMetadataForPage(
     title?: string;
     description?: string;
     image?: string;
+    siteName?: string;
     canonical?: string;
     baseUrl?: string;
     other?: Record<string, string>;
@@ -238,8 +240,14 @@ export async function generateMetadataForPage(
   const title = seo.title || fallback?.title || "Default Title";
   const description =
     seo.description || fallback?.description || "Default page description.";
-  const ogImage = seo.image || fallback?.image || "/default-og.png";
   const metadataBaseUrl = seo.baseUrl || fallback?.baseUrl || BASE_URL || "http://localhost:3000";
+  const toAbsoluteImage = (value?: string) => {
+    if (!value) return "/default-og.png";
+    if (/^https?:\/\//i.test(value)) return value;
+    return `${metadataBaseUrl}${value.startsWith("/") ? value : `/${value}`}`;
+  };
+  const ogImage = toAbsoluteImage(seo.image || fallback?.image);
+  const siteName = seo.siteName || fallback?.siteName || title;
   const normalizedSlug = slug ? `/${slug.replace(/^\/+/, "")}` : "";
   const canonicalCandidate = seo.canonical || fallback?.canonical || normalizedSlug || "/";
   const canonicalUrl = /^https?:\/\//i.test(canonicalCandidate)
@@ -262,7 +270,7 @@ export async function generateMetadataForPage(
       title,
       description,
       url: canonicalUrl,
-      siteName: "Your Store Name",
+      siteName,
       type: "website",
       images: [
         {

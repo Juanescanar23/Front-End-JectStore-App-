@@ -5,6 +5,14 @@ export const GET_DEFAULT_CHANNEL = gql`
     getDefaultChannel {
       id
       code
+      name
+      description
+      logoUrl
+      faviconUrl
+      homeSeo {
+        metaTitle
+        metaDescription
+      }
       defaultLocale {
         code
       }

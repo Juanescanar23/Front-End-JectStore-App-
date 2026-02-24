@@ -1,36 +1,69 @@
-import { CREATE_MERGE_CART } from "@/graphql";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
-import { CreateMergeCartOperation } from "@/types/cart/type";
-import { getAuthToken } from "@/utils/helper";
+import { normalizeLegacyCart } from "@/app/api/_lib/cart-compat";
 
-export async function POST(req: Request) {
+const CART_DETAIL_QUERY = `
+  query CartDetailForMerge {
+    cartDetail {
+      id
+      itemsCount
+      itemsQty
+      isGuest
+      taxTotal
+      shippingAmount
+      subTotal
+      grandTotal
+      shippingMethod
+      selectedShippingRate {
+        method
+        methodTitle
+        methodDescription
+      }
+      payment {
+        method
+        methodTitle
+      }
+      items {
+        id
+        cartId
+        productId
+        name
+        sku
+        quantity
+        type
+        price
+        product {
+          urlKey
+        }
+      }
+    }
+  }
+`;
+
+export async function POST() {
   try {
-    const body = await req.json();
-    const guestToken = getAuthToken(req);
-
-    const variables = {
-      cartId: body.cartId ?? null,
-    };
-
-    const res = await bagistoFetch<CreateMergeCartOperation>({
-      query: CREATE_MERGE_CART,
-      variables: variables,
+    const response = await bagistoFetch<any>({
+      query: CART_DETAIL_QUERY,
       cache: "no-store",
-      guestToken,
     });
 
+    const legacyCart = normalizeLegacyCart(response?.body?.data?.cartDetail);
+
     return Response.json({
-      data: { ...res?.body.data },
+      data: {
+        createMergeCart: {
+          mergeCart: legacyCart,
+        },
+      },
     });
   } catch (error) {
     if (isBagistoError(error)) {
       return Response.json(
         {
           data: { createMergeCart: null },
-          error: error.cause ?? error,
+          error,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -39,8 +72,7 @@ export async function POST(req: Request) {
         message: "Network error",
         error: error instanceof Error ? error.message : error,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

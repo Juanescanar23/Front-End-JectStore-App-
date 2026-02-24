@@ -64,17 +64,33 @@ export async function bagistoFetch<T>({
   isCookies?: boolean;
   guestToken?: string;
   revalidate?: number;
-}): Promise<{ status: number; body: T } | never> {
+}): Promise<{ status: number; body: T; setCookie?: string } | never> {
   try {
     const queryString =
       typeof query === "string" ? query : query.loc?.source?.body ?? "";
 
     let bagistoCartId = "";
+    let bagistoSessionCookieName = BAGISTO_SESSION;
     let accessToken: string | undefined = undefined;
 
     if (isCookies) {
       const cookieStore = await cookies();
-      bagistoCartId = cookieStore.get(BAGISTO_SESSION)?.value ?? "";
+      const sessionCookieCandidates = [
+        BAGISTO_SESSION,
+        "jectstore_session",
+        "laravel_session",
+      ].filter(Boolean);
+
+      for (const cookieName of sessionCookieCandidates) {
+        const value = cookieStore.get(cookieName)?.value;
+
+        if (value) {
+          bagistoCartId = value;
+          bagistoSessionCookieName = cookieName;
+          break;
+        }
+      }
+
       const sessions = await getServerSession(authOptions);
       accessToken = (sessions as any)?.user?.accessToken;
 
@@ -93,7 +109,7 @@ export async function bagistoFetch<T>({
     }
 
     if (bagistoCartId) {
-      baseHeaders.Cookie = `${BAGISTO_SESSION}=${bagistoCartId}`;
+      baseHeaders.Cookie = `${bagistoSessionCookieName}=${bagistoCartId}`;
     }
 
     if (isCookies && headers) {
@@ -122,7 +138,9 @@ export async function bagistoFetch<T>({
 
     if (body.errors) throw body.errors[0];
 
-    return { status: result.status, body };
+    const setCookie = result.headers.get("set-cookie");
+
+    return { status: result.status, body, setCookie: setCookie ?? undefined };
   } catch (e) {
     throw e;
   }
