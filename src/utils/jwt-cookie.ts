@@ -1,5 +1,3 @@
-import { NEXT_AUTH_SECRET } from "./constants";
-
 export const encodeJWT = (payload: object): string => {
   try {
     const jsonStr = JSON.stringify(payload);
@@ -7,7 +5,9 @@ export const encodeJWT = (payload: object): string => {
 
     const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));
 
-    const token = `${header}.${encodedPayload}.${NEXT_AUTH_SECRET}`;
+    // This guest-cart envelope is not an authentication signature. Never embed
+    // the server-only NextAuth secret in a browser-readable cookie.
+    const token = `${header}.${encodedPayload}.guest`;
 
     return encodeURIComponent(token);
   } catch (e) {

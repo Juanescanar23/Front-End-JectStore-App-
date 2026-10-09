@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { TenantWhatsAppConfig } from "@/utils/whatsapp";
+import { storefrontCacheTags } from "../storefront-cache-scope";
 
 const FALLBACK_LANDLORD_HOST = "app.jectstore.com";
 const FALLBACK_LANDLORD_SCHEME = "https";
@@ -39,7 +40,7 @@ export async function getTenantWhatsAppConfig(): Promise<TenantWhatsAppConfig | 
 
   try {
     const response = await fetch(endpoint, {
-      next: { revalidate: 30 },
+      next: { revalidate: 30, tags: await storefrontCacheTags(runtimeHost, ["whatsapp"]) },
       headers: {
         Accept: "application/json",
       },

@@ -1,21 +1,12 @@
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
+import { storefrontHostTag } from "../storefront-cache-scope";
 
 const IMMEDIATE_REVALIDATE = { expire: 0 } as const;
 
-export function revalidateStorefront(): void {
-  // Use immediate expiry so the next storefront request renders fresh tenant data.
-  revalidateTag("home", IMMEDIATE_REVALIDATE);
-  revalidateTag("theme", IMMEDIATE_REVALIDATE);
-  revalidateTag("theme-customization", IMMEDIATE_REVALIDATE);
-  revalidateTag("products", IMMEDIATE_REVALIDATE);
-  revalidateTag("related-products", IMMEDIATE_REVALIDATE);
-  revalidateTag("swatch-and-reviews", IMMEDIATE_REVALIDATE);
-  revalidateTag("categories", IMMEDIATE_REVALIDATE);
-  revalidateTag("channel", IMMEDIATE_REVALIDATE);
-
-  revalidatePath("/", "layout");
-  revalidatePath("/", "page");
-  revalidatePath("/search", "page");
-  revalidatePath("/search/[collection]", "page");
-  revalidatePath("/product/[...urlProduct]", "page");
+export async function revalidateStorefront(hosts: string[]): Promise<void> {
+  // Only called with host scopes verified by the v1 HMAC boundary. No global
+  // entity tags or revalidatePath('/') shared by every storefront are touched.
+  for (const host of hosts) {
+    revalidateTag(await storefrontHostTag(host), IMMEDIATE_REVALIDATE);
+  }
 }

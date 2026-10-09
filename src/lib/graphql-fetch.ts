@@ -7,6 +7,7 @@ import {
 } from "@apollo/client";
 import makeClient from "./apollo-client";
 import { GRAPHQL_URL } from "@/utils/constants";
+import { canonicalCacheHostname, storefrontCacheTags } from "@/utils/storefront-cache-scope";
 import {
   buildTenantForwardHeaders,
   resolveServerGraphqlUrl,
@@ -168,7 +169,6 @@ export function getRevalidateTime(life?: CacheLifeOption): number | false {
   }
 }
 
-const cacheKeyMemo = new Map<unknown, string>();
 const queryPrintMemo = new WeakMap<DocumentNode, string>();
 
 const resolveRequestScope = async (): Promise<string> => {
@@ -192,14 +192,6 @@ export function stableStringify(value: unknown): string {
     .sort()
     .map(key => `"${key}":${stableStringify(obj[key])}`)
     .join(",")}}`;
-}
-
-function stableStringifyMemo(value: unknown): string {
-  const cached = cacheKeyMemo.get(value);
-  if (cached !== undefined) return cached;
-  const str = stableStringify(value);
-  cacheKeyMemo.set(value, str);
-  return str;
 }
 
 
@@ -249,8 +241,15 @@ export async function graphqlRequest<
     queryPrintMemo.set(query, queryString);
   }
 
-  const cacheKey = `graphql:${stableStringifyMemo({
-    scope: await resolveRequestScope(),
+  const scope = await resolveRequestScope();
+  const cacheHost = canonicalCacheHostname(new URL(scope).host);
+  if (!cacheHost) {
+    return graphqlRequest(query, variables, { ...options, noCache: true });
+  }
+  // A namespace bump avoids reusing legacy entries with only global tags.
+  // They expire naturally; no other tenant's data is flushed during rollout.
+  const cacheKey = `graphql:sf-v1:${stableStringify({
+    scope,
     query: queryString,
     variables,
   })}`;
@@ -267,7 +266,7 @@ export async function graphqlRequest<
     },
     [cacheKey],
     {
-      tags: options?.tags,
+      tags: await storefrontCacheTags(cacheHost, options?.tags),
       revalidate: getRevalidateTime(options?.life),
     }
   );

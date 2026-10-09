@@ -4,7 +4,7 @@ import { SORT, SortOrderTypes } from "@/utils/constants";
 import { createUrl } from "@/utils/helper";
 import { Select, SelectItem } from "@heroui/select";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FC, useState, useEffect } from "react";
+import { FC, useState } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -28,10 +28,14 @@ const SortOrder: FC<{
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [tempSort, setTempSort] = useState(sort);
+  const [previousSort, setPreviousSort] = useState(sort);
 
-  useEffect(() => {
+  // Reset only when navigation changes the applied sort; preserve edits while
+  // the drawer remains open and the URL is unchanged.
+  if (previousSort !== sort) {
+    setPreviousSort(sort);
     setTempSort(sort);
-  }, [sort]);
+  }
 
   const handleSortChange = (value: string) => {
     const newParams = new URLSearchParams(searchParams.toString());

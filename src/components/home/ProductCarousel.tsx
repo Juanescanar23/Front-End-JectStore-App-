@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { ComponentProps, FC } from "react";
 import { graphqlRequestNoCache } from "../../lib/graphql-fetch";
 import { GET_PRODUCTS } from "@/graphql/catelog/queries/Product";
 import { ThreeItemGrid } from "./ThreeItemGrid";
@@ -21,6 +21,8 @@ interface ProductCarouselProps {
 
 const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 4, sortOrder }) => {
     const { filters, title } = options;
+    let products: Array<ComponentProps<typeof ThreeItemGrid>["products"][number] & { sku: string }> = [];
+
     try {
         const normalizedFilters = Array.isArray(filters)
             ? filters.reduce<Record<string, string>>((acc, item) => {
@@ -50,7 +52,7 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
             { input }
         );
 
-        const products = (data?.products?.data || [])
+        products = (data?.products?.data || [])
           .slice(0, 8)
           .map((product) => ({
             id: product.id,
@@ -68,6 +70,14 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
             specialPrice: product.specialPrice ?? undefined,
             type: product.type || "simple",
           }));
+    } catch (error) {
+        console.error("Error fetching products for carousel:", {
+            title,
+            filters,
+            error: error instanceof Error ? error.message : error
+        });
+        return null;
+    }
 
         if (!products.length) {
             return null;
@@ -91,14 +101,6 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
                 products={products}
             />
         );
-    } catch (error) {
-        console.error("Error fetching products for carousel:", {
-            title,
-            filters,
-            error: error instanceof Error ? error.message : error
-        });
-        return null;
-    }
 };
 
 export default ProductCarousel;

@@ -1,6 +1,6 @@
 import { cookies, headers as nextHeaders } from "next/headers";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { canonicalCacheHostname, storefrontCacheTags } from "../storefront-cache-scope";
 import {
   BagistoCreateUserOperation,
   BagistoProductInfo,
@@ -30,8 +30,6 @@ import {
   buildTenantForwardHeaders,
   resolveServerGraphqlUrl,
 } from "@/utils/graphql-endpoint";
-
-const IMMEDIATE_REVALIDATE = { expire: 0 } as const;
 
 type ExtractVariables<T> = T extends { variables: object }
   ? T["variables"]
@@ -133,6 +131,8 @@ export async function bagistoFetch<T>({
       }
     }
 
+    const cacheHost = canonicalCacheHostname(headerStore.get("x-tenant-host") || headerStore.get("x-storefront-host") || headerStore.get("x-forwarded-host") || headerStore.get("host") || "");
+    const effectiveCache = cacheHost ? cache : "no-store";
     const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
       headers: baseHeaders,
@@ -140,10 +140,10 @@ export async function bagistoFetch<T>({
         query: queryString,
         ...(variables && { variables }),
       }),
-      cache,
+      cache: effectiveCache,
       next: {
-        revalidate: cache === "no-store" ? 0 : revalidate || 60,
-        ...(tags && { tags }),
+        revalidate: effectiveCache === "no-store" ? 0 : revalidate || 60,
+        tags: cacheHost ? await storefrontCacheTags(cacheHost, tags) : [],
       },
     });
 
@@ -183,6 +183,8 @@ export async function bagistoFetchNoSession<T>({
         headerStore.get("host"),
     );
 
+    const cacheHost = canonicalCacheHostname(headerStore.get("x-tenant-host") || headerStore.get("x-storefront-host") || headerStore.get("x-forwarded-host") || headerStore.get("host") || "");
+    const effectiveCache = cacheHost ? cache : "no-store";
     const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
       headers: {
@@ -196,10 +198,10 @@ export async function bagistoFetchNoSession<T>({
         ...(query && { query }),
         ...(variables && { variables }),
       }),
-      cache,
+      cache: effectiveCache,
       next: {
-        revalidate: cache === "no-store" ? 0 : revalidate || 60,
-        ...(tags && { tags }),
+        revalidate: effectiveCache === "no-store" ? 0 : revalidate || 60,
+        tags: cacheHost ? await storefrontCacheTags(cacheHost, tags) : [],
       },
     });
 
@@ -409,52 +411,8 @@ export async function getThemeCustomization(): Promise<ThemeCustomizationResult>
   };
 }
 
-export async function revalidate(req: NextRequest): Promise<NextResponse> {
-  const collectionWebhooks = [
-    "collections/create",
-    "collections/delete",
-    "collections/update",
-  ];
-  const productWebhooks = [
-    "products/create",
-    "products/delete",
-    "products/update",
-  ];
-  const topic = (await nextHeaders()).get("x-bagisto-topic") || "unknown";
-  const secret = req.nextUrl.searchParams.get("secret");
-  const isCollectionUpdate = collectionWebhooks.includes(topic);
-  const isProductUpdate = productWebhooks.includes(topic);
-
-  if (!secret || secret !== process.env.BAGISTO_REVALIDATION_SECRET) {
-    return NextResponse.json({ status: 200 });
-  }
-
-  if (!isCollectionUpdate && !isProductUpdate) {
-    return NextResponse.json({ status: 200, message: "No action needed" });
-  }
-
-  if (isProductUpdate) {
-    revalidateTag("products", IMMEDIATE_REVALIDATE);
-    revalidateTag("related-products", IMMEDIATE_REVALIDATE);
-    revalidateTag("swatch-and-reviews", IMMEDIATE_REVALIDATE);
-    revalidateTag("categories", IMMEDIATE_REVALIDATE);
-    revalidatePath("/", "layout");
-    revalidatePath("/search", "page");
-    revalidatePath("/product/[...urlProduct]", "page");
-  } else if (isCollectionUpdate) {
-    revalidateTag("categories", IMMEDIATE_REVALIDATE);
-    revalidateTag("products", IMMEDIATE_REVALIDATE);
-    revalidatePath("/", "layout");
-    revalidatePath("/search", "page");
-    revalidatePath("/search/[collection]", "page");
-  }
-
-  return NextResponse.json({
-    status: 200,
-    revalidated: true,
-    topic,
-    now: Date.now()
-  });
+export async function revalidate(_req: NextRequest): Promise<NextResponse> {
+  return NextResponse.json({ revalidated: false, message: "Legacy endpoint retired." }, { status: 410, headers: { "Cache-Control": "no-store" } });
 }
 
 

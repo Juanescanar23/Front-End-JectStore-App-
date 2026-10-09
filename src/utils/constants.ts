@@ -48,7 +48,6 @@ const normalizedGraphqlEndpoint = envGraphqlEndpoint?.replace(/\/+$/, "");
 export const GRAPHQL_URL = normalizedGraphqlEndpoint
   ? normalizedGraphqlEndpoint
   : BAGISTO_GRAPHQL_API_ENDPOINT;
-export const NEXT_AUTH_SECRET = process.env.NEXT_PUBLIC_NEXT_AUTH_SECRET;
 export const STOREFRONT_KEY = process.env.NEXT_PUBLIC_BAGISTO_STOREFRONT_KEY || ""
 
 

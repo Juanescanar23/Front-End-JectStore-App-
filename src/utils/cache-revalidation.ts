@@ -1,39 +1,36 @@
 // "use server";
 
-import { revalidatePath } from "next/cache";
-
 /**
  * Revalidate all product-related caches
  */
 export async function revalidateProducts() {
-  revalidatePath("/", "layout");
-  revalidatePath("/product", "page");
+  throw new Error("Use the authenticated tenant-scoped storefront revalidation endpoint.");
 }
 
 /**
  * Revalidate search-related caches
  */
 export async function revalidateSearch() {
-  revalidatePath("/search", "page");
+  throw new Error("Use the authenticated tenant-scoped storefront revalidation endpoint.");
 }
 
 /**
  * Revalidate a specific product page
  */
-export async function revalidateProductPage(productId: string) {
-  revalidatePath(`/product/${productId}`, "page");
+export async function revalidateProductPage(_productId: string) {
+  throw new Error("Use the authenticated tenant-scoped storefront revalidation endpoint.");
 }
 
 /**
  * Revalidate search page
  */
 export async function revalidateSearchPage() {
-  revalidatePath("/search", "page");
+  throw new Error("Use the authenticated tenant-scoped storefront revalidation endpoint.");
 }
 
 /**
  * Revalidate all caches (use sparingly)
  */
 export async function revalidateAll() {
-  revalidatePath("/", "layout");
+  throw new Error("Use the authenticated tenant-scoped storefront revalidation endpoint.");
 }

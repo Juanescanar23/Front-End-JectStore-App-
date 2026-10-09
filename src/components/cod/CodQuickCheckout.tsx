@@ -111,6 +111,24 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
     () => offers.find((offer) => offer.id === selectedOfferId) || null,
     [offers, selectedOfferId],
   );
+  const [previousOffer, setPreviousOffer] = useState<CodOffer | null>(null);
+
+  // Adjust this editable draft before rendering its fields, only when the
+  // selected offer changes. Equal-size offers retain the existing selections.
+  if (previousOffer !== selectedOffer) {
+    setPreviousOffer(selectedOffer);
+    setOfferPerUnitSelections((prev) => {
+      if (!selectedOffer || selectedOffer.selection_strategy !== "per_unit_variant") {
+        return [];
+      }
+
+      if (prev.length === selectedOffer.units_count) {
+        return prev;
+      }
+
+      return Array.from({ length: selectedOffer.units_count }, (_, index) => prev[index] || {});
+    });
+  }
 
   const isOfferMode = Boolean(selectedOffer);
 
@@ -232,6 +250,9 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
     const urlParams = new URLSearchParams(searchParams.toString());
     const prefilled = parseSelectionsFromSearch(productAttributeCodes, urlParams);
 
+    // This is an editable checkout draft synchronized with API config and Next
+    // URL navigation, not a computed read-only field. Retain the existing reset.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSingleSelection(prefilled);
     setOfferSharedSelection(prefilled);
 
@@ -247,20 +268,11 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
     }
   }, [config, productAttributeCodes, searchParams]);
 
-  useEffect(() => {
-    if (!selectedOffer || selectedOffer.selection_strategy !== "per_unit_variant") {
-      setOfferPerUnitSelections([]);
-      return;
-    }
-
-    setOfferPerUnitSelections((prev) => {
-      if (prev.length === selectedOffer.units_count) {
-        return prev;
-      }
-
-      return Array.from({ length: selectedOffer.units_count }, (_, index) => prev[index] || {});
-    });
-  }, [selectedOffer]);
+  const closeModal = () => {
+    setIsOpen(false);
+    setStep(1);
+    setErrorMessage("");
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -356,8 +368,6 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
 
     const countryCode = form.country_code;
     if (!countryCode) {
-      setRegions([]);
-      setCities([]);
       return;
     }
 
@@ -401,7 +411,6 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
     if (!isOpen || step < 2) return;
 
     if (!form.country_code || !form.region_id) {
-      setCities([]);
       return;
     }
 
@@ -439,12 +448,6 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
 
     loadCities();
   }, [form.country_code, form.region_id, isOpen, step]);
-
-  const closeModal = () => {
-    setIsOpen(false);
-    setStep(1);
-    setErrorMessage("");
-  };
 
   const validateStep1 = (): boolean => {
     if (!config || !productSnapshot) return false;
@@ -961,14 +964,20 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
                       País *
                       <select
                         value={form.country_code}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          // Every country change resets region_id. Discard its
+                          // dependent city list before the next location request.
+                          setCities([]);
+                          if (!event.target.value) {
+                            setRegions([]);
+                          }
                           setForm((prev) => ({
                             ...prev,
                             country_code: event.target.value,
                             region_id: "",
                             city_id: "",
-                          }))
-                        }
+                          }));
+                        }}
                         className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
                       >
                         <option value="">Selecciona</option>
@@ -992,13 +1001,16 @@ export default function CodQuickCheckout({ productId }: CodQuickCheckoutProps) {
                       Departamento / Estado *
                       <select
                         value={form.region_id}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          if (!event.target.value) {
+                            setCities([]);
+                          }
                           setForm((prev) => ({
                             ...prev,
                             region_id: event.target.value,
                             city_id: "",
-                          }))
-                        }
+                          }));
+                        }}
                         className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
                       >
                         <option value="">Selecciona</option>

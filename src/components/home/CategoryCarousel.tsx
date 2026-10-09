@@ -14,6 +14,8 @@ interface CategoryCarouselProps {
 const CategoryCarousel: FC<CategoryCarouselProps> = async ({
   options: _options,
 }) => {
+  let topCategories: any[] = [];
+
   try {
     const data = await graphqlRequestNoCache<any>(
       GET_HOME_CATEGORIES,
@@ -22,12 +24,16 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
 
     const categories = data?.homeCategories || [];
 
-    const topCategories = categories
+    topCategories = categories
       .filter((category: any) => category.id !== "1")
       .sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
       .slice(0, 3);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return null;
+  }
 
-    if (!topCategories.length) return null;
+  if (!topCategories.length) return null;
 
     return (
       <section className="pt-8 sm:pt-12 lg:pt-20">
@@ -73,10 +79,6 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
         </div>
       </section>
     );
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    return null;
-  }
 };
 
 export default CategoryCarousel;

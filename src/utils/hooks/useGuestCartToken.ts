@@ -102,6 +102,9 @@ export const useGuestCartToken = () => {
       }>(cookieToken, isGuest);
 
       if (decoded) {
+        // Cookie state is external and browser-only. Restore it after hydration
+        // rather than reading document.cookie during server/client initial render.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setToken(decoded.sessionToken);
         setCartId(decoded.cartId);
       }

@@ -1,6 +1,6 @@
-import { revalidate } from "@/utils/bagisto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  return revalidate(req);
+// Only the internal HMAC endpoint may invalidate registered tenant host tags.
+export async function POST(): Promise<NextResponse> {
+  return NextResponse.json({ revalidated: false, message: "Legacy endpoint retired." }, { status: 410, headers: { "Cache-Control": "no-store" } });
 }

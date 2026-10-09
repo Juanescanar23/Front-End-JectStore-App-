@@ -12,7 +12,6 @@ export default function CodOrdersPanel() {
   const [markingOrderId, setMarkingOrderId] = useState<string | null>(null);
 
   const load = async () => {
-    setLoading(true);
     try {
       const response = await fetch("/api/portal/orders", {
         method: "GET",
@@ -42,6 +41,9 @@ export default function CodOrdersPanel() {
   };
 
   useEffect(() => {
+    // Hydrate persisted orders from the external API, not from render props.
+    // Loading starts true; reloads are triggered only by the payment event.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, []);
 
@@ -62,6 +64,7 @@ export default function CodOrdersPanel() {
         throw new Error(payload.error || "No se pudo marcar la orden como pagada.");
       }
 
+      setLoading(true);
       await load();
       showToast("Orden marcada como pagada.", "success");
     } catch (error) {

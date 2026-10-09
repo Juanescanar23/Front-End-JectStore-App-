@@ -36,7 +36,6 @@ export default function CodSettingsPanel() {
   );
 
   const load = async () => {
-    setLoading(true);
     try {
       const response = await fetch("/api/portal/cod/settings", {
         method: "GET",
@@ -72,6 +71,9 @@ export default function CodSettingsPanel() {
   };
 
   useEffect(() => {
+    // Hydrate an editable settings draft from the external API after mount.
+    // It cannot be computed from props, and the initial loading state is true.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, []);
 
