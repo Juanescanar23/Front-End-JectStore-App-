@@ -1,4 +1,5 @@
 import dynamicImport from "next/dynamic";
+import Link from "next/link";
 import Grid from "@/components/theme/ui/grid/Grid";
 import NotFound from "@/components/theme/search/not-found";
 import { isArray } from "@/utils/type-guards";
@@ -53,6 +54,36 @@ export async function generateMetadata({
   });
 }
 
+function SearchFallback({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <section className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-14">
+      <div className="rounded-[32px] border border-neutral-200 bg-white px-6 py-12 text-center shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500">
+          Catálogo
+        </p>
+        <h1 className="mt-4 text-3xl font-semibold text-neutral-950 sm:text-4xl">
+          {title}
+        </h1>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-neutral-600 sm:text-base">
+          {description}
+        </p>
+        <Link
+          href="/"
+          className="mt-8 inline-flex items-center justify-center rounded-full bg-neutral-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+        >
+          Volver al inicio
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export default async function SearchPage({
   searchParams,
 }: {
@@ -80,14 +111,27 @@ export default async function SearchPage({
     searchParams: params || {},
   });
 
-  const data = await graphqlRequest<ProductsResponse>(
-    GET_PRODUCTS,
-    { input },
-    {
-      tags: ["products"],
-      life: "minutes",
-    }
-  );
+  let data: ProductsResponse | null = null;
+
+  try {
+    data = await graphqlRequest<ProductsResponse>(
+      GET_PRODUCTS,
+      { input },
+      {
+        tags: ["products"],
+        life: "minutes",
+      }
+    );
+  } catch (error) {
+    console.error("Unable to resolve storefront search page:", error);
+
+    return (
+      <SearchFallback
+        title="No pudimos cargar el catálogo"
+        description="La búsqueda del tenant no está disponible temporalmente. Puedes volver al inicio e intentarlo de nuevo en unos minutos."
+      />
+    );
+  }
 
   const filterAttributes: Array<{
     id: string;

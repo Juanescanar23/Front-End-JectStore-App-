@@ -51,12 +51,17 @@ export async function getTenantWhatsAppConfig(): Promise<TenantWhatsAppConfig | 
 
     const payload = (await response.json()) as {
       enabled?: unknown;
+      allows_checkout?: unknown;
       wa_base_url?: unknown;
       phone_e164?: unknown;
     };
 
     return {
       enabled: Boolean(payload?.enabled),
+      allowsCheckout:
+        typeof payload?.allows_checkout === "boolean"
+          ? payload.allows_checkout
+          : true,
       waBaseUrl:
         typeof payload?.wa_base_url === "string" && payload.wa_base_url.trim() !== ""
           ? payload.wa_base_url

@@ -176,5 +176,23 @@ body {
     }
   }
 
+  .cod-modal-root {
+    --cod-modal-overlay: rgba(0, 0, 0, 0.45);
+    --cod-modal-surface: #ffffff;
+  }
+
+  .cod-modal-root [role="dialog"] {
+    background: var(--cod-modal-surface);
+  }
+
+  .cod-modal-root [role="dialog"] *:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  .cod-modal-root [role="dialog"] {
+    overscroll-behavior: contain;
+  }
+
 
 }

@@ -1,86 +1,41 @@
+import { NextRequest } from "next/server";
+
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
-import { normalizeLegacyCart } from "@/app/api/_lib/cart-compat";
+import { UPDATE_CART_ITEM } from "@/graphql";
+import { UpdateCartItemOperation } from "@/types/cart/type";
+import { getAuthToken } from "@/utils/helper";
 
-const UPDATE_ITEM_TO_CART_MUTATION = `
-  mutation UpdateItemToCart($input: UpdateItemToCartInput!) {
-    updateItemToCart(input: $input) {
-      success
-      message
-      cart {
-        id
-        itemsCount
-        itemsQty
-        isGuest
-        taxTotal
-        shippingAmount
-        subTotal
-        grandTotal
-        shippingMethod
-        selectedShippingRate {
-          method
-          methodTitle
-          methodDescription
-        }
-        payment {
-          method
-          methodTitle
-        }
-        items {
-          id
-          cartId
-          productId
-          name
-          sku
-          quantity
-          type
-          price
-          product {
-            urlKey
-          }
-        }
-      }
-    }
-  }
-`;
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const guestToken = getAuthToken(req);
 
-    const response = await bagistoFetch<any>({
-      query: UPDATE_ITEM_TO_CART_MUTATION,
-      variables: {
-        input: {
-          qty: [
-            {
-              cartItemId: String(body.cartItemId ?? ""),
-              quantity: Math.max(1, Number(body.quantity) || 1),
-            },
-          ],
-        },
-      },
+    const variables = {
+      cartItemId: body.cartItemId,
+      quantity: body.quantity,
+    };
+
+
+    const res = await bagistoFetch<UpdateCartItemOperation>({
+      query: UPDATE_CART_ITEM,
+      variables: variables,
       cache: "no-store",
+      guestToken,
     });
-
-    const payload = response?.body?.data?.updateItemToCart;
-    const legacyCart = normalizeLegacyCart(payload?.cart);
 
     return Response.json({
-      data: {
-        createUpdateCartItem: {
-          updateCartItem: legacyCart,
-        },
-      },
+      data: { ...res?.body.data },
     });
+
   } catch (error) {
     if (isBagistoError(error)) {
       return Response.json(
         {
           data: { createUpdateCartItem: null },
-          error,
+          error: error.cause ?? error,
         },
-        { status: 200 },
+        { status: 200 }
       );
     }
 
@@ -89,7 +44,7 @@ export async function POST(req: Request) {
         message: "Network error",
         error: error instanceof Error ? error.message : error,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

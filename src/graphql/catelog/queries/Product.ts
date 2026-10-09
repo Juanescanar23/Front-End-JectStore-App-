@@ -47,6 +47,17 @@ export const GET_PRODUCT_BY_URL_KEY = gql`
     products: allProducts(input: $input) {
       data {
         ...ProductDetailed
+        commerce {
+          payment {
+            cashOnDelivery {
+              available
+            }
+          }
+          soldOut {
+            showWhatsappCta
+            whatsappUrl
+          }
+        }
         images {
           url
         }
@@ -79,6 +90,17 @@ export const GET_PRODUCT_BY_URL_KEY = gql`
           price
           specialPrice
           isSaleable
+          commerce {
+            payment {
+              cashOnDelivery {
+                available
+              }
+            }
+            soldOut {
+              showWhatsappCta
+              whatsappUrl
+            }
+          }
           images {
             url
           }

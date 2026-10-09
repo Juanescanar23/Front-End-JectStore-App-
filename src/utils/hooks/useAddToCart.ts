@@ -7,6 +7,7 @@ import { isObject } from "@utils/type-guards";
 import { getCartToken, getCookie } from "@utils/getCartToken";
 import { useGuestCartToken } from "./useGuestCartToken";
 import { IS_GUEST } from "@/utils/constants";
+import { detectClientLocaleRoot, getStorefrontCopy } from "@/utils/storefront-copy";
 
 interface AddInput {
   productId: number;
@@ -82,6 +83,7 @@ export const useAddProduct = () => {
   const dispatch = useAppDispatch();
   const { createGuestToken, resetGuestToken } = useGuestCartToken();
   const { showToast } = useCustomToast();
+  const localeRoot = detectClientLocaleRoot();
 
   const { mutateAsync, isPending: isCartLoading } = useMutation({
     mutationFn: ({ token, ...input }: AddInput) =>
@@ -108,7 +110,7 @@ export const useAddProduct = () => {
       if (responseData) {
         if (responseData.success) {
         dispatch(addItem(responseData as any));
-        showToast("Product added to cart successfully", "success");
+        showToast(getStorefrontCopy("addToCartSuccess", localeRoot), "success");
         }
       }
     },
@@ -134,7 +136,10 @@ export const useAddProduct = () => {
       token = await createGuestToken();
 
       if (!token) {
-        showToast("Failed to create cart session", "danger");
+        showToast(
+          getStorefrontCopy("createCartSessionFailed", localeRoot),
+          "danger",
+        );
         return;
       }
     }
@@ -164,7 +169,8 @@ export const useAddProduct = () => {
         const responseData = response?.data?.createRemoveCartItem;
         if (isObject(responseData)) {
           const message =
-            responseData?.message || "Cart item removed successfully";
+            responseData?.message ||
+            getStorefrontCopy("cartItemRemoved", localeRoot);
           dispatch(addItem(responseData?.removeCartItem as any));
           showToast(message as string, "warning");
 
@@ -177,7 +183,7 @@ export const useAddProduct = () => {
             }
           }
         } else {
-          showToast("Something went wrong", "warning");
+          showToast(getStorefrontCopy("genericError", localeRoot), "warning");
         }
       },
       onError: (error) => {
@@ -216,7 +222,7 @@ export const useAddProduct = () => {
         if (isObject(responseData)) {
           dispatch(addItem(responseData as any));
         } else {
-          showToast("Something went wrong!", "warning");
+          showToast(getStorefrontCopy("genericError", localeRoot), "warning");
         }
       },
 
@@ -233,7 +239,7 @@ export const useAddProduct = () => {
     quantity: number;
   }) => {
     if (quantity < 1) {
-      showToast("Quantity must be at least 1", "warning");
+      showToast(getStorefrontCopy("quantityMinimum", localeRoot), "warning");
       return;
     }
     const token = getCartToken();

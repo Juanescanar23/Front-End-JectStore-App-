@@ -10,6 +10,7 @@ import Subscribe from "./Subscribe";
 import FooterMenu from "./FooterMenu";
 import ServiceContent from "./ServiceContent";
 import { ThemeCustomizationTranslationNode } from "@/types/theme/theme-customization";
+import { getStorefrontSeoPayload } from "@/utils/server/storefront-seo";
 
 export default async function Footer() {
   const skeleton =
@@ -17,6 +18,9 @@ export default async function Footer() {
   const menu = await getThemeCustomization();
   const services = menu?.services_content?.[0];
   const serviceTranslations = services?.translations || [];
+  const branding = await getStorefrontSeoPayload();
+  const logoSrc = branding?.image;
+  const logoAlt = branding?.siteName || branding?.title || "JectStore";
 
   return (
     <>
@@ -37,7 +41,7 @@ export default async function Footer() {
               aria-label="Ir al inicio"
               title="Ir al inicio"
             >
-              <LogoIcon />
+              <LogoIcon src={logoSrc} alt={logoAlt} />
               <span className="sr-only">Ir al inicio</span>
             </Link>
             <div className="flex gap-[14px]">

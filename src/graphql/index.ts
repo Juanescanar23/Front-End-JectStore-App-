@@ -5,5 +5,6 @@ export * from "./theme/queries";
 export * from "./cart/mutations";
 export * from "./checkout/queries";
 export * from "./checkout/mutations";
+export * from "./cod";
 export * from "./types";
 export { graphqlRequest, graphqlRequestNoCache } from "../lib/graphql-fetch";

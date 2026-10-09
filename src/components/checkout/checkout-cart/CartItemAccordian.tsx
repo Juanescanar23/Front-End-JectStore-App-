@@ -1,9 +1,11 @@
 import { DEFAULT_OPTION } from "@/utils/constants";
 import { useScrollTo } from "@/utils/hooks/useScrollTo";
+import { resolveCartItemImage } from "@utils/cart/normalize";
+import { NOT_IMAGE } from "@utils/constants";
 import { Price } from "@components/theme/ui/Price";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { createUrl, safeParse } from "@utils/helper";
+import { createUrl } from "@utils/helper";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -24,8 +26,7 @@ export default function CartItemAccordion({
   const scrollTo = useScrollTo();
 
   return (
-    <div className="mobile-heading fixed bottom-0 left-0 z-50 w-full border-t border-neutral-200 bg-white pb-14
-     dark:border-neutral-700 dark:bg-black lg:hidden">
+    <div className="mobile-heading fixed bottom-0 left-0 z-50 w-full border-t border-neutral-200 bg-white/95 pb-[calc(env(safe-area-inset-bottom)+56px)] shadow-[0_-18px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
       <Accordion
         selectionMode="multiple"
         className="!px-0"
@@ -51,9 +52,9 @@ export default function CartItemAccordion({
             )
           }
           classNames={{
-    heading: "px-4", 
-    content: "px-4" 
-  }}
+            heading: "px-4",
+            content: "px-4",
+          }}
           aria-label="Resumen del pedido"
           title="Resumen del pedido"
           subtitle={
@@ -65,14 +66,18 @@ export default function CartItemAccordion({
           }
         >
           <div className="flex h-full flex-col justify-between px-4">
-            <ul className="flex-grow overflow-y-auto max-h-[300px] py-4 pr-2 -mr-2" style={{ scrollbarWidth: 'thin' }}>
+            <div className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+              {cart.length} {cart.length === 1 ? "producto" : "productos"} listos para checkout.
+            </div>
+
+            <ul className="max-h-[300px] flex-grow overflow-y-auto py-4 pr-2 -mr-2" style={{ scrollbarWidth: "thin" }}>
               {cart?.map((item: any, i: number) => {
                 const merchandiseSearchParams = {} as MerchandiseSearchParams;
                 const merchandiseUrl = createUrl(
                                 `/product/${item?.node.productUrlKey}`,
                                 new URLSearchParams(merchandiseSearchParams)
                               );
-                const baseImage: any = safeParse(item?.node?.baseImage);
+                const imageSrc = resolveCartItemImage(item?.node?.baseImage);
                 return (
                   <li key={i} className="flex w-full flex-col">
                     <div className="relative flex w-full flex-row justify-between gap-3 px-1 py-4">
@@ -87,7 +92,8 @@ export default function CartItemAccordion({
                             width={64}
                             height={64}
                             alt={item?.node?.baseImage || item?.product?.name}
-                            src={baseImage?.small_image_url || ""}
+                            src={imageSrc}
+                            onError={(e) => (e.currentTarget.src = NOT_IMAGE)}
                           />
                         </div>
 
@@ -119,35 +125,35 @@ export default function CartItemAccordion({
             </ul>
             <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
               <div className="mb-3 flex items-center justify-between pb-1">
-                <p className="text-black[60%] font-outfit text-base font-normal dark:text-white">
+                <p className="font-outfit text-base font-normal text-black/[60%]">
                   Subtotal
                 </p>
                 <Price
-                  className="text-right text-base text-black dark:text-white"
+                  className="text-right text-base text-black"
                   amount={cartItems?.subtotal || "0"}
                   currencyCode={"USD"}
                 />
               </div>
               <div className="mb-3 flex items-center justify-between pb-1 pt-1">
-                <p className="text-black[60%] font-outfit text-base font-normal dark:text-white">
+                <p className="font-outfit text-base font-normal text-black/[60%]">
                   Envío
                 </p>
                 {cartItems?.shippingAmount ? (
                   <Price
                     amount={cartItems?.shippingAmount || "0"}
-                    className="text-right text-base text-black dark:text-white"
+                    className="text-right text-base text-black"
                     currencyCode={"USD"}
                   />
                 ) : (
-                  <p className="text-right text-base">
+                  <p className="text-right text-base text-neutral-600">
                     Calculado en el siguiente paso
                   </p>
                 )}
               </div>
               <div className="mb-3 flex items-center justify-between pb-1 pt-1">
-                <p className="text-xl font-bold dark:text-white">Total</p>
+                <p className="text-xl font-bold text-neutral-950">Total</p>
                 <Price
-                  className="text-right text-base text-black dark:text-white"
+                  className="text-right text-base text-black"
                   amount={cartItems?.grandTotal || "0"}
                   currencyCode={"USD"}
                 />

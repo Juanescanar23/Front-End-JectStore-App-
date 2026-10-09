@@ -1,4 +1,4 @@
-import { cookies, headers } from "next/headers";
+import { cookies, headers as nextHeaders } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -25,6 +25,13 @@ import { SUBSCRIBE_TO_NEWSLETTER } from "@/graphql/theme/mutations";
 import { authOptions } from "@utils/auth";
 import { RegisterInputs } from "@components/customer/RegistrationForm";
 import { GetFooterResponse, GetFooterVariables, ThemeCustomizationResult } from "@/types/theme/theme-customization";
+import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
+import {
+  buildTenantForwardHeaders,
+  resolveServerGraphqlUrl,
+} from "@/utils/graphql-endpoint";
+
+const IMMEDIATE_REVALIDATE = { expire: 0 } as const;
 
 type ExtractVariables<T> = T extends { variables: object }
   ? T["variables"]
@@ -37,13 +44,22 @@ const normalizeBase = (value?: string) => {
 
 const resolveGraphqlUrl = async () => {
   if (!GRAPHQL_URL) return GRAPHQL_URL;
-  if (!GRAPHQL_URL.startsWith("/")) return GRAPHQL_URL;
-  const headerStore = await headers();
-  const host = headerStore.get("host");
-  if (!host) return GRAPHQL_URL;
+  const headerStore = await nextHeaders();
+  const runtimeHost =
+    headerStore.get("x-tenant-host") ||
+    headerStore.get("x-storefront-host") ||
+    headerStore.get("x-forwarded-host") ||
+    headerStore.get("host");
+
+  if (!runtimeHost) return GRAPHQL_URL;
+
+  const resolved = resolveServerGraphqlUrl(GRAPHQL_URL, runtimeHost);
+  if (!resolved) return GRAPHQL_URL;
+  if (!resolved.startsWith("/")) return resolved;
+
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
-  const base = normalizeBase(host);
-  return `${proto}://${base}${GRAPHQL_URL}`;
+  const base = normalizeBase(runtimeHost.split(",")[0]?.trim());
+  return `${proto}://${base}${resolved}`;
 };
 
 export async function bagistoFetch<T>({
@@ -64,33 +80,18 @@ export async function bagistoFetch<T>({
   isCookies?: boolean;
   guestToken?: string;
   revalidate?: number;
-}): Promise<{ status: number; body: T; setCookie?: string } | never> {
+}): Promise<{ status: number; body: T } | never> {
   try {
     const queryString =
       typeof query === "string" ? query : query.loc?.source?.body ?? "";
+    const localeCode = await getStorefrontLocaleCode();
 
     let bagistoCartId = "";
-    let bagistoSessionCookieName = BAGISTO_SESSION;
     let accessToken: string | undefined = undefined;
 
     if (isCookies) {
       const cookieStore = await cookies();
-      const sessionCookieCandidates = [
-        BAGISTO_SESSION,
-        "jectstore_session",
-        "laravel_session",
-      ].filter(Boolean);
-
-      for (const cookieName of sessionCookieCandidates) {
-        const value = cookieStore.get(cookieName)?.value;
-
-        if (value) {
-          bagistoCartId = value;
-          bagistoSessionCookieName = cookieName;
-          break;
-        }
-      }
-
+      bagistoCartId = cookieStore.get(BAGISTO_SESSION)?.value ?? "";
       const sessions = await getServerSession(authOptions);
       accessToken = (sessions as any)?.user?.accessToken;
 
@@ -99,7 +100,19 @@ export async function bagistoFetch<T>({
     const baseHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       "X-STOREFRONT-KEY": STOREFRONT_KEY,
+      "x-locale": localeCode || "es",
     };
+
+    const headerStore = await nextHeaders();
+    Object.assign(
+      baseHeaders,
+      buildTenantForwardHeaders(
+        headerStore.get("x-tenant-host") ||
+          headerStore.get("x-storefront-host") ||
+          headerStore.get("x-forwarded-host") ||
+          headerStore.get("host"),
+      ),
+    );
 
     if (accessToken) {
       baseHeaders.Authorization = `Bearer ${accessToken}`;
@@ -109,7 +122,7 @@ export async function bagistoFetch<T>({
     }
 
     if (bagistoCartId) {
-      baseHeaders.Cookie = `${bagistoSessionCookieName}=${bagistoCartId}`;
+      baseHeaders.Cookie = `${BAGISTO_SESSION}=${bagistoCartId}`;
     }
 
     if (isCookies && headers) {
@@ -138,9 +151,7 @@ export async function bagistoFetch<T>({
 
     if (body.errors) throw body.errors[0];
 
-    const setCookie = result.headers.get("set-cookie");
-
-    return { status: result.status, body, setCookie: setCookie ?? undefined };
+    return { status: result.status, body };
   } catch (e) {
     throw e;
   }
@@ -163,13 +174,22 @@ export async function bagistoFetchNoSession<T>({
   revalidate?: number,
 }): Promise<{ status: number; body: T } | never> {
   try {
+    const localeCode = await getStorefrontLocaleCode();
+    const headerStore = await nextHeaders();
+    const tenantHeaders = buildTenantForwardHeaders(
+      headerStore.get("x-tenant-host") ||
+        headerStore.get("x-storefront-host") ||
+        headerStore.get("x-forwarded-host") ||
+        headerStore.get("host"),
+    );
+
     const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-STOREFRONT-KEY": STOREFRONT_KEY,
-        "x-locale": "en",
-        "x-currency": "USD",
+        "x-locale": localeCode || "es",
+        ...tenantHeaders,
         ...headers,
       },
       body: JSON.stringify({
@@ -400,7 +420,7 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
     "products/delete",
     "products/update",
   ];
-  const topic = (await headers()).get("x-bagisto-topic") || "unknown";
+  const topic = (await nextHeaders()).get("x-bagisto-topic") || "unknown";
   const secret = req.nextUrl.searchParams.get("secret");
   const isCollectionUpdate = collectionWebhooks.includes(topic);
   const isProductUpdate = productWebhooks.includes(topic);
@@ -414,16 +434,16 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   if (isProductUpdate) {
-    revalidateTag("products", "max");
-    revalidateTag("related-products", "max");
-    revalidateTag("swatch-and-reviews", "max");
-    revalidateTag("categories", "max");
+    revalidateTag("products", IMMEDIATE_REVALIDATE);
+    revalidateTag("related-products", IMMEDIATE_REVALIDATE);
+    revalidateTag("swatch-and-reviews", IMMEDIATE_REVALIDATE);
+    revalidateTag("categories", IMMEDIATE_REVALIDATE);
     revalidatePath("/", "layout");
     revalidatePath("/search", "page");
     revalidatePath("/product/[...urlProduct]", "page");
   } else if (isCollectionUpdate) {
-    revalidateTag("categories", "max");
-    revalidateTag("products", "max");
+    revalidateTag("categories", IMMEDIATE_REVALIDATE);
+    revalidateTag("products", IMMEDIATE_REVALIDATE);
     revalidatePath("/", "layout");
     revalidatePath("/search", "page");
     revalidatePath("/search/[collection]", "page");
@@ -440,50 +460,16 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
 
 export async function getPage(
   input: { urlKey: string }
-): Promise<any[]> {
+): Promise<any> {
   try {
     const res = await bagistoFetch<any>({
       query: PAGE_BY_URL_KEY,
       cache: "no-store",
       isCookies: false,
-      variables: {
-        input: { urlKey: input.urlKey },
-        first: 1,
-        page: 1,
-      },
+      variables: { pageByUrlKey: input.urlKey },
     });
 
-    const cmsPagesPayload = res.body.data?.cmsPages;
-    const pages = Array.isArray(cmsPagesPayload)
-      ? cmsPagesPayload
-      : cmsPagesPayload?.data ?? [];
-
-    return pages
-      .map((page: any) => {
-        if (page?.translation) {
-          return page;
-        }
-
-        const translations = Array.isArray(page?.translations)
-          ? page.translations
-          : [];
-
-        const translation =
-          translations.find(
-            (entry: any) =>
-              entry?.urlKey?.toLowerCase() === input.urlKey.toLowerCase()
-          ) ?? translations[0];
-
-        if (!translation) {
-          return null;
-        }
-
-        return {
-          ...page,
-          translation,
-        };
-      })
-      .filter(Boolean);
+    return res.body.data?.pageByUrlKeypages;
   } catch (error) {
     if (error instanceof Error) {
       console.error("getPage Error:", {

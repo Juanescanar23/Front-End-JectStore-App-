@@ -7,13 +7,17 @@ import {
 } from "@apollo/client";
 import makeClient from "./apollo-client";
 import { GRAPHQL_URL } from "@/utils/constants";
-import { resolveTenantScopedGraphqlUrl } from "@/utils/graphql-endpoint";
+import {
+  buildTenantForwardHeaders,
+  resolveServerGraphqlUrl,
+  resolveTenantHostForRequest,
+} from "@/utils/graphql-endpoint";
 
-const serverClients = new Map<string, ReturnType<typeof makeClient>>();
 const FALLBACK_LANDLORD_HOST = "app.jectstore.com";
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
 const STOREFRONT_REALTIME_MODE =
-  process.env.STOREFRONT_REALTIME_MODE !== "false";
+  process.env.NODE_ENV !== "production" ||
+  process.env.STOREFRONT_REALTIME_MODE === "true";
 
 const normalizeBase = (value?: string | null) => {
   if (!value) return "";
@@ -39,6 +43,7 @@ const resolveRuntimeHost = (headerStore: Headers) => {
   const landlordHost = getLandlordHost();
   const candidates = [
     headerStore.get("x-tenant-host"),
+    headerStore.get("x-storefront-host"),
     headerStore.get("x-original-host"),
     headerStore.get("host"),
     headerStore.get("x-forwarded-host"),
@@ -78,17 +83,46 @@ const resolveRuntimeProtocol = (headerStore: Headers, host: string) => {
   return "https";
 };
 
-const resolveServerGraphqlUrl = async () => {
-  if (!GRAPHQL_URL) return GRAPHQL_URL;
+const resolveServerGraphqlTarget = async () => {
+  if (!GRAPHQL_URL) {
+    return {
+      uri: GRAPHQL_URL,
+      tenantHost: "",
+    };
+  }
+
   const headerStore = await headers();
   const host = resolveRuntimeHost(headerStore);
-  if (!host) return GRAPHQL_URL;
-  const scopedUrl = resolveTenantScopedGraphqlUrl(GRAPHQL_URL, host);
-  if (!scopedUrl) return GRAPHQL_URL;
-  if (!scopedUrl.startsWith("/")) return scopedUrl;
+
+  if (!host) {
+    return {
+      uri: GRAPHQL_URL,
+      tenantHost: "",
+    };
+  }
+
+  const resolvedUri = resolveServerGraphqlUrl(GRAPHQL_URL, host);
+  if (!resolvedUri) {
+    return {
+      uri: GRAPHQL_URL,
+      tenantHost: "",
+    };
+  }
+
+  if (!resolvedUri.startsWith("/")) {
+    return {
+      uri: resolvedUri,
+      tenantHost: resolveTenantHostForRequest(host),
+    };
+  }
+
   const proto = resolveRuntimeProtocol(headerStore, host);
   const base = normalizeBase(host);
-  return `${proto}://${base}${scopedUrl}`;
+
+  return {
+    uri: `${proto}://${base}${resolvedUri}`,
+    tenantHost: "",
+  };
 };
 
 async function getClient() {
@@ -97,17 +131,15 @@ async function getClient() {
     return makeClient();
   }
 
-  const headerStore = await headers();
-  const host = resolveRuntimeHost(headerStore) || "default";
-  const proto = resolveRuntimeProtocol(headerStore, host);
-  const cacheKey = `${proto}://${host}`;
-  const cached = serverClients.get(cacheKey);
-  if (cached) return cached;
+  const { uri, tenantHost } = await resolveServerGraphqlTarget();
+  const tenantHeaders = buildTenantForwardHeaders(tenantHost);
 
-  const uri = await resolveServerGraphqlUrl();
-  const client = makeClient({ uri });
-  serverClients.set(cacheKey, client);
-  return client;
+  return makeClient({
+    uri,
+    extraHeaders: Object.keys(tenantHeaders).length
+      ? tenantHeaders
+      : undefined,
+  });
 }
 
 

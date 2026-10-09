@@ -3,6 +3,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { GET_DEFAULT_CHANNEL } from "@/graphql";
 import { graphqlRequest } from "@/lib/graphql-fetch";
+import { resolveLocaleRoot } from "@/utils/storefront-copy";
 
 type DefaultChannelResponse = {
   getDefaultChannel?: {
@@ -12,7 +13,7 @@ type DefaultChannelResponse = {
   } | null;
 };
 
-const normalizeLocale = (value?: string | null) => {
+export const normalizeLocaleCode = (value?: string | null) => {
   if (!value) return "";
 
   return value.trim().toLowerCase().replace("_", "-");
@@ -22,7 +23,7 @@ const extractLocaleFromAcceptLanguage = (value?: string | null) => {
   if (!value) return "";
 
   const firstLanguage = value.split(",")[0]?.trim();
-  const normalized = normalizeLocale(firstLanguage);
+  const normalized = normalizeLocaleCode(firstLanguage);
 
   if (!normalized) return "";
 
@@ -34,7 +35,7 @@ export async function getStorefrontLocaleCode(): Promise<string | undefined> {
 
   const explicitLocale =
     headerStore.get("x-locale") ?? headerStore.get("x-locale-code");
-  const normalizedExplicitLocale = normalizeLocale(explicitLocale);
+  const normalizedExplicitLocale = normalizeLocaleCode(explicitLocale);
 
   if (normalizedExplicitLocale) {
     return normalizedExplicitLocale;
@@ -50,7 +51,7 @@ export async function getStorefrontLocaleCode(): Promise<string | undefined> {
       },
     );
 
-    const channelLocale = normalizeLocale(
+    const channelLocale = normalizeLocaleCode(
       data?.getDefaultChannel?.defaultLocale?.code,
     );
 
@@ -66,4 +67,8 @@ export async function getStorefrontLocaleCode(): Promise<string | undefined> {
   );
 
   return acceptLanguageLocale || undefined;
+}
+
+export async function getStorefrontLocaleRoot(): Promise<string> {
+  return resolveLocaleRoot(await getStorefrontLocaleCode());
 }

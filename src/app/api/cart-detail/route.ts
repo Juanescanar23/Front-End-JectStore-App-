@@ -1,69 +1,29 @@
+import { GET_CART_ITEM } from "@/graphql";
+import { ReadCartOperation } from "@/types/cart/type";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
-import { normalizeLegacyCart } from "@/app/api/_lib/cart-compat";
+import { getAuthToken } from "@/utils/helper";
 
-const CART_DETAIL_QUERY = `
-  query GetCartDetail {
-    cartDetail {
-      id
-      itemsCount
-      itemsQty
-      isGuest
-      taxTotal
-      shippingAmount
-      subTotal
-      grandTotal
-      shippingMethod
-      selectedShippingRate {
-        method
-        methodTitle
-        methodDescription
-      }
-      payment {
-        method
-        methodTitle
-      }
-      items {
-        id
-        cartId
-        productId
-        name
-        sku
-        quantity
-        type
-        price
-        product {
-          urlKey
-        }
-      }
-    }
-  }
-`;
-
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const response = await bagistoFetch<any>({
-      query: CART_DETAIL_QUERY,
+    const guestToken = getAuthToken(req);
+
+    const response = await bagistoFetch<ReadCartOperation>({
+      query: GET_CART_ITEM,
       cache: "no-store",
+      guestToken,
     });
-
-    const legacyCart = normalizeLegacyCart(response?.body?.data?.cartDetail);
-
     return Response.json({
-      data: {
-        createReadCart: {
-          readCart: legacyCart,
-        },
-      },
+      data: { ...response.body.data },
     });
   } catch (error) {
     if (isBagistoError(error)) {
       return Response.json(
         {
           data: { createReadCart: null },
-          error,
+          error: error.cause ?? error,
         },
-        { status: 200 },
+        { status: 200 }
       );
     }
 
@@ -72,7 +32,7 @@ export async function POST() {
         message: "Network error",
         error: error instanceof Error ? error.message : error,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

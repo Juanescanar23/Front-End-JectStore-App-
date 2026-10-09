@@ -11,10 +11,13 @@ import BottomNavbar from "./BottomNavbar";
 import { MobileSearchBar } from "./MobileSearch";
 import { useState } from "react";
 
-
-
-
-export default function MobileMenu({ menu }: { menu: any }) {
+export default function MobileMenu({
+  menu,
+  allowsCheckout = true,
+}: {
+  menu: any;
+  allowsCheckout?: boolean;
+}) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [activeTab, setActiveTab] = useState<
     "home" | "category" | "cart" | "account" | null
@@ -25,7 +28,9 @@ export default function MobileMenu({ menu }: { menu: any }) {
       <BottomNavbar
         onMenuOpen={onOpen}
         setActiveTab={setActiveTab}
-        activeTab={activeTab} />
+        activeTab={activeTab}
+        allowsCheckout={allowsCheckout}
+      />
 
       <Drawer
         backdrop="transparent"

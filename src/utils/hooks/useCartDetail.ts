@@ -7,6 +7,7 @@ import { addItem } from "@/store/slices/cart-slice";
 import { isObject } from "@utils/type-guards";
 import { useEffect } from "react";
 import { getCartToken } from "@utils/getCartToken";
+import { resolveReadCartPayload } from "@utils/cart/normalize";
 
 
 export function useCartDetail() {
@@ -30,11 +31,11 @@ export function useCartDetail() {
   });
 
   useEffect(() => {
-    const cartData = data?.data?.createReadCart?.readCart;
+    const cartData = resolveReadCartPayload(data);
 
     if (isObject(cartData)) {
       dispatch(addItem(cartData as any));
-    } else if (data && !isLoading) {
+    } else if (data?.error && !isLoading) {
       console.error("Invalid cart data structure:", data);
     }
   }, [data, isLoading, dispatch]);

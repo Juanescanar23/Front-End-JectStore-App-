@@ -1,60 +1,35 @@
 import { NextResponse } from "next/server";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
-
-const SAVE_PAYMENT_MUTATION = `
-  mutation SavePayment($input: savePaymentMethodInput!) {
-    savePayment(input: $input) {
-      message
-      jumpToSection
-      cart {
-        id
-        payment {
-          method
-          methodTitle
-        }
-      }
-    }
-  }
-`;
+import { CREATE_CHECKOUT_PAYMENT_METHODS } from "@/graphql";
+import { getAuthToken } from "@/utils/helper";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const guestToken = getAuthToken(req);
 
-    const response = await bagistoFetch<any>({
-      query: SAVE_PAYMENT_MUTATION,
-      variables: {
-        input: {
-          method: String(body?.paymentMethod ?? body?.method ?? ""),
-        },
-      },
+    const variables = {
+      paymentMethod: body.paymentMethod,
+      successUrl: `payment/success`,
+      failureUrl: `payment/failure`,
+      cancelUrl: `payment/cancel`
+    }
+
+    const res = await bagistoFetch<any>({
+      query: CREATE_CHECKOUT_PAYMENT_METHODS,
+      variables: variables as any,
       cache: "no-store",
+      guestToken,
     });
 
-    const payload = response?.body?.data?.savePayment;
-
-    return NextResponse.json(
-      {
-        data: {
-          createCheckoutPaymentMethod: {
-            checkoutPaymentMethod: {
-              success: Boolean(payload),
-              message: payload?.message ?? "",
-              paymentGatewayUrl: null,
-              paymentData: null,
-            },
-          },
-        },
-      },
-      { status: 200 },
-    );
+    return NextResponse.json({ data: res?.body?.data }, { status: 200 });
   } catch (error) {
     if (isBagistoError(error)) {
       return NextResponse.json(
         {
           data: { saveShipping: null },
-          error,
+          error: { ...error.cause },
         },
         { status: 200 },
       );

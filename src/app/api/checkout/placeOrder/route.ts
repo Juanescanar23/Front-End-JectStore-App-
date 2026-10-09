@@ -1,63 +1,27 @@
 import { NextResponse } from "next/server";
-import { bagistoFetch } from "@/utils/bagisto";
-import { isBagistoError } from "@/utils/type-guards";
+import { CREATE_CHECKOUT_ORDER } from "@/graphql";
+import { bagistoFetch } from "@utils/bagisto";
+import { isBagistoError } from "@utils/type-guards";
+import { CreateCheckoutOrderOperation } from "@/types/checkout/type";
+import { getAuthToken } from "@/utils/helper";
 
-const PLACE_ORDER_MUTATION = `
-  mutation PlaceOrder {
-    placeOrder {
-      success
-      redirectUrl
-      selectedMethod
-      order {
-        id
-        incrementId
-      }
-    }
-  }
-`;
-
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const response = await bagistoFetch<any>({
-      query: PLACE_ORDER_MUTATION,
+    const guestToken = getAuthToken(req);
+
+
+    const res = await bagistoFetch<CreateCheckoutOrderOperation>({
+      query: CREATE_CHECKOUT_ORDER,
       cache: "no-store",
+      guestToken,
     });
-
-    const payload = response?.body?.data?.placeOrder;
-
-    if (!payload?.success || !payload?.order?.id) {
-      return NextResponse.json(
-        {
-          data: { createCheckoutOrder: null },
-          error: {
-            message: "No se pudo finalizar la orden.",
-            payload,
-          },
-        },
-        { status: 200 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        data: {
-          createCheckoutOrder: {
-            checkoutOrder: {
-              id: Number(payload.order.id),
-              orderId: Number(payload.order.id),
-              incrementId: payload.order.incrementId,
-            },
-          },
-        },
-      },
-      { status: 200 },
-    );
+    return NextResponse.json({ data: res?.body?.data }, { status: 200 });
   } catch (error) {
     if (isBagistoError(error)) {
       return NextResponse.json(
         {
           data: { createCheckoutOrder: null },
-          error,
+          error: error.cause ?? error,
         },
         { status: 200 },
       );

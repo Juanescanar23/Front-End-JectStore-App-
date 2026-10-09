@@ -1,5 +1,5 @@
-import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateStorefront } from "@/utils/server/revalidate-storefront";
 
 const resolveSecret = () =>
   process.env.THEME_REVALIDATION_SECRET ||
@@ -22,11 +22,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  revalidateTag("home", "max");
-  revalidateTag("theme", "max");
-  revalidateTag("theme-customization", "max");
-  revalidatePath("/", "layout");
-  revalidatePath("/", "page");
+  revalidateStorefront();
 
   return NextResponse.json({
     revalidated: true,

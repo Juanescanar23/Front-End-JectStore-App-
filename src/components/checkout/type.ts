@@ -5,6 +5,7 @@ export type CustomRadioProps = {
   children: React.ReactNode;
   description?: string;
   value: string;
+  isDisabled?: boolean;
 } & typeof Radio.defaultProps;
 
 export type ShippingMethodType = {

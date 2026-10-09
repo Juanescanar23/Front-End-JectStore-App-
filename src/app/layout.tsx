@@ -16,6 +16,7 @@ import { headers } from "next/headers";
 import PortalShell from "@/app/portal/PortalShell";
 import { getRequestBaseUrl } from "@/utils/server/request-base-url";
 import { getStorefrontSeoPayload } from "@/utils/server/storefront-seo";
+import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
 const LANDLORD_HOST = "app.jectstore.com";
 
@@ -58,9 +59,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const landlord = await isLandlordHost();
+  const storefrontLocale = await getStorefrontLocaleCode();
+  const htmlLang = storefrontLocale || "es";
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={htmlLang} suppressHydrationWarning>
         <head>
         <script
           type="speculationrules"

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isArray } from "@/utils/type-guards";
 import Grid from "@components/theme/ui/grid/Grid";
@@ -31,6 +32,35 @@ import {
 import { pickTranslationByLocale } from "@/utils/theme-translation";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
+function CategoryFallback({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <section className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-14">
+      <div className="rounded-[32px] border border-neutral-200 bg-white px-6 py-12 text-center shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500">
+          Categoría
+        </p>
+        <h1 className="mt-4 text-3xl font-semibold text-neutral-950 sm:text-4xl">
+          {title}
+        </h1>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-neutral-600 sm:text-base">
+          {description}
+        </p>
+        <Link
+          href="/search"
+          className="mt-8 inline-flex items-center justify-center rounded-full bg-neutral-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+        >
+          Ir a búsqueda
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -39,21 +69,30 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { collection: categorySlug } = await params;
 
-  const treeData = await graphqlRequest<TreeCategoriesResponse>(
-    GET_TREE_CATEGORIES,
-    { getCategoryTree: true },
-    { tags: ["categories"], life: "hours" }
-  );
+  try {
+    const treeData = await graphqlRequest<TreeCategoriesResponse>(
+      GET_TREE_CATEGORIES,
+      { getCategoryTree: true },
+      { tags: ["categories"], life: "hours" }
+    );
 
-  const categories = treeData?.homeCategories || [];
-  const categoryItem = findCategoryBySlug(categories, categorySlug);
+    const categories = treeData?.homeCategories || [];
+    const categoryItem = findCategoryBySlug(categories, categorySlug);
 
-  if (!categoryItem) return notFound();
+    if (!categoryItem) return notFound();
 
-  return {
-    title: categoryItem.metaTitle || categoryItem.name,
-    description: categoryItem.description || `${categoryItem.name} productos`,
-  };
+    return {
+      title: categoryItem.metaTitle || categoryItem.name,
+      description: categoryItem.description || `${categoryItem.name} productos`,
+    };
+  } catch (error) {
+    console.error("Unable to resolve category metadata:", error);
+
+    return {
+      title: `Categoría: ${categorySlug}`,
+      description: "Explora productos de esta categoría en JectStore.",
+    };
+  }
 }
 
 export default async function CategoryPage({
@@ -67,21 +106,35 @@ export default async function CategoryPage({
   const resolvedParams = await searchParams;
   const localeCode = await getStorefrontLocaleCode();
 
-  const [treeData, filterOptionsData] = await Promise.all([
-    graphqlRequest<TreeCategoriesResponse>(
-      GET_TREE_CATEGORIES,
-      { getCategoryTree: true },
-      { tags: ["categories"], life: "hours" }
-    ),
-    graphqlRequest<ProductFilterAttributeResponse>(
-      GET_FILTER_OPTIONS,
-      { categorySlug },
-      {
-        tags: ["products", "categories"],
-        life: "hours",
-      }
-    ),
-  ]);
+  let treeData: TreeCategoriesResponse | null = null;
+  let filterOptionsData: ProductFilterAttributeResponse | null = null;
+
+  try {
+    [treeData, filterOptionsData] = await Promise.all([
+      graphqlRequest<TreeCategoriesResponse>(
+        GET_TREE_CATEGORIES,
+        { getCategoryTree: true },
+        { tags: ["categories"], life: "hours" }
+      ),
+      graphqlRequest<ProductFilterAttributeResponse>(
+        GET_FILTER_OPTIONS,
+        { categorySlug },
+        {
+          tags: ["products", "categories"],
+          life: "hours",
+        }
+      ),
+    ]);
+  } catch (error) {
+    console.error("Unable to resolve category page filters:", error);
+
+    return (
+      <CategoryFallback
+        title="No pudimos cargar esta categoría"
+        description="La búsqueda por categoría no está disponible temporalmente para este tenant. Puedes volver a la búsqueda general e intentarlo de nuevo."
+      />
+    );
+  }
 
   const categories = treeData?.homeCategories || [];
   const categoryItem = findCategoryBySlug(categories, categorySlug);
@@ -113,14 +166,27 @@ export default async function CategoryPage({
     searchParams: resolvedParams || {},
   });
 
-  const data = await graphqlRequest<ProductsResponse>(
-    GET_FILTER_PRODUCTS,
-    { input },
-    {
-      tags: ["products", "categories", `category-${categorySlug}`],
-      life: "minutes",
-    }
-  );
+  let data: ProductsResponse | null = null;
+
+  try {
+    data = await graphqlRequest<ProductsResponse>(
+      GET_FILTER_PRODUCTS,
+      { input },
+      {
+        tags: ["products", "categories", `category-${categorySlug}`],
+        life: "minutes",
+      }
+    );
+  } catch (error) {
+    console.error("Unable to resolve category products:", error);
+
+    return (
+      <CategoryFallback
+        title="No pudimos cargar esta categoría"
+        description="El catálogo de esta categoría está temporalmente fuera de servicio. Puedes volver a la búsqueda general e intentarlo de nuevo."
+      />
+    );
+  }
 
   const filterAttributes = (
     filterOptionsData?.getFilterAttribute?.filterAttributes || []

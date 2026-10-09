@@ -1,38 +1,25 @@
+import { GET_CHECKOUT_SHIPPING_RATES } from "@/graphql";
 import { bagistoFetch } from "@/utils/bagisto";
-import { flattenShippingMethods } from "@/app/api/_lib/cart-compat";
+import { getAuthToken } from "@/utils/helper";
 
-const SHIPPING_METHODS_QUERY = `
-  query ShippingMethods {
-    shippingMethods {
-      message
-      shippingMethods {
-        title
-        methods {
-          code
-          label
-          price
-          formattedPrice
-        }
-      }
-    }
-  }
-`;
-
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const response = await bagistoFetch<any>({
-      query: SHIPPING_METHODS_QUERY,
-      cache: "no-store",
-    });
+    const guestToken = getAuthToken(req);
 
-    const shippingGroups =
-      response?.body?.data?.shippingMethods?.shippingMethods ?? [];
+    const variables = { token: "" };
+
+    const response = await bagistoFetch<any>({
+      query: GET_CHECKOUT_SHIPPING_RATES,
+      variables: variables as any,
+      cache: "no-store",
+      guestToken,
+    });
 
     return Response.json(
       {
-        data: flattenShippingMethods(shippingGroups),
+        data: response?.body?.data?.collectionShippingRates,
       },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     return Response.json(
@@ -40,7 +27,7 @@ export async function POST() {
         message: "Error querying the GraphQL API",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

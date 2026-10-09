@@ -34,9 +34,7 @@ export default function PaymentMethod({
 
 
   useEffect(() => {
-    if (selectedPayment) {
-      reset({ method: selectedPayment });
-    }
+    reset({ method: selectedPayment ?? "" });
   }, [selectedPayment, reset]);
 
   const onSubmit = async (data: FieldValues) => {
@@ -44,6 +42,20 @@ export default function PaymentMethod({
       showToast("Selecciona el método de pago", "warning");
       return;
     }
+
+    const selectedMethod = methods?.find(
+      (method: any) => method?.method === data.method
+    );
+
+    if (selectedMethod?.disabled) {
+      showToast(
+        selectedMethod?.helperMessage ||
+          "Este método de pago no está disponible en este momento.",
+        "warning"
+      );
+      return;
+    }
+
     try {
       await saveCheckoutPayment(data.method);
       setIsOpen(false);
@@ -113,11 +125,18 @@ export default function PaymentMethod({
                   {methods?.map((method: any) => (
                     <CustomRadio
                       key={method?.method}
-                      className="my-1 border border-solid border-neutral-300 dark:border-neutral-500"
-                      description={method?.description}
+                      className="my-1 border border-solid border-neutral-300 bg-white dark:border-neutral-500"
+                      description={method?.helperMessage || method?.description}
+                      isDisabled={Boolean(method?.disabled)}
                       value={method?.method}
                     >
-                      <span className="text-neutral-700 dark:text-white">
+                      <span
+                        className={
+                          method?.disabled
+                            ? "text-neutral-400"
+                            : "text-neutral-700 dark:text-white"
+                        }
+                      >
                         {method?.title}
                       </span>
                     </CustomRadio>
@@ -150,7 +169,7 @@ const CustomRadio = (props: CustomRadioProps) => {
         base: cn(
           "inline-flex m-0 bg-transparent hover:bg-transparent items-center",
           "flex-row items-baseline max-w-full cursor-pointer rounded-lg gap-4 p-4 border-2 border-transparent",
-          "data-[selected=true]:border-primary"
+          "data-[selected=true]:border-neutral-900 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
         ),
         hiddenInput: "peer absolute h-0 w-0 opacity-0",
       }}

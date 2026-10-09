@@ -18,10 +18,12 @@ const BottomNavbar = memo(function BottomNavbar({
   onMenuOpen,
   activeTab,
   setActiveTab,
+  allowsCheckout = true,
 }: {
   onMenuOpen: () => void;
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  allowsCheckout?: boolean;
 }) {
   const cartDetail = useAppSelector((state) => state.cartDetail);
   const itemBase =
@@ -39,8 +41,6 @@ const BottomNavbar = memo(function BottomNavbar({
     <div className="fixed inset-x-0 bottom-0 z-30 lg:hidden">
       <nav className="px-3 h-16 border-t border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black">
         <div className="flex h-full items-center justify-between">
-
-          {/* Home */}
           <Link
             href="/"
             aria-label="Ir al inicio"
@@ -53,7 +53,6 @@ const BottomNavbar = memo(function BottomNavbar({
             <span>Inicio</span>
           </Link>
 
-          {/* Categories */}
           <button
             onClick={() => {
               setActiveTab("category");
@@ -68,19 +67,19 @@ const BottomNavbar = memo(function BottomNavbar({
             <span>Categorías</span>
           </button>
 
-          {/* Cart */}
-          <Cart
-            className={itemBase}
-            onClick={() => setActiveTab("cart")}
-            onClose={() => setActiveTab(null)}
-          >
-            <div className={getIconWrapperClass("cart")}>
-              <OpenCart quantity={cartDetail?.cart?.itemsQty} />
-            </div>
-            <span>Carrito</span>
-          </Cart>
+          {allowsCheckout ? (
+            <Cart
+              className={itemBase}
+              onClick={() => setActiveTab("cart")}
+              onClose={() => setActiveTab(null)}
+            >
+              <div className={getIconWrapperClass("cart")}>
+                <OpenCart quantity={cartDetail?.cart?.itemsQty} />
+              </div>
+              <span>Carrito</span>
+            </Cart>
+          ) : null}
 
-          {/* Account */}
           <Suspense fallback={<IconSkeleton />}>
             <UserAccount
               className={itemBase}
@@ -93,7 +92,6 @@ const BottomNavbar = memo(function BottomNavbar({
               <span>Cuenta</span>
             </UserAccount>
           </Suspense>
-
         </div>
       </nav>
     </div>

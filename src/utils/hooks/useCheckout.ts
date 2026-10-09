@@ -28,6 +28,22 @@ interface savePaymentMethodsTypes {
   paymentMethod: string;
 }
 
+const getSafePaymentGatewayUrl = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+
+  const candidate = value.trim();
+  if (!candidate) return null;
+
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "https:") return null;
+
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+};
+
 
 export const useCheckout = () => {
   const router = useRouter();
@@ -178,10 +194,21 @@ export const useCheckout = () => {
         }),
       onSuccess: (response) => {
         const responseData = response?.data?.createCheckoutPaymentMethod?.checkoutPaymentMethod;
+        const paymentGatewayUrl = getSafePaymentGatewayUrl(responseData?.paymentGatewayUrl);
 
         if (isObject(responseData)) {
           showToast(responseData?.message as string, "success");
           queryClient.invalidateQueries({ queryKey: ["cart-detail"] });
+
+          if (paymentGatewayUrl) {
+            window.location.assign(paymentGatewayUrl);
+            return;
+          }
+
+          if (typeof responseData?.paymentGatewayUrl === "string" && responseData?.paymentGatewayUrl.trim() !== "") {
+            showToast("La URL de pago recibida no es segura.", "warning");
+          }
+
           router.replace("/checkout?step=review");
         } else {
           showToast(response?.error?.message as string, "warning");

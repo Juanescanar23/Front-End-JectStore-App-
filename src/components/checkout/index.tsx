@@ -37,9 +37,9 @@ const CheckOut = ({ step }: CheckOutProps) => {
 
 
   return (
-    <>
-      <section className="flex flex-col items-start justify-between lg:flex-row lg:justify-between">
-        <div className="w-full px-0 py-2 sm:px-4 sm:py-4 lg:w-1/2 xl:px-16">
+    <section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,440px)] lg:gap-8">
+      <div className="min-w-0">
+        <div className="rounded-[28px] border border-neutral-200 bg-white px-4 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
           {isLoading ? (
             <CheckoutSkeleton />
           ) : (
@@ -56,18 +56,21 @@ const CheckOut = ({ step }: CheckOutProps) => {
             />
           )}
         </div>
+      </div>
 
-        <div className="h-full w-full !z-0 justify-self-start border-0 border-l border-none border-black/[10%] dark:border-neutral-700 lg:w-1/2 lg:border-solid">
+      <div className="min-w-0">
+        <div className="w-full lg:sticky lg:top-6">
           {isLoading ? (
             <CartSkeleton className="w-full" />
           ) : (
-            <div className="max-h-auto w-full flex-initial flex-shrink-0 flex-grow-0 lg:sticky lg:top-0">
-              <CheckoutCart cartItems={cartItems} selectedShippingRate={selectedShippingRate} />
-            </div>
+            <CheckoutCart
+              cartItems={cartItems}
+              selectedShippingRate={selectedShippingRate}
+            />
           )}
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 };
 

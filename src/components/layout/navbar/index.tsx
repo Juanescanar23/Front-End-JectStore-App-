@@ -9,27 +9,47 @@ import { GET_TREE_CATEGORIES, graphqlRequest } from "@/graphql";
 import ThemeSwitcherWrapper from "@components/theme/theme-switch";
 import LogoIcon from "@components/common/icons/LogoIcon";
 import UserAccount from "@components/customer/credentials";
+import { getStorefrontSeoPayload } from "@/utils/server/storefront-seo";
 
+export default async function Navbar({
+  allowsCheckout = true,
+}: {
+  allowsCheckout?: boolean;
+}) {
+  let filteredCategories: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }> = [];
 
-export default async function Navbar() {
-  const data = await graphqlRequest<any>(
-    GET_TREE_CATEGORIES,
-    { getCategoryTree: true },
-    { tags: ["categories"], life: "hours" }
-  );
+  try {
+    const data = await graphqlRequest<any>(
+      GET_TREE_CATEGORIES,
+      { getCategoryTree: true },
+      { tags: ["categories"], life: "hours" }
+    );
 
-  const categories = data?.homeCategories || [];
+    const categories = Array.isArray(data?.homeCategories)
+      ? data.homeCategories
+      : [];
 
-  const filteredCategories = categories
-    .filter((cat: any) => cat.id !== "1")
-    .map((cat: any) => {
-      return {
-        id: cat.id,
-        name: cat.name || "",
-        slug: cat.slug || "",
-      };
-    })
-    .filter((item: any) => item.name && item.slug);
+    filteredCategories = categories
+      .filter((cat: any) => cat.id !== "1")
+      .map((cat: any) => {
+        return {
+          id: cat.id,
+          name: cat.name || "",
+          slug: cat.slug || "",
+        };
+      })
+      .filter((item: any) => item.name && item.slug);
+  } catch (error) {
+    console.error("Unable to resolve navbar categories:", error);
+  }
+
+  const branding = await getStorefrontSeoPayload();
+  const logoSrc = branding?.image;
+  const logoAlt = branding?.siteName || branding?.title || "JectStore";
 
   const menuData = [
     { id: "all", name: "Todo", slug: "" },
@@ -43,14 +63,14 @@ export default async function Navbar() {
           <div className="flex w-full items-center justify-between gap-0 sm:gap-4">
             <div className="flex max-w-fit gap-2 xl:gap-6">
               <Suspense fallback={null}>
-                <MobileMenu menu={menuData} />
+                <MobileMenu menu={menuData} allowsCheckout={allowsCheckout} />
               </Suspense>
               <Link
                 className="flex h-9 w-full scale-95 items-center md:h-9 md:w-auto lg:h-10"
                 href="/"
                 aria-label="Ir al inicio"
               >
-                <LogoIcon />
+                <LogoIcon src={logoSrc} alt={logoAlt} />
               </Link>
               <ul className="hidden gap-4 text-sm md:items-center lg:flex xl:gap-6">
                 {menuData.map(
@@ -78,9 +98,11 @@ export default async function Navbar() {
               <div className="flex">
                 <ThemeSwitcherWrapper />
               </div>
-              <div className="hidden lg:block">
-                <Cart />
-              </div>
+              {allowsCheckout ? (
+                <div className="hidden lg:block">
+                  <Cart />
+                </div>
+              ) : null}
               <Suspense fallback={<IconSkeleton />}>
                 <div className="hidden lg:block">
                   <UserAccount />

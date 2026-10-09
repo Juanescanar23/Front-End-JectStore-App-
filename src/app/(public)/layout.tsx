@@ -13,7 +13,7 @@ export default async function RootLayout({
 
   return (
     <main>
-      <Navbar />
+      <Navbar allowsCheckout={tenantWhatsApp?.allowsCheckout !== false} />
       <div className="mx-auto min-h-[calc(100vh-580px)] w-full">
         {children}
       </div>

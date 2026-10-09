@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
   ProductDetailSkeleton,
@@ -133,7 +133,12 @@ export default async function ProductPage({
   const { urlProduct } = await params;
   const fullPath = urlProduct.join("/");
   const product = await getSingleProduct(fullPath);
+
   if (!product) return notFound();
+
+  if (product.urlKey && product.urlKey !== fullPath) {
+    redirect(`/product/${product.urlKey}`);
+  }
 
   const imageUrl = getProductImageUrl(product);
   const productImages = collectProductImageUrls(product).map((src) => ({
@@ -181,13 +186,13 @@ export default async function ProductPage({
         }}
         type="application/ld+json"
       />
-      <div className="flex flex-col gap-y-4 rounded-lg pb-0 pt-4 sm:gap-y-6 md:py-7.5 lg:flex-row w-full max-w-screen-2xl mx-auto px-4 xss:px-7.5 lg:gap-8">
-        <div className="h-full w-full max-w-[885px] max-1366:max-w-[650px] max-lg:max-w-full">
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-y-4 rounded-lg px-4 pb-0 pt-4 xss:px-7.5 sm:gap-y-6 md:py-7.5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(420px,36rem)] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1.02fr)_minmax(460px,40rem)] xl:gap-14">
+        <div className="h-full w-full min-w-0">
           <Suspense fallback={<ProductDetailSkeleton />}>
             <HeroCarousel images={heroImages} />
           </Suspense>
         </div>
-        <div className="basis-full lg:basis-4/6">
+        <div className="w-full min-w-0">
           <Suspense fallback={<ProductDetailSkeleton />}>
             <ProductInfo
               product={product}

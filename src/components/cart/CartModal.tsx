@@ -19,13 +19,14 @@ import { EditItemQuantityButton } from "../common/icons/cart/EditItemQuantityBut
 import { useCartDetail } from "@utils/hooks/useCartDetail";
 import Image from "next/image";
 import { NOT_IMAGE } from "@utils/constants";
+import { resolveCartItemImage } from "@utils/cart/normalize";
 import { isObject } from "@utils/type-guards";
 import LoadingDots from "@components/common/icons/LoadingDots";
 import { useFormStatus } from "react-dom";
 import { redirectToCheckout } from "@/utils/actions";
 import { EMAIL, getLocalStorage } from "@/store/local-storage";
 import Link from "next/link";
-import { createUrl, isCheckout, useAddressesFromApi, safeParse } from "@utils/helper";
+import { createUrl, isCheckout, useAddressesFromApi } from "@utils/helper";
 import { useMediaQuery } from "@utils/hooks/useMediaQueryHook";
 
 
@@ -98,7 +99,15 @@ export default function CartModal({
                 <>
                   <DrawerHeader className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-lg font-semibold">Mi carrito</p>
+                      <div>
+                        <p className="text-lg font-semibold">Mi carrito</p>
+                        <p className="text-sm text-neutral-500">
+                          {cartDetail?.cart?.itemsQty || cart.length}{" "}
+                          {Number(cartDetail?.cart?.itemsQty || cart.length) === 1
+                            ? "artículo"
+                            : "artículos"}
+                        </p>
+                      </div>
                       <button
                         aria-label="Cerrar carrito"
                         className="cursor-pointer"
@@ -129,7 +138,7 @@ export default function CartModal({
                                 `/product/${item?.node.productUrlKey}`,
                                 new URLSearchParams(merchandiseSearchParams)
                               );
-                              const baseImage: any = safeParse(item?.node?.baseImage);
+                              const imageSrc = resolveCartItemImage(item?.node?.baseImage);
 
                               return (
                                 <li key={i} className="flex w-full flex-col">
@@ -148,7 +157,7 @@ export default function CartModal({
                                           }
                                           className="h-full w-full object-cover"
                                           height={64}
-                                          src={baseImage?.small_image_url || ""}
+                                          src={imageSrc}
                                           width={74}
                                           onError={(e) =>
                                             (e.currentTarget.src = NOT_IMAGE)
@@ -223,16 +232,26 @@ export default function CartModal({
                           </div>
                         </div>
 
-                        <form action={redirectToCheckout}>
-                          <CheckoutButton
-                            cartDetails={cartObj?.items?.edges ?? []}
-                            isGuest={cartObj?.isGuest}
-                            isEmail={cartObj?.customerEmail ?? getLocalStorage(EMAIL)}
-                            isSelectShipping={(cartObj?.selectedShippingRate != null)}
-                            isSeclectAddress={isObject(billingAddress)}
-                            isSelectPayment={(cartObj?.paymentMethod != null)}
-                          />
-                        </form>
+                        <div className="space-y-3">
+                          <form action={redirectToCheckout}>
+                            <CheckoutButton
+                              cartDetails={cartObj?.items?.edges ?? []}
+                              isGuest={cartObj?.isGuest}
+                              isEmail={cartObj?.customerEmail ?? getLocalStorage(EMAIL)}
+                              isSelectShipping={(cartObj?.selectedShippingRate != null)}
+                              isSeclectAddress={isObject(billingAddress)}
+                              isSelectPayment={(cartObj?.paymentMethod != null)}
+                            />
+                          </form>
+
+                          <Link
+                            href="/cart"
+                            className="block w-full rounded-full border border-neutral-300 px-4 py-3 text-center text-sm font-medium text-neutral-900 transition hover:border-neutral-900 hover:bg-neutral-50"
+                            onClick={onClose}
+                          >
+                            Ver carrito completo
+                          </Link>
+                        </div>
                       </div>
                     )}
                   </DrawerBody>
@@ -266,7 +285,15 @@ export default function CartModal({
                 <>
                   <DrawerHeader className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-xl font-semibold">Mi carrito</p>
+                      <div>
+                        <p className="text-xl font-semibold">Mi carrito</p>
+                        <p className="text-sm text-neutral-500">
+                          {cartDetail?.cart?.itemsQty || cart.length}{" "}
+                          {Number(cartDetail?.cart?.itemsQty || cart.length) === 1
+                            ? "artículo"
+                            : "artículos"}
+                        </p>
+                      </div>
                     </div>
                   </DrawerHeader>
 
@@ -290,7 +317,7 @@ export default function CartModal({
                                 `/product/${item?.node.productUrlKey}`,
                                 new URLSearchParams(merchandiseSearchParams)
                               );
-                              const baseImage: any = safeParse(item?.node?.baseImage);
+                              const imageSrc = resolveCartItemImage(item?.node?.baseImage);
 
                               return (
                                 <li key={i} className="flex w-full flex-col">
@@ -309,7 +336,7 @@ export default function CartModal({
                                           }
                                           className="h-full w-full object-cover"
                                           height={64}
-                                          src={baseImage?.small_image_url || ""}
+                                          src={imageSrc}
                                           width={74}
                                           onError={(e) =>
                                             (e.currentTarget.src = NOT_IMAGE)
@@ -383,16 +410,26 @@ export default function CartModal({
                           </div>
                         </div>
 
-                        <form action={redirectToCheckout}>
-                          <CheckoutButton
-                            cartDetails={cartObj?.items?.edges ?? []}
-                            isGuest={cartObj?.isGuest}
-                            isEmail={cartObj?.customerEmail ?? getLocalStorage(EMAIL)}
-                            isSelectShipping={(cartObj?.selectedShippingRate != null)}
-                            isSeclectAddress={isObject(billingAddress)}
-                            isSelectPayment={(cartObj?.paymentMethod != null)}
-                          />
-                        </form>
+                        <div className="space-y-3">
+                          <form action={redirectToCheckout}>
+                            <CheckoutButton
+                              cartDetails={cartObj?.items?.edges ?? []}
+                              isGuest={cartObj?.isGuest}
+                              isEmail={cartObj?.customerEmail ?? getLocalStorage(EMAIL)}
+                              isSelectShipping={(cartObj?.selectedShippingRate != null)}
+                              isSeclectAddress={isObject(billingAddress)}
+                              isSelectPayment={(cartObj?.paymentMethod != null)}
+                            />
+                          </form>
+
+                          <Link
+                            href="/cart"
+                            className="block w-full rounded-full border border-neutral-300 px-4 py-3 text-center text-sm font-medium text-neutral-900 transition hover:border-neutral-900 hover:bg-neutral-50"
+                            onClick={onClose}
+                          >
+                            Ver carrito completo
+                          </Link>
+                        </div>
                       </div>
                     )}
                   </DrawerBody>

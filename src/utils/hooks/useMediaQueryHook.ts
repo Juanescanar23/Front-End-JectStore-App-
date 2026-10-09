@@ -3,8 +3,16 @@ import { useSyncExternalStore } from "react";
 export function useMediaQuery(query: string) {
   const subscribe = (callback: () => void) => {
     const media = window.matchMedia(query);
-    media.addEventListener("change", callback);
-    return () => media.removeEventListener("change", callback);
+
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", callback);
+
+      return () => media.removeEventListener("change", callback);
+    }
+
+    media.addListener(callback);
+
+    return () => media.removeListener(callback);
   };
 
   const getSnapshot = () => {

@@ -10,9 +10,9 @@ export default async function RootLayout({
       <div className="block lg:hidden">
         <Navbar />
       </div>
-    <main className="mx-auto w-full max-w-screen-2xl px-4 md:px-8 lg:px-16 xl:px-28 3xl:px-0">
-      {children}
-    </main>
+      <main className="mx-auto w-full max-w-[1440px] px-4 pb-8 pt-3 sm:px-6 lg:px-10 lg:pb-12 lg:pt-6 xl:px-14">
+        {children}
+      </main>
     </>
   );
 }

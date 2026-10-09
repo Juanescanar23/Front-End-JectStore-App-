@@ -1,69 +1,36 @@
+import { CREATE_MERGE_CART } from "@/graphql";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
-import { normalizeLegacyCart } from "@/app/api/_lib/cart-compat";
+import { CreateMergeCartOperation } from "@/types/cart/type";
+import { getAuthToken } from "@/utils/helper";
 
-const CART_DETAIL_QUERY = `
-  query CartDetailForMerge {
-    cartDetail {
-      id
-      itemsCount
-      itemsQty
-      isGuest
-      taxTotal
-      shippingAmount
-      subTotal
-      grandTotal
-      shippingMethod
-      selectedShippingRate {
-        method
-        methodTitle
-        methodDescription
-      }
-      payment {
-        method
-        methodTitle
-      }
-      items {
-        id
-        cartId
-        productId
-        name
-        sku
-        quantity
-        type
-        price
-        product {
-          urlKey
-        }
-      }
-    }
-  }
-`;
-
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const response = await bagistoFetch<any>({
-      query: CART_DETAIL_QUERY,
+    const body = await req.json();
+    const guestToken = getAuthToken(req);
+
+    const variables = {
+      cartId: body.cartId ?? null,
+    };
+
+    const res = await bagistoFetch<CreateMergeCartOperation>({
+      query: CREATE_MERGE_CART,
+      variables: variables,
       cache: "no-store",
+      guestToken,
     });
 
-    const legacyCart = normalizeLegacyCart(response?.body?.data?.cartDetail);
-
     return Response.json({
-      data: {
-        createMergeCart: {
-          mergeCart: legacyCart,
-        },
-      },
+      data: { ...res?.body.data },
     });
   } catch (error) {
     if (isBagistoError(error)) {
       return Response.json(
         {
           data: { createMergeCart: null },
-          error,
+          error: error.cause ?? error,
         },
-        { status: 200 },
+        { status: 200 }
       );
     }
 
@@ -72,7 +39,8 @@ export async function POST() {
         message: "Network error",
         error: error instanceof Error ? error.message : error,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
+

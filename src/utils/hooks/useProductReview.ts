@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { fetchHandler } from "../fetch-handler";
 import { useCustomToast } from "./useToast";
 import { isObject } from "@utils/type-guards";
+import { detectClientLocaleRoot, getStorefrontCopy } from "@/utils/storefront-copy";
 
 interface AddInput {
     productId: number,
@@ -18,6 +19,7 @@ interface AddInput {
 
 export function useProductReview() {
     const { showToast } = useCustomToast();
+    const localeRoot = detectClientLocaleRoot();
     const { mutateAsync: createProductReview, isPending: isLoading } = useMutation({
         mutationFn: ({ token, ...input }: AddInput & { token: string }) =>
             fetchHandler({
@@ -34,7 +36,7 @@ export function useProductReview() {
         onSuccess: (response) => {
             const responseData = response?.data?.createProductReview?.productReview;
             if (isObject(responseData)) {
-                showToast("Product review created successfully", "success");
+                showToast(getStorefrontCopy("productReviewCreated", localeRoot), "success");
             }
         },
 

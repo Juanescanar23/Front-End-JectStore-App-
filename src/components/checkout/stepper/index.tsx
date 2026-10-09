@@ -121,48 +121,77 @@ export default function Stepper(
     const isCompleted = step.id <= (steps[currentStepIndex]?.id || 1);
 
     return (
-      <div key={step.id} className="flex w-full flex-col">
+      <div
+        key={step.id}
+        className="rounded-[26px] border border-neutral-200 bg-white/80 p-4 shadow-sm sm:p-5"
+      >
         <div className="flex items-center justify-between font-outfit">
           <div className="flex items-center gap-3">
             <div
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium ${isCompleted
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-neutral-900"
-                }`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                isCompleted
+                  ? "bg-blue-600 text-white"
+                  : "bg-neutral-100 text-neutral-900"
+              }`}
             >
               {step.id}
             </div>
             <span
-              className={`text-lg font-medium max-md:text-base ${isActive
-                ? "font-medium text-neutral-900 dark:text-neutral-300"
-                : "text-neutral-900 dark:text-white"
-                }`}
+              className={`text-lg font-medium max-md:text-base ${
+                isActive
+                  ? "text-neutral-950"
+                  : "text-neutral-700"
+              }`}
             >
               {step.title}
             </span>
           </div>
         </div>
 
-        {isCompleted && <section className="relative">{step.component}</section>}
+        {isCompleted ? (
+          <section className="relative mt-5 border-t border-neutral-200 pt-5">
+            {step.component}
+          </section>
+        ) : null}
       </div>
     );
   };
 
   return (
     <div className="mx-auto w-full">
-      <header className="pb-6 sm:py-6">
+      <header className="pb-6">
         <Link
           aria-label={SITE_NAME}
-          className="flex items-center gap-2 text-black dark:text-white md:pt-1 hidden lg:block"
+          className="hidden items-center gap-2 text-black md:pt-1 lg:flex"
           href="/"
         >
           <LogoIcon />
         </Link>
-        <h1 className="text-xl px-2 font-semibold block lg:hidden">Finalizar compra</h1>
+
+        <div className="mt-3 rounded-[26px] bg-neutral-50 px-4 py-5 sm:px-5 lg:px-0 lg:py-0">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500">
+                Checkout
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold text-neutral-950 sm:text-3xl">
+                Finaliza tu compra
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">
+                Completa tus datos de contacto, envío y pago. Puedes retomar
+                el paso actual sin perder el progreso.
+              </p>
+            </div>
+
+            <div className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm">
+              Paso {Math.max(currentStepIndex + 1, 1)} de {steps.length}
+            </div>
+          </div>
+        </div>
       </header>
 
-      <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-500 dark:scrollbar-thumb-neutral-300 h-[calc(100dvh-300px)] overflow-y-auto lg:h-[calc(100dvh-124px)]">
-        <div className="flex h-full flex-col gap-y-8 px-2 sm:px-3">
+      <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 h-[calc(100dvh-260px)] overflow-y-auto pr-1 lg:h-[calc(100dvh-190px)]">
+        <div className="flex h-full flex-col gap-y-5 px-0 sm:px-1">
           {steps.map((step) => (
             <StepItem key={step.id} step={step} />
           ))}

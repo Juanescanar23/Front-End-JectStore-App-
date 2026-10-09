@@ -14,6 +14,11 @@ const DEFAULT_STOREFRONT_KEY =
   process.env.SMOKE_STOREFRONT_KEY ||
   process.env.NEXT_PUBLIC_BAGISTO_STOREFRONT_KEY ||
   "default";
+const DEFAULT_LANDLORD_HOST =
+  process.env.SMOKE_LANDLORD_HOST ||
+  process.env.NEXT_PUBLIC_LANDLORD_HOST ||
+  "app.jectstore.com";
+const DEFAULT_LANDLORD_PROTOCOL = process.env.SMOKE_LANDLORD_PROTOCOL || "https";
 
 function printUsage() {
   console.log(`
@@ -26,6 +31,8 @@ Options:
   --tenant=<host>           Single tenant host (repeatable).
   --config=<file>           JSON config file path (default: config/tenants.json).
   --protocol=<https|http>   Request protocol (default: https).
+  --landlord-host=<host>    Host that serves the landlord APIs (default: app.jectstore.com).
+  --landlord-protocol=<p>   Protocol for landlord APIs (default: https).
   --storefront-key=<key>    GraphQL storefront key header value.
   --timeout-ms=<number>     Request timeout in milliseconds (default: 15000).
   --require-product         Fail if tenant has zero products.
@@ -36,6 +43,8 @@ Environment alternatives:
   SMOKE_TENANTS_FILE
   SMOKE_STOREFRONT_KEY
   SMOKE_PROTOCOL
+  SMOKE_LANDLORD_HOST
+  SMOKE_LANDLORD_PROTOCOL
   SMOKE_TIMEOUT_MS
 `);
 }
@@ -46,6 +55,8 @@ function parseArgs(argv) {
     configFile: DEFAULT_CONFIG_FILE,
     protocol: DEFAULT_PROTOCOL,
     storefrontKey: DEFAULT_STOREFRONT_KEY,
+    landlordHost: DEFAULT_LANDLORD_HOST,
+    landlordProtocol: DEFAULT_LANDLORD_PROTOCOL,
     timeoutMs: Number.isFinite(DEFAULT_TIMEOUT_MS) ? DEFAULT_TIMEOUT_MS : 15000,
     requireProduct: false,
     help: false,
@@ -123,6 +134,35 @@ function parseArgs(argv) {
       const parsed = Number.parseInt(arg.slice("--timeout-ms=".length), 10);
       if (Number.isFinite(parsed) && parsed > 0) {
         options.timeoutMs = parsed;
+      }
+      continue;
+    }
+
+    if (arg.startsWith("--landlord-host=")) {
+      options.landlordHost = normalizeHost(arg.slice("--landlord-host=".length).trim());
+      continue;
+    }
+
+    if (arg === "--landlord-host") {
+      const next = argv[i + 1];
+      if (next && !next.startsWith("--")) {
+        options.landlordHost = normalizeHost(next.trim());
+        i += 1;
+      }
+      continue;
+    }
+
+    if (arg.startsWith("--landlord-protocol=")) {
+      options.landlordProtocol =
+        arg.slice("--landlord-protocol=".length).trim() || DEFAULT_LANDLORD_PROTOCOL;
+      continue;
+    }
+
+    if (arg === "--landlord-protocol") {
+      const next = argv[i + 1];
+      if (next && !next.startsWith("--")) {
+        options.landlordProtocol = next.trim() || DEFAULT_LANDLORD_PROTOCOL;
+        i += 1;
       }
       continue;
     }
@@ -213,6 +253,29 @@ function applyConfigDefaults(options, config) {
     }
   }
 
+  const hasEnvLandlordHost = Boolean(
+    process.env.SMOKE_LANDLORD_HOST || process.env.NEXT_PUBLIC_LANDLORD_HOST,
+  );
+  const hasEnvLandlordProtocol = Boolean(process.env.SMOKE_LANDLORD_PROTOCOL);
+
+  if (
+    !hasEnvLandlordHost &&
+    next.landlordHost === DEFAULT_LANDLORD_HOST &&
+    typeof config.landlordHost === "string" &&
+    config.landlordHost.trim()
+  ) {
+    next.landlordHost = normalizeHost(config.landlordHost.trim());
+  }
+
+  if (
+    !hasEnvLandlordProtocol &&
+    next.landlordProtocol === DEFAULT_LANDLORD_PROTOCOL &&
+    typeof config.landlordProtocol === "string" &&
+    config.landlordProtocol.trim()
+  ) {
+    next.landlordProtocol = config.landlordProtocol.trim();
+  }
+
   return next;
 }
 
@@ -257,6 +320,26 @@ async function fetchText(url, timeoutMs, options = {}) {
     return { response: null, body: "", error };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function fetchJson(url, timeoutMs, options = {}) {
+  const result = await fetchText(url, timeoutMs, options);
+
+  if (!result.body) {
+    return { ...result, parsed: null };
+  }
+
+  try {
+    return {
+      ...result,
+      parsed: JSON.parse(result.body),
+    };
+  } catch {
+    return {
+      ...result,
+      parsed: null,
+    };
   }
 }
 
@@ -316,10 +399,22 @@ function isHealthyStatus(status) {
   return status >= 200 && status < 400;
 }
 
+function hasRenderedWhatsAppCta(html) {
+  if (!html) return false;
+
+  return (
+    /aria-label="Consultar por WhatsApp"/i.test(html) ||
+    />\s*WhatsApp\s*<\/a>/i.test(html) ||
+    /https?:\/\/wa\.me\//i.test(html)
+  );
+}
+
 async function runTenantSmoke({
   host,
   protocol,
   storefrontKey,
+  landlordHost,
+  landlordProtocol,
   timeoutMs,
   requireProduct,
 }) {
@@ -500,6 +595,8 @@ async function runTenantSmoke({
   const foundBySlug = Array.isArray(slugResult.parsed?.data?.products?.data)
     ? slugResult.parsed.data.products.data.length > 0
     : false;
+  const productNode = foundBySlug ? slugResult.parsed?.data?.products?.data?.[0] || null : null;
+  const productId = Number(productNode?.id || 0);
 
   if (!foundBySlug) {
     record(
@@ -509,6 +606,96 @@ async function runTenantSmoke({
     );
   } else {
     record("PASS", `GraphQL slug lookup (${candidateSlug})`, "Product found");
+  }
+
+  const hasPurchaseCta =
+    productPage.body.includes("Agregar al carrito") ||
+    productPage.body.includes("Agotado");
+
+  if (!hasPurchaseCta) {
+    record(
+      "FAIL",
+      `Product CTA (${candidateSlug})`,
+      "Product page rendered without purchase CTA text",
+    );
+  } else {
+    record("PASS", `Product CTA (${candidateSlug})`, "CTA visible");
+  }
+
+  if (Number.isFinite(productId) && productId > 0) {
+    const codConfigUrl = buildUrl(
+      protocol,
+      host,
+      `/api/checkout/cod/config?product_id=${encodeURIComponent(String(productId))}`,
+    );
+    const codConfig = await fetchJson(codConfigUrl, timeoutMs, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (codConfig.error || !codConfig.response) {
+      record("FAIL", `GET /api/checkout/cod/config (${productId})`, String(codConfig.error));
+    } else if (![200, 403].includes(codConfig.response.status)) {
+      record(
+        "FAIL",
+        `GET /api/checkout/cod/config (${productId})`,
+        `Unexpected status ${codConfig.response.status}`,
+      );
+    } else {
+      const allowedByPlan = Boolean(codConfig.parsed?.allowed_by_plan);
+      record(
+        "PASS",
+        `GET /api/checkout/cod/config (${productId})`,
+        allowedByPlan ? "COD endpoint available" : "COD blocked by plan or policy",
+      );
+    }
+  } else {
+    record("WARN", `GET /api/checkout/cod/config (${candidateSlug})`, "Product id unavailable");
+  }
+
+  const whatsappConfigUrl = buildUrl(
+    landlordProtocol,
+    landlordHost,
+    `/api/storefront/whatsapp-config?host=${encodeURIComponent(host)}`,
+  );
+  const whatsappConfig = await fetchJson(whatsappConfigUrl, timeoutMs, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (whatsappConfig.error || !whatsappConfig.response) {
+    record("FAIL", "Landlord WhatsApp config", String(whatsappConfig.error));
+  } else if (!isHealthyStatus(whatsappConfig.response.status) || !whatsappConfig.parsed) {
+    record(
+      "FAIL",
+      "Landlord WhatsApp config",
+      `Unexpected status ${whatsappConfig.response.status}`,
+    );
+  } else {
+    const whatsappEnabled = Boolean(whatsappConfig.parsed?.enabled);
+    const productHasWhatsApp = hasRenderedWhatsAppCta(productPage.body);
+
+    if (whatsappEnabled && !productHasWhatsApp) {
+      record(
+        "FAIL",
+        `Product WhatsApp (${candidateSlug})`,
+        "Tenant has WhatsApp enabled but product page does not render the button",
+      );
+    } else if (!whatsappEnabled && productHasWhatsApp) {
+      record(
+        "FAIL",
+        `Product WhatsApp (${candidateSlug})`,
+        "Product page renders WhatsApp without an enabled tenant config",
+      );
+    } else {
+      record(
+        "PASS",
+        `Product WhatsApp (${candidateSlug})`,
+        whatsappEnabled ? "Button visible" : "Not enabled for tenant",
+      );
+    }
   }
 
   return { host, checks, hasFailure };
@@ -552,6 +739,8 @@ async function main() {
       host,
       protocol: options.protocol,
       storefrontKey: options.storefrontKey,
+      landlordHost: options.landlordHost,
+      landlordProtocol: options.landlordProtocol,
       timeoutMs: options.timeoutMs,
       requireProduct: options.requireProduct,
     });

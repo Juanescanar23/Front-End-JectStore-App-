@@ -5,6 +5,22 @@ export interface CacheImage {
   originalImageUrl?: string | null;
 }
 
+export interface ProductCashOnDeliveryCommerce {
+  available?: boolean | null;
+}
+
+export interface ProductSoldOutCommerce {
+  showWhatsappCta?: boolean | null;
+  whatsappUrl?: string | null;
+}
+
+export interface ProductCommerce {
+  payment?: {
+    cashOnDelivery?: ProductCashOnDeliveryCommerce | null;
+  } | null;
+  soldOut?: ProductSoldOutCommerce | null;
+}
+
 export interface ProductSectionNode {
   id: string;
   sku: string;
@@ -15,6 +31,7 @@ export interface ProductSectionNode {
   price?: number | string | null;
   specialPrice?: number | string | null;
   isSaleable?: boolean | null;
+  commerce?: ProductCommerce | null;
   cacheBaseImage?: CacheImage[] | CacheImage | null;
   cacheGalleryImages?: CacheImage[] | CacheImage | null;
   images?: Array<{ url?: string | null; imageUrl?: string | null }>;
@@ -103,6 +120,8 @@ export interface ProductData {
   shortDescription?: string;
   description?: string;
   isSaleable?: boolean | null;
+  commerce?: ProductCommerce | null;
+  variants?: ProductNode[] | null;
   configutableData?: {
     attributes?: unknown[];
     index?: unknown[];

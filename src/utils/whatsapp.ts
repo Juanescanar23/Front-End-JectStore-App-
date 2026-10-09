@@ -1,5 +1,6 @@
 export type TenantWhatsAppConfig = {
   enabled: boolean;
+  allowsCheckout: boolean;
   waBaseUrl: string | null;
   phoneE164: string | null;
 };

@@ -8,7 +8,18 @@ const nextConfig: NextConfig = {
   },
   images: {
     unoptimized: true,
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "app.jectstore.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.jectstore.com",
+        pathname: "/**",
+      },
+    ],
   },
   async headers() {
     return configHeader;
