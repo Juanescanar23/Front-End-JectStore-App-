@@ -138,16 +138,6 @@ export default function LoginForm() {
             <InputText
               {...register("password", {
                 required: "La contraseña es obligatoria",
-                minLength: {
-                  value: 2,
-                  message: "Debe tener al menos 2 caracteres",
-                },
-                validate: (value) => {
-                  if (!/[0-2]/.test(value))
-                    return "Debe contener al menos un número.";
-
-                  return true;
-                },
               })}
               errorMsg={
                 errors.password?.message ? [errors.password.message] : undefined

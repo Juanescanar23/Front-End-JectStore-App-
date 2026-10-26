@@ -2,7 +2,7 @@
   "schema_version": 1,
   "baseline": "c75040675bbfc15d6fbb3849eeac3c48e59ad635",
   "production_head": "202c5c82765e435c66ad580b64e1282de8ef5746",
-  "production_observed_at": "2026-10-26T20:46:28.111Z",
+  "production_observed_at": "2026-10-26T21:08:17.787Z",
   "deployment_authorized": false,
   "files": [
     {
@@ -57,8 +57,8 @@
       "path": "scripts/tests/frontend-compat.contract.test.mjs",
       "action": "replace",
       "before_sha256": "b5945376b829e124335d1fdeba2e142ab7c9054853bdc0513255274d462f4550",
-      "after_sha256": "2cb5b90dfba433081cb54a252c624f25a7a0b31120015cd8a7cdc78b8e43b12c",
-      "bytes": 19915,
+      "after_sha256": "aee511c67b3f77b95571ba7153c16298bc34abb6c0d37b8f546c380795a51acf",
+      "bytes": 26172,
       "mode": 420
     },
     {
@@ -163,6 +163,14 @@
       "before_sha256": "aa26a790b8b4074058aa2957dc0560c71764441e59ab0a4c89add815d3ae126d",
       "after_sha256": "0b8f08981d07cda6275693e7b75c953ae06e1f0cc183c265ebec977d200ff54c",
       "bytes": 5017,
+      "mode": 420
+    },
+    {
+      "path": "src/components/customer/LoginForm.tsx",
+      "action": "replace",
+      "before_sha256": "611a1d69a47ccacd91ae66324c7609475d07c9aa2e9778648e60945ef6fc7240",
+      "after_sha256": "be2b5bb85d131d88928e87438bd3ef9a1112fcbc8193b9b96a99d3a2915d3524",
+      "bytes": 6683,
       "mode": 420
     },
     {

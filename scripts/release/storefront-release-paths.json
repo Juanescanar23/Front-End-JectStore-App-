@@ -22,6 +22,7 @@
     "src/app/%5F%5Fstorefront-next-preview/page.tsx",
     "src/app/api/auth/[...nextauth]/route.ts",
     "src/app/globals.css",
+    "src/components/customer/LoginForm.tsx",
     "src/components/home/CategoryCarousel.tsx",
     "src/components/home/ImageCarousel.tsx",
     "src/components/home/NextPreviewBridge.tsx",

@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { createFormControl } from "react-hook-form";
 
 const root = path.resolve(import.meta.dirname, "../..");
 // Fixed pre-remediation source: committing this change must not turn the
@@ -363,4 +364,106 @@ test("COD paid action keeps POST then refresh ordering and never fabricates paym
   }
   assert.deepEqual(plain(outputs[1]), plain(outputs[0]));
   assert.deepEqual(outputs[1].calls.map((call) => call.options.method), ["GET", "POST", "GET"]);
+});
+
+function loginFormFixture() {
+  const form = createFormControl({ mode: "onSubmit", reValidateMode: "onChange" });
+  form.subscribe({ formState: { values: true }, callback() {} });
+  const notices = [];
+  const signIns = [];
+  const forbiddenCalls = [];
+  const forbidden = (name) => () => {
+    forbiddenCalls.push(name);
+    throw new Error(`Unexpected side effect in login validation fixture: ${name}`);
+  };
+  const element = (type, props) => ({ type, props: props || {} });
+  const load = (file, dependencies) => {
+    const fixtureModule = { exports: {} };
+    const compiled = ts.transpileModule(source(file, false), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
+    vm.runInNewContext(compiled, {
+      module: fixtureModule, exports: fixtureModule.exports, process: { env: {} },
+      fetch: forbidden("network"), console: { error() {}, warn() {} },
+      setTimeout: forbidden("navigation timer"),
+      require: (id) => { assert.ok(Object.hasOwn(dependencies, id), `Unexpected login dependency: ${id}`); return dependencies[id]; },
+    }, { filename: file });
+    return fixtureModule.exports;
+  };
+  const constants = load("src/utils/constants.ts", {});
+  // The real form engine checks instanceof RegExp; preserve the actual source
+  // pattern while moving its VM-created value into the runner's realm.
+  constants.EMAIL_REGEX = new RegExp(constants.EMAIL_REGEX.source, constants.EMAIL_REGEX.flags);
+  const component = load("src/components/customer/LoginForm.tsx", {
+    "react/jsx-runtime": { jsx: element, jsxs: element },
+    "react-hook-form": { useForm: () => ({ ...form, formState: form.control._formState }) },
+    "next-auth/react": { signIn: async (...args) => { signIns.push(args); return { ok: false, error: "Credenciales inválidas." }; }, getSession: forbidden("session") },
+    "next/navigation": { useRouter: () => ({ push: forbidden("navigation"), refresh: forbidden("refresh") }) },
+    "next/image": { default: "Image", __esModule: true },
+    "next/link": { default: "Link", __esModule: true },
+    "@components/common/button/Button": { Button: "Button" },
+    "@components/common/form/Input": { default: "InputText", __esModule: true },
+    "@/utils/constants": constants,
+    "@utils/constants": constants,
+    "@/utils/hooks/useToast": { useCustomToast: () => ({ showToast: (...args) => notices.push(args) }) },
+    "@utils/hooks/useMergeCart": { useMergeCart: () => ({ mergeCart: forbidden("cart merge") }) },
+    "@utils/getCartToken": { getCookie: () => null },
+    "@utils/helper": { setCookie: forbidden("cookie write") },
+    "@/store/local-storage": { setLocalStorage: forbidden("storage write") },
+    "@/store/hooks": { useAppDispatch: () => forbidden("dispatch") },
+    "@/store/slices/user-slice": { setUser: forbidden("user mutation") },
+    "@utils/hooks/useCartDetail": { useCartDetail: () => ({ getCartDetail: forbidden("cart read") }) },
+    clsx: { default: (...args) => args.filter(Boolean).join(" "), __esModule: true },
+  }).default;
+  const render = () => component();
+  render(); // Register the actual component's rules with the installed form engine.
+  return { form, render, notices, signIns, forbiddenCalls };
+}
+
+test("login accepts every nonempty existing password without creation-policy constraints", async () => {
+  const view = loginFormFixture();
+  for (const password of ["una-frase-sin-dígitos", "Clave987654", "3", "7", "9", "🔑", "  "]) {
+    view.form.setValue("password", password);
+    assert.equal(await view.form.trigger("password"), true, "An existing password must reach authentication without digit/length policy");
+    assert.equal(view.form.getValues("password"), password, "Login must not trim or transform the password");
+  }
+  assert.equal(view.signIns.length, 0);
+  assert.deepEqual(view.forbiddenCalls, []);
+});
+
+test("login still rejects an empty password and exposes the existing inline message", async () => {
+  const view = loginFormFixture();
+  view.form.setValue("username", "login-fixture@example.invalid");
+  view.form.setValue("password", "");
+  await nodes(view.render(), (node) => node.type === "form")[0].props.onSubmit();
+  assert.equal(view.form.control._formState.errors.password.message, "La contraseña es obligatoria");
+  const password = nodes(view.render(), (node) => node.type === "InputText" && node.props.name === "password")[0];
+  assert.deepEqual(plain(password.props.errorMsg), ["La contraseña es obligatoria"]);
+  assert.equal(password.props.typeName, "password");
+  assert.equal(view.signIns.length, 0);
+  assert.deepEqual(view.forbiddenCalls, []);
+});
+
+test("login retains required email and format validation independently of password policy", async () => {
+  const view = loginFormFixture();
+  view.form.setValue("password", "una-frase-sin-dígitos");
+  for (const [username, message] of [["", "El correo es obligatorio"], ["not-an-email", "Ingresa un correo válido."]]) {
+    view.form.setValue("username", username);
+    await nodes(view.render(), (node) => node.type === "form")[0].props.onSubmit();
+    assert.equal(view.form.control._formState.errors.username.message, message);
+    const field = nodes(view.render(), (node) => node.type === "InputText" && node.props.name === "username")[0];
+    assert.deepEqual(plain(field.props.errorMsg), [message]);
+  }
+  assert.equal(view.signIns.length, 0);
+  assert.deepEqual(view.forbiddenCalls, []);
+});
+
+test("login sends an unchanged existing password to the auth adapter and preserves server rejection", async () => {
+  const view = loginFormFixture();
+  const password = "Clave987654";
+  view.form.setValue("username", "login-fixture@example.invalid");
+  view.form.setValue("password", password);
+  await nodes(view.render(), (node) => node.type === "form")[0].props.onSubmit();
+  assert.deepEqual(plain(view.signIns), [["credentials", { redirect: false, username: "login-fixture@example.invalid", password, callbackUrl: "/" }]]);
+  assert.deepEqual(plain(view.notices), [["Credenciales inválidas.", "warning"]]);
+  assert.equal(view.form.getValues("password"), password);
+  assert.deepEqual(view.forbiddenCalls, []);
 });
