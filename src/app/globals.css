@@ -1,4 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+/* Resolve application sources from this stylesheet, independent of the build cwd.
+   Keep checks, build output and local duplicate copies out of candidate discovery. */
+@source "../**/*.{js,ts,jsx,tsx,mdx}";
+@source not "../**/* 2.*";
 @plugin '../../hero.ts';
 @source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant dark (&:is(.dark *));
@@ -123,6 +127,20 @@ body {
 }
 
 @layer components {
+  /* Inspection feedback belongs only to the authorized editor preview. */
+  #next-storefront-preview [data-storefront-section-id] {
+    cursor: pointer;
+  }
+
+  #next-storefront-preview [data-storefront-section-id]:hover,
+  #next-storefront-preview [data-storefront-section-id]:focus-visible,
+  #next-storefront-preview [data-storefront-section-id]:focus-within,
+  #next-storefront-preview [data-storefront-section-id].contents:hover > *,
+  #next-storefront-preview [data-storefront-section-id].contents:focus-within > * {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+
   .placeholder-input-color::placeholder {
     color: var(--input-color);
   }

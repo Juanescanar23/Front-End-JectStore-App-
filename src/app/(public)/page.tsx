@@ -3,11 +3,15 @@ import { GET_THEME_CUSTOMIZATION } from "@/graphql";
 import { graphqlRequest } from "../../lib/graphql-fetch";
 import RenderThemeCustomization from "@components/home/RenderThemeCustomization";
 import { ThemeCustomizationResponse } from "@/types/theme/theme-customization";
+import { getStorefrontExperience } from "@/lib/storefront-experience/server";
+import RenderStorefrontDocument from "@/components/home/RenderStorefrontDocument";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const experience = await getStorefrontExperience();
+  if (experience?.document) return <RenderStorefrontDocument document={experience.document} currency={experience.currency} />;
   let themeCustomizations: ThemeCustomizationResponse["themeCustomization"] | undefined;
 
   try {
@@ -59,6 +63,6 @@ export default async function Home() {
   }
 
   return (
-    <RenderThemeCustomization themeCustomizations={themeCustomizations} />
+    <RenderThemeCustomization themeCustomizations={themeCustomizations} currency={experience?.currency} />
   );
 }

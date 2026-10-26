@@ -4,9 +4,15 @@ import { decodeJWT } from "@/utils/jwt-cookie";
 export const getNativeCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
 
-  const cookies = document.cookie.split("; ").map((c) => c.trim());
-  const found = cookies.find((c) => c.startsWith(name + "="));
-  return found ? decodeURIComponent(found.split("=")[1]) : null;
+  try {
+    const cookies = document.cookie.split("; ").map((c) => c.trim());
+    const found = cookies.find((c) => c.startsWith(name + "="));
+    return found ? decodeURIComponent(found.split("=")[1]) : null;
+  } catch {
+    // An opaque editor sandbox (or blocked cookies) has no readable session.
+    // Preserve that restriction without aborting storefront hydration.
+    return null;
+  }
 };
 
 export const getCartToken = (): string | null => {
@@ -23,8 +29,12 @@ export const getCartToken = (): string | null => {
 export const getCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
 
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? decodeURIComponent(match[2]) : null;
+  try {
+    const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch {
+    return null;
+  }
 };
 
 export const setCookie = (name: string, value: string, days = 7) => {

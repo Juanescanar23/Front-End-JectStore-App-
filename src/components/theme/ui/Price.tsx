@@ -8,7 +8,7 @@ export const Price = ({
   className?: string;
   currencyCode: string;
 } & React.ComponentProps<"p">) => (
-  <p className={className} suppressHydrationWarning={true} {...rest}>
+  <p className={className} suppressHydrationWarning={true} data-currency={currencyCode} {...rest}>
     {`${new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: currencyCode,

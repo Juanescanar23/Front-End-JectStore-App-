@@ -3,7 +3,7 @@ import { ProductsSectionProps } from "@components/catalog/type";
 import { getProductImageUrl } from "@utils/constants";
 
 
-const Theme = ({ title, description, products }: ProductsSectionProps) => {
+const Theme = ({ title, description, products, currency }: ProductsSectionProps & { currency: string }) => {
   return (
     <section className="pt-8 sm:pt-12 lg:pt-20">
       <div className="md:max-w-4.5xl mx-auto mb-6 w-full px-0 text-center xss:mb-10 md:px-36">
@@ -25,7 +25,7 @@ const Theme = ({ title, description, products }: ProductsSectionProps) => {
             return (
               <ProductCard
                 key={item.id ?? index}
-                currency="USD"
+                currency={currency}
                 imageUrl={imageUrl || ""}
                 price={String(price)}
                 product={{

@@ -8,13 +8,13 @@ import {
 import makeClient from "./apollo-client";
 import { GRAPHQL_URL } from "@/utils/constants";
 import { canonicalCacheHostname, storefrontCacheTags } from "@/utils/storefront-cache-scope";
+import { requestHost } from "@/utils/request-host";
 import {
   buildTenantForwardHeaders,
   resolveServerGraphqlUrl,
   resolveTenantHostForRequest,
 } from "@/utils/graphql-endpoint";
 
-const FALLBACK_LANDLORD_HOST = "app.jectstore.com";
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
 const STOREFRONT_REALTIME_MODE =
   process.env.NODE_ENV !== "production" ||
@@ -35,36 +35,7 @@ const normalizeHostname = (value?: string | null) =>
     .replace(/:\d+$/, "")
     .replace(/\/$/, "");
 
-const getLandlordHost = () =>
-  normalizeHostname(
-    process.env.NEXT_PUBLIC_LANDLORD_HOST || FALLBACK_LANDLORD_HOST,
-  ) || FALLBACK_LANDLORD_HOST;
-
-const resolveRuntimeHost = (headerStore: Headers) => {
-  const landlordHost = getLandlordHost();
-  const candidates = [
-    headerStore.get("x-tenant-host"),
-    headerStore.get("x-storefront-host"),
-    headerStore.get("x-original-host"),
-    headerStore.get("host"),
-    headerStore.get("x-forwarded-host"),
-  ]
-    .map(normalizeHostHeader)
-    .filter((value): value is string => Boolean(value));
-
-  if (!candidates.length) return "";
-
-  const tenantCandidate = candidates.find((candidate) => {
-    const hostname = normalizeHostname(candidate);
-    return (
-      Boolean(hostname) &&
-      hostname !== landlordHost &&
-      !LOCAL_HOSTNAMES.has(hostname)
-    );
-  });
-
-  return tenantCandidate || candidates[0];
-};
+const resolveRuntimeHost = requestHost;
 
 const resolveRuntimeProtocol = (headerStore: Headers, host: string) => {
   const rawProto = headerStore.get("x-forwarded-proto");
@@ -84,7 +55,7 @@ const resolveRuntimeProtocol = (headerStore: Headers, host: string) => {
   return "https";
 };
 
-const resolveServerGraphqlTarget = async () => {
+const resolveServerGraphqlTarget = async (verifiedHost?: string) => {
   if (!GRAPHQL_URL) {
     return {
       uri: GRAPHQL_URL,
@@ -93,7 +64,7 @@ const resolveServerGraphqlTarget = async () => {
   }
 
   const headerStore = await headers();
-  const host = resolveRuntimeHost(headerStore);
+  const host = verifiedHost ?? resolveRuntimeHost(headerStore);
 
   if (!host) {
     return {
@@ -126,14 +97,18 @@ const resolveServerGraphqlTarget = async () => {
   };
 };
 
-async function getClient() {
+async function getClient(verifiedLocale?: string, verifiedHost?: string) {
   const ssrMode = typeof window === "undefined";
   if (!ssrMode) {
     return makeClient();
   }
 
-  const { uri, tenantHost } = await resolveServerGraphqlTarget();
+  const { uri, tenantHost } = await resolveServerGraphqlTarget(verifiedHost);
   const tenantHeaders = buildTenantForwardHeaders(tenantHost);
+  const locale = verifiedLocale || (await headers()).get("x-locale");
+  if (locale && /^[A-Za-z]{2,8}(?:[_-][A-Za-z0-9]{2,8})*$/.test(locale)) {
+    Object.assign(tenantHeaders, { "x-locale": locale });
+  }
 
   return makeClient({
     uri,
@@ -171,13 +146,13 @@ export function getRevalidateTime(life?: CacheLifeOption): number | false {
 
 const queryPrintMemo = new WeakMap<DocumentNode, string>();
 
-const resolveRequestScope = async (): Promise<string> => {
+const resolveRequestScope = async (verifiedHost?: string): Promise<string> => {
   if (typeof window !== "undefined") {
     return `${window.location.protocol}//${window.location.host}`;
   }
 
   const headerStore = await headers();
-  const host = resolveRuntimeHost(headerStore) || "default";
+  const host = verifiedHost ?? (resolveRuntimeHost(headerStore) || "default");
   const proto = resolveRuntimeProtocol(headerStore, host);
 
   return `${proto}://${host}`;
@@ -213,10 +188,15 @@ export async function graphqlRequest<
   variables?: TVariables,
   options?: GraphQLRequestOptions
 ): Promise<TData> {
-  const bypassCache = options?.noCache || STOREFRONT_REALTIME_MODE;
+  const requestHeaders = typeof window === "undefined" ? await headers() : null;
+  const experience = requestHeaders && process.env.STOREFRONT_EXPERIENCES_ENABLED === "true"
+    ? await (await import("./storefront-experience/server")).getVerifiedExperienceContext()
+    : null;
+  const verifiedHost = experience ? requestHeaders?.get("host") || undefined : undefined;
+  const bypassCache = options?.noCache || STOREFRONT_REALTIME_MODE || requestHeaders?.has("x-jectstore-next-preview-query");
 
   if (bypassCache) {
-    const client = await getClient();
+    const client = await getClient(experience?.locale, verifiedHost);
     const result: ApolloQueryResult<TData> = await client.query({
       query,
       variables,
@@ -241,7 +221,7 @@ export async function graphqlRequest<
     queryPrintMemo.set(query, queryString);
   }
 
-  const scope = await resolveRequestScope();
+  const scope = await resolveRequestScope(verifiedHost);
   const cacheHost = canonicalCacheHostname(new URL(scope).host);
   if (!cacheHost) {
     return graphqlRequest(query, variables, { ...options, noCache: true });
@@ -252,9 +232,19 @@ export async function graphqlRequest<
     scope,
     query: queryString,
     variables,
+    ...(experience ? {
+      experience: {
+        channel: experience.channel.id,
+        locale: experience.locale,
+        engine: experience.engine,
+        base: experience.base_key,
+        currency: experience.currency,
+        revision: experience.published_revision_id,
+      },
+    } : {}),
   })}`;
 
-  const client = await getClient();
+  const client = await getClient(experience?.locale, verifiedHost);
   const cachedQuery = unstable_cache(
     async (): Promise<TData> => {
       const result: ApolloQueryResult<TData> = await client.query({

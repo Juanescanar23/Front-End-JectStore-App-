@@ -3,9 +3,11 @@ import { DefaultSession, DefaultUser } from "next-auth";
 declare module "next-auth" {
   interface User extends DefaultUser {
     id: string;
-    apiToken: string;
+    apiToken?: string;
     accessToken: string;
     role: string;
+    tenant_host?: string;
+    tenant_session_version?: number;
   }
 
   interface Session {
@@ -22,8 +24,10 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    apiToken: string;
+    apiToken?: string;
     accessToken: string;
     role: string;
+    tenant_host?: string;
+    tenant_session_version?: number;
   }
 }

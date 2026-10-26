@@ -4,8 +4,10 @@ import { FC, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Shimmer } from "@/components/common/Shimmer";
+import { nextBannerHref } from "@/lib/storefront-experience/document";
 
 interface ImageCarouselProps {
+    editorial?: boolean;
     options: {
         images: {
             image: string;
@@ -16,7 +18,7 @@ interface ImageCarouselProps {
     };
 }
 
-const ImageCarousel: FC<ImageCarouselProps> = ({ options }) => {
+const ImageCarousel: FC<ImageCarouselProps> = ({ options, editorial = false }) => {
     const { images } = options;
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -144,7 +146,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({ options }) => {
                         >
                             {img.link ? (
                                 <Link
-                                    href={`/search/${img.link}`}
+                                    href={editorial ? nextBannerHref(img.link) : `/search/${img.link}`}
                                     className="block h-full w-full"
                                     aria-label={`Ver ${altText}`}
                                 >

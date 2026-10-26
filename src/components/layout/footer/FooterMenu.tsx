@@ -5,6 +5,7 @@ import { isArray } from "@/utils/type-guards";
 import { safeParse } from "@/utils/helper";
 import { pickTranslationByLocale } from "@/utils/theme-translation";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
+import type { NextFooterSettings } from "@/lib/storefront-experience/document";
 
 const getUrlparams = (url?: string | null) => {
   if (!url) return "/";
@@ -21,14 +22,14 @@ const getUrlparams = (url?: string | null) => {
   return "/";
 };
 
-const FooterMenuItem = ({ item }: { item: ThemeOptions }) => {
+const FooterMenuItem = ({ item, explicitUrl = false }: { item: ThemeOptions; explicitUrl?: boolean }) => {
   return (
     <li className="text-selected-black dark:text-neutral-300">
       <Link
         aria-label={`${item?.title}`}
         title={`${item?.title}`}
-        className="block px-0 py-1 md:p-2 text-nowrap text-sm underline-offset-4 text-selected-black dark:text-neutral-300 hover:text-black hover:underline md:inline-block dark:hover:text-neutral-300"
-        href={getUrlparams(item.url)}
+        className={`block px-0 py-1 md:p-2 ${explicitUrl ? "break-words whitespace-normal" : "text-nowrap"} text-sm underline-offset-4 text-selected-black dark:text-neutral-300 hover:text-black hover:underline md:inline-block dark:hover:text-neutral-300`}
+        href={explicitUrl ? item.url || "/" : getUrlparams(item.url)}
       >
         {item.title}
       </Link>
@@ -38,10 +39,12 @@ const FooterMenuItem = ({ item }: { item: ThemeOptions }) => {
 
 export default async function FooterMenu({
   menu,
+  editorial,
 }: {
   menu: ThemeCustomizationNode[];
+  editorial?: NextFooterSettings["columns"];
 }) {
-  if (!menu || menu.length === 0) return null;
+  if (!editorial && (!menu || menu.length === 0)) return null;
 
   const localeCode = await getStorefrontLocaleCode();
 
@@ -52,8 +55,9 @@ export default async function FooterMenu({
     typeof firstTranslation?.options === "string"
       ? safeParse(firstTranslation.options)
       : firstTranslation?.options;
-  const columns =
-    channels && typeof channels === "object" ? (channels as FooterColumns) : null;
+  const columns = editorial ?? (
+    channels && typeof channels === "object" ? (channels as FooterColumns) : null
+  );
 
   return (
     <div className="flex justify-between gap-x-8 lg:gap-x-[50px]">
@@ -62,7 +66,7 @@ export default async function FooterMenu({
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
             {(columns?.column_1 || []).map((item: ThemeOptions, index: number) => {
-              return <FooterMenuItem key={index} item={item} />;
+              return <FooterMenuItem key={index} item={item} explicitUrl={Boolean(editorial)} />;
             })}
           </ul>
         </nav>
@@ -73,7 +77,7 @@ export default async function FooterMenu({
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
             {(columns?.column_2 || []).map((item: ThemeOptions, index: number) => {
-              return <FooterMenuItem key={index} item={item} />;
+              return <FooterMenuItem key={index} item={item} explicitUrl={Boolean(editorial)} />;
             })}
           </ul>
         </nav>
@@ -84,7 +88,7 @@ export default async function FooterMenu({
         <nav className="w-full lg:min-w-[160px] xl:min-w-[200px]">
           <ul>
             {(columns?.column_3 || []).map((item: ThemeOptions, index: number) => {
-              return <FooterMenuItem key={index} item={item} />;
+              return <FooterMenuItem key={index} item={item} explicitUrl={Boolean(editorial)} />;
             })}
           </ul>
         </nav>

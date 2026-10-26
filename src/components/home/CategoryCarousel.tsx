@@ -2,23 +2,27 @@ import { FC } from "react";
 import Link from "next/link";
 import { graphqlRequestNoCache } from "../../lib/graphql-fetch";
 import { GET_HOME_CATEGORIES } from "@/graphql/catelog/queries/HomeCategories";
+import { GET_TREE_CATEGORIES } from "@/graphql/catelog/queries/Category";
 import { GridTileImage } from "../theme/ui/grid/Tile";
 import { NOT_IMAGE } from "@/utils/constants";
+import type { NextCategorySection } from "@/lib/storefront-experience/document";
 
 interface CategoryCarouselProps {
   options: {
-    filters: Record<string, any>;
+    filters?: Record<string, any>;
   };
+  editorial?: NextCategorySection["settings"];
 }
 
 const CategoryCarousel: FC<CategoryCarouselProps> = async ({
   options: _options,
+  editorial,
 }) => {
   let topCategories: any[] = [];
 
   try {
     const data = await graphqlRequestNoCache<any>(
-      GET_HOME_CATEGORIES,
+      editorial?.category_ids.length ? GET_TREE_CATEGORIES : GET_HOME_CATEGORIES,
       { getCategoryTree: true }
     );
 
@@ -28,6 +32,14 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
       .filter((category: any) => category.id !== "1")
       .sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
       .slice(0, 3);
+    if (editorial?.category_ids.length) {
+      const flatten = (items: any[]): any[] => items.flatMap((item) => [item, ...flatten(Array.isArray(item.children) ? item.children : [])]);
+      const selectable = flatten(categories);
+      topCategories = editorial.category_ids.flatMap((id) => {
+        const category = selectable.find((item: any) => String(item.id) === String(id) && String(item.id) !== "1");
+        return category ? [category] : [];
+      });
+    }
   } catch (error) {
     console.error("Error fetching categories:", error);
     return null;
@@ -39,11 +51,10 @@ const CategoryCarousel: FC<CategoryCarouselProps> = async ({
       <section className="pt-8 sm:pt-12 lg:pt-20">
         <div className="md:max-w-4.5xl mx-auto mb-10 w-auto text-center md:px-36">
           <h2 className="mb-2 text-xl md:text-4xl  font-semibold">
-            Compra por categoría
+            {editorial?.title ?? "Compra por categoría"}
           </h2>
           <p className="text-sm md:text-base font-normal text-black/60 dark:text-neutral-300">
-            Descubre las últimas tendencias. Productos recién agregados: nuevas
-            tendencias, tecnología y esenciales antes de que se agoten.
+            {editorial?.description ?? "Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten."}
           </p>
         </div>
         <div className="w-full overflow-x-auto overflow-y-hidden">

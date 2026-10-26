@@ -1,24 +1,14 @@
 import { ReactNode } from "react";
-import Footer from "@/components/layout/footer";
-import Navbar from "@/components/layout/navbar";
-import FloatingWhatsAppButton from "@/components/common/whatsapp/FloatingWhatsAppButton";
-import { getTenantWhatsAppConfig } from "@/utils/server/tenant-whatsapp";
+import StorefrontShell from "@/components/layout/StorefrontShell";
+import { getStorefrontExperience } from "@/lib/storefront-experience/server";
 
 export default async function RootLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const tenantWhatsApp = await getTenantWhatsAppConfig();
-
+  const experience = await getStorefrontExperience();
   return (
-    <main>
-      <Navbar allowsCheckout={tenantWhatsApp?.allowsCheckout !== false} />
-      <div className="mx-auto min-h-[calc(100vh-580px)] w-full">
-        {children}
-      </div>
-      <Footer />
-      <FloatingWhatsAppButton href={tenantWhatsApp?.enabled ? tenantWhatsApp.waBaseUrl : null} />
-    </main>
+    <StorefrontShell document={experience?.document}>{children}</StorefrontShell>
   );
 }

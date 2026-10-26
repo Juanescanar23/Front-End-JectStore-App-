@@ -8,19 +8,24 @@ import {
   resolveSortToStorefrontFilters,
 } from "@/utils/storefront-filters";
 import { ProductsResponse } from "@/components/catalog/type";
+import { getStorefrontCurrencyCode } from "@/utils/server/storefront-currency";
 
 
 interface ProductCarouselProps {
     options: {
         title?: string;
+        description?: string;
         filters: Record<string, any>;
     };
     itemCount?: number;
     sortOrder?: number;
+    layout?: "three-item" | "grid";
+    currency?: string;
 }
 
-const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 4, sortOrder }) => {
+const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 4, sortOrder, layout, currency }) => {
     const { filters, title } = options;
+    let currencyCode = currency;
     let products: Array<ComponentProps<typeof ThreeItemGrid>["products"][number] & { sku: string }> = [];
 
     try {
@@ -40,9 +45,9 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
             base: {
             page: 1,
             limit: Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : itemCount,
-            ...resolveSortToStorefrontFilters(
-              typeof sort === "string" ? sort : undefined
-            ),
+            ...(layout && ["name", "price", "created_at"].includes(String(sort))
+              ? { sort }
+              : resolveSortToStorefrontFilters(typeof sort === "string" ? sort : undefined)),
             ...rest,
           },
         });
@@ -68,8 +73,13 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
                 : undefined,
             price: product.price ?? "0",
             specialPrice: product.specialPrice ?? undefined,
+            isSaleable: product.isSaleable,
             type: product.type || "simple",
           }));
+        if (products.length) {
+          currencyCode ||= await getStorefrontCurrencyCode();
+          if (!/^[A-Z]{3}$/.test(currencyCode)) throw new Error("The channel currency is unavailable.");
+        }
     } catch (error) {
         console.error("Error fetching products for carousel:", {
             title,
@@ -79,15 +89,17 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
         return null;
     }
 
-        if (!products.length) {
+        if (!products.length || !currencyCode) {
             return null;
         }
 
-        if (sortOrder === 2 && products.length >= 3) {
+        const description = options.description ?? "Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten.";
+        if ((layout === "three-item" || !layout && sortOrder === 2) && products.length >= 3) {
             return (
                 <ThreeItemGrid
                     title={title || "Productos"}
-                    description="Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten."
+                    currency={currencyCode}
+                    description={description}
                     products={products.slice(0, 3)}
                 />
             );
@@ -97,7 +109,8 @@ const ProductCarousel: FC<ProductCarouselProps> = async ({ options, itemCount = 
 
             <Theme
                 title={title || "Productos"}
-                description="Descubre las últimas tendencias. Productos recién agregados: nuevas tendencias, tecnología y esenciales antes de que se agoten."
+                currency={currencyCode}
+                description={description}
                 products={products}
             />
         );

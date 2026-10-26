@@ -1,5 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Exported builds have no .git boundary. Keep source directories traversable
+# when Tailwind 4 inherits an ancestor ignore-all rule; file exclusions stay below.
+!/src/
+!/src/**/
+
 # dependencies
 /node_modules
 /.pnp

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
@@ -19,9 +19,14 @@ const files = {
   orders: "src/components/portal/cod/CodOrdersPanel.tsx",
   settings: "src/components/portal/cod/CodSettingsPanel.tsx",
 };
-const source = (file, baseline) => baseline
-  ? execFileSync("git", ["show", `${baselineReference}:${file}`], { cwd: root, encoding: "utf8" })
-  : readFileSync(path.join(root, file), "utf8");
+const historicalSources = JSON.parse(readFileSync(new URL("./fixtures/frontend-baselines.json", import.meta.url), "utf8")).snapshots;
+const source = (file, baseline) => {
+  if (!baseline) return readFileSync(path.join(root, file), "utf8");
+  const snapshot = historicalSources.find((entry) => entry.reference === baselineReference && entry.path === file);
+  assert.ok(snapshot, `Missing immutable baseline: ${file}`);
+  assert.equal(createHash("sha256").update(snapshot.source).digest("hex"), snapshot.sha256, `Baseline hash mismatch: ${file}`);
+  return snapshot.source;
+};
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const nodes = (tree, predicate) => {
   if (Array.isArray(tree)) return tree.flatMap((node) => nodes(node, predicate));
@@ -101,6 +106,7 @@ function fixture(file, baseline, { graphql, request, cookies = {}, initialSearch
     "../fetch-handler": { fetchHandler: async (options) => { calls.push(options); return { data: { createCartToken: { cartToken: { sessionToken: "raw-fixture-token", id: 7, isGuest: true } } } }; } },
     "../../lib/graphql-fetch": { graphqlRequestNoCache: async (...args) => { calls.push(args); return graphql(...args); } },
     "@/utils/storefront-filters": { buildStorefrontFilterInput: ({ base }) => base, resolveSortToStorefrontFilters: (sort) => ({ sort }) },
+    "@/utils/server/storefront-currency": { getStorefrontCurrencyCode: async () => "USD" },
     "@heroui/react": { Drawer: "Drawer", DrawerContent: "DrawerContent", DrawerHeader: "DrawerHeader", DrawerBody: "DrawerBody", Button: "Button", useDisclosure: () => ({ isOpen: true, onOpen() {}, onOpenChange() { navigation.push("drawer-close"); } }) },
     "@/utils/constants": constants,
     clsx: { default: (...args) => args.filter(Boolean).join(" "), __esModule: true },
@@ -150,7 +156,7 @@ test("category fetch failure/empty state and ordering stay identical outside JSX
   }
 });
 
-test("product filters, empty/error fallback, eight-item cap and three-grid mode are preserved", async () => {
+test("product filters, empty/error fallback, eight-item cap and three-grid mode are preserved apart from authoritative currency", async () => {
   for (const mode of ["error", "empty", "grid", "carousel"]) {
     const outputs = [];
     for (const baseline of [true, false]) {
@@ -158,7 +164,9 @@ test("product filters, empty/error fallback, eight-item cap and three-grid mode 
         if (mode === "error") throw Error("fixture");
         return { products: { data: mode === "empty" ? [] : Array.from({ length: 10 }, (_, id) => ({ id: String(id), sku: `sku${id}`, price: id, cacheBaseImage: { originalImageUrl: `image${id}` } })) } };
       } });
-      outputs.push({ tree: plain(await view.render({ options: { filters: [{ key: "limit", value: "6" }, { key: "sort", value: "price-asc" }] }, sortOrder: mode === "grid" ? 2 : 1 })), calls: plain(view.calls) });
+      const tree = plain(await view.render({ options: { filters: [{ key: "limit", value: "6" }, { key: "sort", value: "price-asc" }] }, sortOrder: mode === "grid" ? 2 : 1 }));
+      if (!baseline && tree) { assert.equal(tree.props.currency, "USD"); delete tree.props.currency; }
+      outputs.push({ tree, calls: plain(view.calls) });
     }
     assert.deepEqual(outputs[1], outputs[0]);
   }

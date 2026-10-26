@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { requestHost } from "@/utils/request-host";
 
 const FALLBACK_LANDLORD_HOST = "app.jectstore.com";
 const FALLBACK_LANDLORD_SCHEME = "https";
@@ -30,11 +31,7 @@ export const isLandlordHost = (host?: string | null) => {
 
 export async function getRuntimeHost(): Promise<string> {
   const headerStore = await headers();
-  return normalizeHost(
-    headerStore.get("x-tenant-host") ||
-      headerStore.get("x-forwarded-host") ||
-      headerStore.get("host"),
-  );
+  return requestHost(headerStore);
 }
 
 export function getDefaultTenantPlanForHost(runtimeHost: string): string {

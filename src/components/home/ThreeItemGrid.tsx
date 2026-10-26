@@ -9,6 +9,7 @@ import { getProductImageUrl, NOT_IMAGE } from "@/utils/constants";
 interface ThreeItemGridProps {
     title: string;
     description: string;
+    currency: string;
     products: Array<{
         id: string;
         name: string;
@@ -18,14 +19,16 @@ interface ThreeItemGridProps {
         cacheBaseImage?: Array<{ originalImageUrl?: string | null; largeImageUrl?: string | null }>;
         price: string | number;
         specialPrice?: string | number;
+        isSaleable?: boolean | null;
         type: string;
     }>;
 }
 
-function ThreeItemGridItem({ product, size, priority }: {
+function ThreeItemGridItem({ product, size, priority, currency }: {
     product: any;
     size: 'full' | 'half';
     priority?: boolean;
+    currency: string;
 }) {
     const imageUrl = getProductImageUrl(product) || NOT_IMAGE;
     const displayPrice = product?.specialPrice ?? product?.price ?? '0';
@@ -61,7 +64,7 @@ function ThreeItemGridItem({ product, size, priority }: {
                         position: size === 'full' ? 'center' : 'bottom',
                         title: product.name,
                         amount: displayPrice,
-                        currencyCode: 'USD',
+                        currencyCode: currency,
                     }}
                 />
             </Link>
@@ -70,10 +73,11 @@ function ThreeItemGridItem({ product, size, priority }: {
 }
 
 
-function MobileThreeItemGridItem({ product, size, priority }: {
+function MobileThreeItemGridItem({ product, size, priority, currency }: {
     product: any;
     size: 'full' | 'half';
     priority?: boolean;
+    currency: string;
 }) {
     const imageUrl = getProductImageUrl(product) || NOT_IMAGE;
     const displayPrice = product?.specialPrice ?? product?.price ?? '0';
@@ -107,14 +111,14 @@ function MobileThreeItemGridItem({ product, size, priority }: {
                         position: size === 'full' ? 'center' : 'bottom',
                         title: product.name,
                         amount: displayPrice,
-                        currencyCode: 'USD',
+                        currencyCode: currency,
                     }}
                 />
             </Link>
         </div>
     );
 }
-export const ThreeItemGrid: FC<ThreeItemGridProps> = ({ title, description, products }) => {
+export const ThreeItemGrid: FC<ThreeItemGridProps> = ({ title, description, products, currency }) => {
     if (!products || products.length < 3) return null;
 
     const [firstProduct, secondProduct, thirdProduct] = products;
@@ -134,16 +138,16 @@ export const ThreeItemGrid: FC<ThreeItemGridProps> = ({ title, description, prod
             {
                 isDesktop ?
                     <div className="grid gap-4 md:grid-cols-6 md:grid-rows-2 lg:max-h-[calc(100vh-200px)]">
-                        <ThreeItemGridItem product={firstProduct} size="full" priority={true} />
-                        <ThreeItemGridItem product={secondProduct} size="half" priority={true} />
-                        <ThreeItemGridItem product={thirdProduct} size="half" />
+                        <ThreeItemGridItem product={firstProduct} size="full" priority={true} currency={currency} />
+                        <ThreeItemGridItem product={secondProduct} size="half" priority={true} currency={currency} />
+                        <ThreeItemGridItem product={thirdProduct} size="half" currency={currency} />
                     </div>
                     :
                     (
                         <div className="grid  gap-4 grid-cols-1 xs:grid-cols-2 lg:max-h-[calc(100vh-200px)]">
-                            <MobileThreeItemGridItem product={firstProduct} size="full" priority={true} />
-                            <MobileThreeItemGridItem product={secondProduct} size="half" priority={true} />
-                            <MobileThreeItemGridItem product={thirdProduct} size="half" />
+                            <MobileThreeItemGridItem product={firstProduct} size="full" priority={true} currency={currency} />
+                            <MobileThreeItemGridItem product={secondProduct} size="half" priority={true} currency={currency} />
+                            <MobileThreeItemGridItem product={thirdProduct} size="half" currency={currency} />
                         </div>
                     )}
         </section>

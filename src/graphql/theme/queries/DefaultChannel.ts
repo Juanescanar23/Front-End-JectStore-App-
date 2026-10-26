@@ -16,6 +16,9 @@ export const GET_DEFAULT_CHANNEL = gql`
       defaultLocale {
         code
       }
+      baseCurrency {
+        code
+      }
     }
   }
 `;

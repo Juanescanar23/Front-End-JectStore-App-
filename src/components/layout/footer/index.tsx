@@ -11,28 +11,29 @@ import FooterMenu from "./FooterMenu";
 import ServiceContent from "./ServiceContent";
 import { ThemeCustomizationTranslationNode } from "@/types/theme/theme-customization";
 import { getStorefrontSeoPayload } from "@/utils/server/storefront-seo";
+import type { NextFooterSettings, NextHeaderSettings } from "@/lib/storefront-experience/document";
 
-export default async function Footer() {
+export default async function Footer({ editorial, branding: editorialBranding }: { editorial?: NextFooterSettings; branding?: NextHeaderSettings } = {}) {
   const skeleton =
     "w-full h-6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700";
-  const menu = await getThemeCustomization();
+  const menu = editorial ? null : await getThemeCustomization();
   const services = menu?.services_content?.[0];
   const serviceTranslations = services?.translations || [];
   const branding = await getStorefrontSeoPayload();
-  const logoSrc = branding?.image;
-  const logoAlt = branding?.siteName || branding?.title || "JectStore";
+  const logoSrc = editorialBranding?.logo_url || branding?.image;
+  const logoAlt = editorialBranding?.brand_name || branding?.siteName || branding?.title || "JectStore";
 
   return (
     <>
-      <div className="mx-auto my-16 mt-16 sm:mt-0 w-full lg:my-12 md:my-20 md:max-w-4xl px-4 py-8">
-        {isObject(services) && serviceTranslations.length > 0 && (
+      <div className="mx-auto my-16 mt-16 sm:mt-0 w-full lg:my-12 md:my-20 md:max-w-4xl px-4 py-8" data-storefront-section-id={editorial ? "region-footer" : undefined}>
+        {editorial ? <ServiceContent serviceData={[]} editorial={editorial.services} /> : isObject(services) && serviceTranslations.length > 0 && (
           <ServiceContent
             name={services?.name || undefined}
             serviceData={serviceTranslations as ThemeCustomizationTranslationNode[]}
           />
         )}
       </div>
-      <footer className="hidden lg:block border-t border-neutral-200 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+      <footer className="hidden lg:block border-t border-neutral-200 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400" data-storefront-section-id={editorial ? "region-footer" : undefined}>
         <div className="mx-auto flex w-full max-w-screen-2xl flex-col justify-between gap-6 gap-y-6 px-6 py-12 text-sm dark:border-neutral-700 min-[880px]:flex-row min-[880px]:gap-12 min-[880px]:gap-y-20 min-[880px]:px-4">
           <div className="flex flex-col gap-[14px]">
             <Link
@@ -47,7 +48,7 @@ export default async function Footer() {
             <div className="flex gap-[14px]">
               <Link
                 href={"#"}
-                aria-label="Visitar la tienda Bagisto en Facebook"
+                aria-label="Visitar la tienda JectStore en Facebook"
                 title="Facebook"
                 target="_blank"
                 className="cursor-pointer">
@@ -56,7 +57,7 @@ export default async function Footer() {
               </Link>
               <Link
                 href={"#"}
-                aria-label="Visitar la tienda Bagisto en Instagram"
+                aria-label="Visitar la tienda JectStore en Instagram"
                 title="Instagram"
                 target="_blank"
                 className="cursor-pointer">
@@ -65,7 +66,7 @@ export default async function Footer() {
               </Link>
               <Link
                 href={"#"}
-                aria-label="Visitar la tienda Bagisto en Twitter"
+                aria-label="Visitar la tienda JectStore en Twitter"
                 title="Twitter"
                 target="_blank"
                 className="cursor-pointer">
@@ -86,16 +87,16 @@ export default async function Footer() {
                 </div>
               }
             >
-              <FooterMenu menu={menu?.footer_links || []} />
+              <FooterMenu menu={menu?.footer_links || []} editorial={editorial?.columns} />
             </Suspense>
-            <Subscribe />
+            <Subscribe editorial={editorial?.newsletter} />
           </div>
         </div>
         <div className="border-t border-neutral-200 py-6 text-sm dark:border-neutral-700">
           <div className="mx-auto flex w-full max-w-screen-2xl flex-col justify-center gap-1 px-4 md:flex-row">
             <p className="text-center">
-              Hecho con ♥ en Latinoamérica - &copy; 2026 Todos los derechos
-              reservados - Impulsado por{" "}
+              {editorial?.copyright_text || "Hecho con ♥ en Latinoamérica - © 2026 Todos los derechos reservados - Impulsado por "}
+              {" "}
               <Link
                 href="https://jectstore.com/"
                 target="_blank"

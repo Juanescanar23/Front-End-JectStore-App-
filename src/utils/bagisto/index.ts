@@ -1,6 +1,6 @@
 import { cookies, headers as nextHeaders } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { canonicalCacheHostname, storefrontCacheTags } from "../storefront-cache-scope";
+import { storefrontCacheTags } from "../storefront-cache-scope";
 import {
   BagistoCreateUserOperation,
   BagistoProductInfo,
@@ -22,7 +22,8 @@ import { DocumentNode } from "graphql";
 import { GRAPHQL_URL } from "@/utils/constants";
 import { GET_FOOTER, PAGE_BY_URL_KEY } from "@/graphql";
 import { SUBSCRIBE_TO_NEWSLETTER } from "@/graphql/theme/mutations";
-import { authOptions } from "@utils/auth";
+import { createTenantAuthOptions } from "@utils/auth";
+import { requestHost } from "@/utils/request-host";
 import { RegisterInputs } from "@components/customer/RegistrationForm";
 import { GetFooterResponse, GetFooterVariables, ThemeCustomizationResult } from "@/types/theme/theme-customization";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
@@ -43,11 +44,7 @@ const normalizeBase = (value?: string) => {
 const resolveGraphqlUrl = async () => {
   if (!GRAPHQL_URL) return GRAPHQL_URL;
   const headerStore = await nextHeaders();
-  const runtimeHost =
-    headerStore.get("x-tenant-host") ||
-    headerStore.get("x-storefront-host") ||
-    headerStore.get("x-forwarded-host") ||
-    headerStore.get("host");
+  const runtimeHost = requestHost(headerStore);
 
   if (!runtimeHost) return GRAPHQL_URL;
 
@@ -90,7 +87,7 @@ export async function bagistoFetch<T>({
     if (isCookies) {
       const cookieStore = await cookies();
       bagistoCartId = cookieStore.get(BAGISTO_SESSION)?.value ?? "";
-      const sessions = await getServerSession(authOptions);
+      const sessions = await getServerSession(createTenantAuthOptions(requestHost(await nextHeaders())));
       accessToken = (sessions as any)?.user?.accessToken;
 
     }
@@ -104,12 +101,7 @@ export async function bagistoFetch<T>({
     const headerStore = await nextHeaders();
     Object.assign(
       baseHeaders,
-      buildTenantForwardHeaders(
-        headerStore.get("x-tenant-host") ||
-          headerStore.get("x-storefront-host") ||
-          headerStore.get("x-forwarded-host") ||
-          headerStore.get("host"),
-      ),
+      buildTenantForwardHeaders(requestHost(headerStore)),
     );
 
     if (accessToken) {
@@ -131,7 +123,7 @@ export async function bagistoFetch<T>({
       }
     }
 
-    const cacheHost = canonicalCacheHostname(headerStore.get("x-tenant-host") || headerStore.get("x-storefront-host") || headerStore.get("x-forwarded-host") || headerStore.get("host") || "");
+    const cacheHost = requestHost(headerStore);
     const effectiveCache = cacheHost ? cache : "no-store";
     const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
@@ -176,14 +168,9 @@ export async function bagistoFetchNoSession<T>({
   try {
     const localeCode = await getStorefrontLocaleCode();
     const headerStore = await nextHeaders();
-    const tenantHeaders = buildTenantForwardHeaders(
-      headerStore.get("x-tenant-host") ||
-        headerStore.get("x-storefront-host") ||
-        headerStore.get("x-forwarded-host") ||
-        headerStore.get("host"),
-    );
+    const tenantHeaders = buildTenantForwardHeaders(requestHost(headerStore));
 
-    const cacheHost = canonicalCacheHostname(headerStore.get("x-tenant-host") || headerStore.get("x-storefront-host") || headerStore.get("x-forwarded-host") || headerStore.get("host") || "");
+    const cacheHost = requestHost(headerStore);
     const effectiveCache = cacheHost ? cache : "no-store";
     const result = await fetch(await resolveGraphqlUrl(), {
       method: "POST",
@@ -302,7 +289,7 @@ export async function createUserToLogin(
 
 export async function logoutUser() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(createTenantAuthOptions(requestHost(await nextHeaders())));
     const token = session?.user?.accessToken;
 
     if (!token) {

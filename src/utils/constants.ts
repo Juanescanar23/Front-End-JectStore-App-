@@ -145,6 +145,10 @@ export const configHeader = [
   {
     source: "/_next/static/:path*",
     headers: [
+      // Public build assets must also load in the editor's opaque sandbox origin.
+      // No credentialed CORS is enabled, and HTML/API policies remain unchanged.
+      { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+      { key: "Access-Control-Allow-Origin", value: "*" },
       {
         key: "Cache-Control",
         value: "public, max-age=31536000, immutable",
@@ -162,8 +166,18 @@ export const configHeader = [
   },
   // Public folder assets - long cache
   {
+    // Exact public brand file; no arbitrary tenant upload route is opened.
+    source: "/brand/jectstore-logo.svg",
+    headers: [
+      { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+      { key: "Access-Control-Allow-Origin", value: "*" },
+    ],
+  },
+  {
     source: "/image/:path*",
     headers: [
+      { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+      { key: "Access-Control-Allow-Origin", value: "*" },
       {
         key: "Cache-Control",
         value: "public, max-age=31536000, immutable",

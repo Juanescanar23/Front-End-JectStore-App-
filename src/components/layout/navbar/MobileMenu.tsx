@@ -62,7 +62,7 @@ export default function MobileMenu({
               <DrawerBody className="px-4 py-4 overflow-y-auto">
                 <MobileSearchBar onClose={onClose} />
                 <h1 className="text-2xl text-black dark:text-white px-2 font-semibold">
-                  Categorías
+                  {menu.some((item: { href?: string }) => item.href) ? "Menú" : "Categorías"}
                 </h1>
                 <ul className="flex w-full flex-col">
                   {menu.map((item: any) => (
@@ -71,7 +71,8 @@ export default function MobileMenu({
                       className="p-2 text-xl text-black dark:text-white"
                     >
                       <Link
-                        href={item.slug ? `/search/${item.slug}` : "/search"}
+                        className={item.href ? "block break-words" : undefined}
+                        href={item.href ?? (item.slug ? `/search/${item.slug}` : "/search")}
                         aria-label={`${item?.name}`}
                         onClick={onClose}
                       >

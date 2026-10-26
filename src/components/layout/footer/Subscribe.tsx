@@ -8,12 +8,13 @@ import { Button } from "@components/common/button/LoadingButton";
 import { userSubscribe } from "@utils/actions";
 import { useCustomToast } from "@utils/hooks/useToast";
 import { EMAIL_REGEX } from "@utils/constants";
+import type { NextFooterSettings } from "@/lib/storefront-experience/document";
 
 type FormValues = {
   email: string;
 };
 
-const Subscribe = () => {
+const Subscribe = ({ editorial }: { editorial?: NextFooterSettings["newsletter"] }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const {
     register,
@@ -65,9 +66,9 @@ const Subscribe = () => {
       className="mt-4 md:mt-0 md:px-0 relative"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <p className="mb-1 text-base font-semibold">Boletín</p>
+      <p className="mb-1 text-base font-semibold">{editorial?.title || "Boletín"}</p>
       <p className="font-sm font-normal">
-        Suscríbete a nuestro boletín para ofertas exclusivas.
+        {editorial?.text || "Suscríbete a nuestro boletín para ofertas exclusivas."}
       </p>
 
       <div className="mt-4 flex gap-x-3">
@@ -99,7 +100,7 @@ const Subscribe = () => {
           )}
           disabled={loading || isSubmitting}
           loading={loading || isSubmitting}
-          title="Suscribirme"
+          title={editorial?.button_label || "Suscribirme"}
           type="submit"
         />
       </div>

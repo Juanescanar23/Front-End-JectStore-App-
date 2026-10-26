@@ -11,6 +11,7 @@ import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
 interface RenderThemeCustomizationProps {
     themeCustomizations: ThemeCustomizationResponse["themeCustomization"] | undefined;
+    currency?: string;
 }
 
 const isEnabled = (status?: string | boolean | null) => {
@@ -20,7 +21,8 @@ const isEnabled = (status?: string | boolean | null) => {
 };
 
 const RenderThemeCustomization = async ({
-    themeCustomizations
+    themeCustomizations,
+    currency,
 }: RenderThemeCustomizationProps) => {
     if (!themeCustomizations?.length) return null;
 
@@ -62,6 +64,7 @@ const RenderThemeCustomization = async ({
                             return (
                                 <ProductCarousel
                                     key={node.id}
+                                    currency={currency}
                                     options={{ ...options, title: node.name } as any}
                                     itemCount={itemCount}
                                     sortOrder={productCarouselIndex === 1 ? 2 : sortOrder}

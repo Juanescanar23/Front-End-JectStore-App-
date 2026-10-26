@@ -9,10 +9,12 @@ import VectorIcon from "@components/common/icons/service/VectorIcon";
 import TruckIcon from "@components/common/icons/service/TruckIcon";
 import SofaIcon from "@components/common/icons/service/SofaIcon";
 import AssuranceIcon from "@components/common/icons/service/AssuranceIcon";
+import type { NextFooterSettings } from "@/lib/storefront-experience/document";
 
 export interface ServiceContentDataTypes {
   name?: string;
   serviceData: ThemeCustomizationTranslationNode[];
+  editorial?: NextFooterSettings["services"];
 }
 
 export interface ServiceContenRenderTypes {
@@ -21,7 +23,8 @@ export interface ServiceContenRenderTypes {
   };
 }
 
-const ServiceContent: FC<ServiceContentDataTypes> = ({ serviceData }) => {
+const ServiceContent: FC<ServiceContentDataTypes> = ({ serviceData, editorial }) => {
+  if (editorial) return <ServiceCarouselRender serviceList={{ options: { services: editorial } as OptionDataTypes }} accessibleNames />;
   return serviceData?.slice(0, 1)?.map((service, index: number) => {
     const options =
       typeof service.options === "string"
@@ -46,8 +49,9 @@ const iconMapping: Record<string, JSX.Element> = {
   "icon-support": <AssuranceIcon />,
 };
 
-const ServiceCarouselRender: FC<ServiceContenRenderTypes> = ({
+const ServiceCarouselRender: FC<ServiceContenRenderTypes & { accessibleNames?: boolean }> = ({
   serviceList,
+  accessibleNames,
 }) => {
   const { options } = serviceList;
   const { services } = options;
@@ -70,6 +74,8 @@ const ServiceCarouselRender: FC<ServiceContenRenderTypes> = ({
         return (
           <div
             key={index}
+            role={accessibleNames ? "group" : undefined}
+            aria-label={accessibleNames ? list.title || undefined : undefined}
             className="flex flex-col items-center justify-center gap-3 max-md:gap-3 max-md:px-4 max-md:py-2"
           >
             {iconMapping[iconKey] ?? null}
