@@ -3,7 +3,7 @@ import test from "node:test";
 import { createRequire } from "node:module";
 import { createHmac } from "node:crypto";
 import { createServer } from "node:http";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import ts from "typescript";
 import { experience, nextDocument } from "./fixtures/storefront-experience.mjs";
@@ -11,15 +11,17 @@ import { experience, nextDocument } from "./fixtures/storefront-experience.mjs";
 const require = createRequire(import.meta.url);
 const root = resolve(import.meta.dirname, "../..");
 function loadSource(relative, mocks = {}) {
-  const file = resolve(root, relative);
+  const source = resolve(root, relative);
+  const file = [source, `${source}.ts`, `${source}.tsx`].find(candidate => existsSync(candidate));
+  assert.ok(file, `Missing source: ${relative}`);
   const output = ts.transpileModule(readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText;
   const loaded = { exports: {} };
   const localRequire = (name) => {
     if (Object.hasOwn(mocks, name)) return mocks[name];
-    if (name.startsWith(".")) return loadSource(resolve(dirname(file), `${name}.ts`), mocks);
-    if (name.startsWith("@/")) return loadSource(`src/${name.slice(2)}.ts`, mocks);
+    if (name.startsWith(".")) return loadSource(resolve(dirname(file), name), mocks);
+    if (name.startsWith("@/")) return loadSource(`src/${name.slice(2)}`, mocks);
     return require(name);
   };
   new Function("require", "module", "exports", output)(localRequire, loaded, loaded.exports);
@@ -286,6 +288,7 @@ const componentMocks = {
   "./ImageCarousel": { default: "ImageCarousel", __esModule: true }, "./ProductCarousel": { default: "ProductCarousel", __esModule: true },
   "./CategoryCarousel": { default: "CategoryCarousel", __esModule: true }, "@/components/layout/navbar/MobileSearch": { MobileSearchBar: "MobileSearchBar" },
   "@/components/common/skeleton/CategoryCarouselSkeleton": { CategoryCarouselSkeleton: "CategorySkeleton" },
+  "./StoreIntro": { default: "StoreIntro", __esModule: true },
 };
 function nodes(tree, type) {
   if (Array.isArray(tree)) return tree.flatMap((node) => nodes(node, type));
@@ -306,6 +309,45 @@ test("actual shared renderer preserves section order, explicit layout, visibilit
   assert.equal(nodes(moved, "ImageCarousel").length, 0);
   assert.equal(nodes(moved, "ProductCarousel")[0].props.layout, "three-item", "Moving a section cannot change its layout");
   assert.deepEqual(nodes(moved, "div").map((node) => node.props["data-storefront-section-id"]), ["categories-1", "products-1"]);
+});
+
+test("typed store intro preserves legacy content and owns its spacing without extra mobile search", () => {
+  const { STORE_INTRO_DEFAULTS } = loadSource("src/lib/storefront-experience/store-intro.ts");
+  const doc = nextDocument();
+  doc.sections = [{ id: "store-intro", type: "store_intro", visible: true, settings: { ...STORE_INTRO_DEFAULTS } }];
+  assert.deepEqual(documentApi.parseNextStorefrontDocument(doc), doc);
+  const render = loadSource("src/components/home/RenderStorefrontDocument.tsx", componentMocks).default;
+  const tree = render({ document: doc, currency: "COP" });
+  assert.equal(nodes(tree, "MobileSearchBar").length, 0);
+  assert.equal(nodes(tree, "section").length, 0, "The intro owns its original section container");
+  assert.deepEqual(nodes(tree, "StoreIntro")[0].props.settings, STORE_INTRO_DEFAULTS);
+  const intro = loadSource("src/components/home/StoreIntro.tsx", { ...componentMocks, "next/link": { __esModule: true, default: "a" } }).default({ settings: STORE_INTRO_DEFAULTS });
+  assert.equal(nodes(intro, "h1")[0].props.children, STORE_INTRO_DEFAULTS.heading);
+  assert.deepEqual(nodes(intro, "a").map(link => [link.props.href, link.props.children]), [["/search", "Ver catálogo"], ["/customer/login", "Ingresar"]]);
+  assert.equal(nodes(intro, "section")[0].props.className, "mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16");
+  doc.sections.push(nextDocument().sections[1], { ...doc.sections[0], id: "second-intro" }, nextDocument().sections[2]);
+  const mixed = render({ document: doc, currency: "COP" });
+  assert.deepEqual(nodes(mixed, "div").map(node => node.props["data-storefront-section-id"]), ["store-intro", "products-1", "second-intro", "categories-1"]);
+  assert.equal(nodes(mixed, "MobileSearchBar").length, 1);
+  assert.equal(nodes(mixed, "section").length, 2);
+});
+
+test("intro cannot become empty, executable markup, foreign navigation or arbitrary styles", () => {
+  const { STORE_INTRO_DEFAULTS } = loadSource("src/lib/storefront-experience/store-intro.ts");
+  const doc = nextDocument();
+  doc.sections = [{ id: "store-intro", type: "store_intro", visible: true, settings: { ...STORE_INTRO_DEFAULTS } }];
+  for (const [key, value] of [["heading", ""], ["primary_label", "  "], ["secondary_label", ""], ["body", "<script>unsafe</script>"], ["primary_url", "/%2foutside.test"], ["secondary_url", "https://outside.test"], ["css", "body{}"], ["html", "<b>override</b>"]]) {
+    const invalid = structuredClone(doc); invalid.sections[0].settings[key] = value;
+    assert.throws(() => documentApi.parseNextStorefrontDocument(invalid), key);
+  }
+  for (const url of ["/search?q=50%25", "/search?q=50%", "/search?q=hola%20mundo", "/search?q=%FF"]) {
+    doc.sections[0].settings.primary_url = url;
+    assert.equal(documentApi.parseNextStorefrontDocument(doc).sections[0].settings.primary_url, url);
+  }
+  for (const heading of ["\u00a0", "\ufeff", "\u0085"]) {
+    doc.sections[0].settings.heading = heading;
+    assert.throws(() => documentApi.parseNextStorefrontDocument(doc));
+  }
 });
 
 test("request loader memoizes one backend revision for home and shell", async (t) => {
@@ -438,22 +480,61 @@ test("carousel preserves catalog salability through both actual product-card CTA
   assert.equal(warnings.length, 6, "Unavailable or unknown catalog state never dispatches an add-to-cart action");
 });
 
+function frameClock() {
+  const pending = new Map(); let id = 0;
+  return {
+    requestAnimationFrame(callback) { pending.set(++id, callback); return id; },
+    cancelAnimationFrame(id) { pending.delete(id); },
+    flush() { const callbacks = [...pending.values()]; pending.clear(); callbacks.forEach(callback => callback(0)); },
+    get pending() { return pending.size; },
+  };
+}
+
 test("preview bridge is nonce/source-scoped, blocks mutations only inside the iframe and cleans up", () => {
   const { installNextPreviewBridge } = loadSource("src/lib/storefront-experience/preview-bridge.ts");
   const listeners = new Map(); const notifications = [];
-  const section = { dataset: { storefrontSectionId: "products-1" } };
+  const frames = frameClock();
+  const section = { dataset: { storefrontSectionId: "products-1" }, closest() { return this; } };
   const rootNode = { contains: (node) => node === section };
   const fakeDocument = { getElementById: () => rootNode, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: (name) => listeners.delete(name) };
-  const target = { document: fakeDocument, location: { href: "https://a.jectstore.test/__storefront-next-preview?_editor_preview=nonce", search: "?_editor_preview=nonce" }, parent: { postMessage: (...args) => notifications.push(args) }, addEventListener() {}, removeEventListener() {} };
+  const target = { ...frames, document: fakeDocument, location: { href: "https://a.jectstore.test/__storefront-next-preview?_editor_preview=nonce", search: "?_editor_preview=nonce" }, parent: { postMessage: (...args) => notifications.push(args) }, addEventListener() {}, removeEventListener() {} };
   const dispose = installNextPreviewBridge(target, ["products-1"]);
   assert.equal(notifications[0][1], "https://a.jectstore.test");
   assert.equal(notifications[0][0].previewToken, "nonce");
   const stopped = [];
   listeners.get("click")({ target: { closest: () => section }, preventDefault: () => stopped.push("default"), stopPropagation() {}, stopImmediatePropagation() {} });
+  frames.flush();
   assert.equal(notifications[1][0].sectionId, "products-1"); assert.equal(stopped.length, 1);
   section.dataset.storefrontSectionId = "unknown";
   listeners.get("click")({ target: { closest: () => section }, preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {} });
   assert.equal(notifications.length, 2);
   dispose(); assert.equal(listeners.size, 0);
   target.parent = target; installNextPreviewBridge(target, ["products-1"]); assert.equal(listeners.size, 0);
+});
+
+test("native preview inspection accepts only its exact parent and nonce and never interprets HTML effects", () => {
+  const { installNextPreviewBridge } = loadSource("src/lib/storefront-experience/preview-bridge.ts");
+  const events = new Map(); const notifications = []; const rect = { left: 10, top: 20, right: 200, bottom: 100, width: 190, height: 80 };
+  const frames = frameClock(); let measured = 0;
+  const section = { dataset: { storefrontSectionId: "products-1" }, closest() { return this; }, getBoundingClientRect: () => { measured++; return { width: 0, height: 0 }; }, children: [{ getBoundingClientRect: () => rect }] };
+  const rootNode = { contains: node => node === section, querySelectorAll: () => [section] };
+  const fakeDocument = { getElementById: () => rootNode, addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key) };
+  const target = { ...frames, document: fakeDocument, location: { href: "https://a.jectstore.test/__storefront-next-preview?_editor_preview=nonce", search: "?_editor_preview=nonce" }, parent: { postMessage: (...args) => notifications.push(args) }, addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key) };
+  const dispose = installNextPreviewBridge(target, ["products-1"]);
+  const send = (changes = {}) => events.get('message')({ source: target.parent, origin: 'https://a.jectstore.test', data: { type: 'jectstore:next-inspector', action: 'craftile.editor.select-block', blockId: 'products-1', previewToken: 'nonce' }, ...changes });
+  send({ source: {} }); send({ origin: 'null' }); send({ origin: 'https://foreign.test' }); send({ data: { type: 'jectstore:next-inspector', action: 'craftile.editor.select-block', blockId: 'products-1', previewToken: 'wrong' } });
+  assert.equal(notifications.length, 1);
+  send(); frames.flush(); assert.equal(notifications[1][0].type, 'jectstore:storefront-section-position');
+  assert.deepEqual(JSON.parse(JSON.stringify(notifications[1][0].rect)), { x: 10, y: 20, ...rect });
+  send({ data: { type: 'jectstore:next-inspector', action: 'updates.effects', html: '<script>untrusted</script>', previewToken: 'nonce' } });
+  assert.equal(notifications.length, 2);
+  const before = measured;
+  for (let i = 0; i < 50; i++) { events.get('scroll')(); events.get('resize')(); events.get('pointerover')({ target: { closest: () => section } }); }
+  assert.equal(notifications.length, 2); assert.equal(frames.pending, 1);
+  frames.flush(); assert.equal(notifications.length, 4); assert.equal(measured, before + 1, 'One layout read per section per frame');
+  events.get('pointerover')({ target: { closest: () => section } });
+  assert.equal(frames.pending, 0, 'Repeated descendants in the same section do not emit or measure');
+  events.get('scroll')(); assert.equal(frames.pending, 1);
+  dispose(); assert.equal(events.size, 0); assert.equal(frames.pending, 0);
+  frames.flush(); assert.equal(notifications.length, 4);
 });

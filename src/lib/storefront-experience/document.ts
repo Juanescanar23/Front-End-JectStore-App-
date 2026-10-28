@@ -13,6 +13,16 @@ export type NextFooterSettings = {
   copyright_text: string;
 };
 type Section<T extends string, S> = { id: string; type: T; visible: boolean; settings: S };
+export type NextStoreIntroSettings = {
+  eyebrow: string;
+  heading: string;
+  body: string;
+  primary_label: string;
+  primary_url: string;
+  secondary_label: string;
+  secondary_url: string;
+};
+export type NextStoreIntroSection = Section<"store_intro", NextStoreIntroSettings>;
 export type NextImageSection = Section<"image_carousel", { images: NextImage[] }>;
 export type NextProductSection = Section<"product_carousel", {
   title: string;
@@ -32,7 +42,7 @@ export type NextStorefrontDocument = {
     header: Section<"header", NextHeaderSettings>;
     footer: Section<"footer", NextFooterSettings>;
   };
-  sections: Array<NextImageSection | NextProductSection | NextCategorySection>;
+  sections: Array<NextStoreIntroSection | NextImageSection | NextProductSection | NextCategorySection>;
 };
 
 const invalid = (field: string): never => { throw new Error(`Invalid Next storefront document: ${field}`); };
@@ -159,7 +169,22 @@ export function parseNextStorefrontDocument(value: unknown): NextStorefrontDocum
     if (!/^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$/.test(id) || seen.has(id) || typeof section.visible !== "boolean") invalid("section.identity");
     seen.add(id);
     const settings = record(section.settings, "section.settings");
-    if (section.type === "image_carousel") {
+    if (section.type === "store_intro") {
+      keys(settings, ["eyebrow", "heading", "body", "primary_label", "primary_url", "secondary_label", "secondary_url"], "intro.settings");
+      for (const [field, max] of [["eyebrow", 80], ["heading", 240], ["body", 600], ["primary_label", 80], ["secondary_label", 80]] as const) {
+        const value = text(settings[field], `intro.${field}`, max);
+        if (["heading", "primary_label", "secondary_label"].includes(field) && !value.replace(/[\s\u0085]/gu, "")) invalid(`intro.${field}`);
+        if (/[<>]/.test(value)) invalid(`intro.${field}`);
+      }
+      for (const field of ["primary_url", "secondary_url"]) {
+        const url = localLink(settings[field], `intro.${field}`);
+        let decoded = url;
+        // Match rawurldecode for the safety checks, including literal percent,
+        // percent-encoded spaces and arbitrary bytes. Keep the original URL.
+        for (let i = 0; i < 3; i++) decoded = decoded.replace(/%([0-9a-f]{2})/gi, (_, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)));
+        if (decoded.startsWith("//") || /[<>\\\r\n\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(decoded)) invalid(`intro.${field}`);
+      }
+    } else if (section.type === "image_carousel") {
       keys(settings, ["images"], "image.settings");
       for (const entry of list(settings.images, "images", 20)) {
         const image = record(entry, "image");
