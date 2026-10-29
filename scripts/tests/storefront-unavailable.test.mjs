@@ -24,7 +24,7 @@ function loader(mocks = {}, exposeCod = false) {
     const file = [path, `${path}.ts`, `${path}/index.ts`].find(candidate => existsSync(candidate) && statSync(candidate).isFile());
     assert(file, `Missing source ${relative}`);
     if (cache.has(file)) return cache.get(file).exports;
-    const module = { exports: {} }; cache.set(file, module);
+    const loaded = { exports: {} }; cache.set(file, loaded);
     const output = ts.transpileModule(readFileSync(file, "utf8"), { fileName: file, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
     const localRequire = name => {
       if (Object.hasOwn(mocks, name)) return mocks[name];
@@ -35,8 +35,8 @@ function loader(mocks = {}, exposeCod = false) {
       return require(name);
     };
     const extra = exposeCod && file.endsWith("/cod-order.ts") ? "\nexports.__testCheckout = createOrderWithCheckoutGraphql;" : "";
-    new Function("require", "module", "exports", output + extra)(localRequire, module, module.exports);
-    return module.exports;
+    new Function("require", "module", "exports", output + extra)(localRequire, loaded, loaded.exports);
+    return loaded.exports;
   }
   return load;
 }
