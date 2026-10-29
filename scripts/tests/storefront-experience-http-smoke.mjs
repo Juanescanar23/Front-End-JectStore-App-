@@ -181,6 +181,16 @@ function request(port, targetHost, path = "/", options = {}) {
 }
 const cookieFrom = (response) => (response.headers["set-cookie"] || []).find((value) => value.startsWith("jectstore_experience="))?.split(";")[0];
 const check = (condition, message) => { assert.ok(condition, message); assertions++; };
+function checkAnonymousScripts(html, surface) {
+  const scripts = [...html.matchAll(/<script\b[^>]*>/gi)].map(match => match[0]).filter(tag => /\bsrc="\/_next\/static\//i.test(tag));
+  const preloads = [...html.matchAll(/<link\b[^>]*>/gi)].map(match => match[0]).filter(tag => /\brel="(?:preload|modulepreload)"/i.test(tag) && /\bas="script"/i.test(tag) && /\bhref="\/_next\/static\//i.test(tag));
+  // An empty crossorigin attribute is React's serialization of anonymous mode.
+  // Missing attributes use no-cors and can reuse stale CDN response policies.
+  const nonAnonymous = [...scripts, ...preloads].filter(tag => !/\bcrossorigin="(?:anonymous)?"/i.test(tag));
+  check(scripts.length > 0 && preloads.length > 0 && nonAnonymous.length === 0,
+    `${surface}: every Next script and script preload must use anonymous CORS: ${JSON.stringify(nonAnonymous)}`);
+  console.log(`${surface} anonymous script assets PASS: ${scripts.length} scripts, ${preloads.length} preloads; no credentials.`);
+}
 
 try {
   let port = await start();
@@ -193,6 +203,7 @@ try {
   const cookie = cookieFrom(published);
   check(Boolean(cookie) && /HttpOnly/i.test(published.headers["set-cookie"].join(";")), "Server issues HttpOnly engine pin");
   check(!Object.keys(published.headers).some((name) => name.startsWith("x-jectstore-")), "Internal selection must not leak to response headers");
+  checkAnonymousScripts(published.text, "Public storefront");
   const assetPaths = [...new Set([...published.text.matchAll(/(?:href|src)="(\/_next\/static\/[^" ]+)"/g)].map((match) => match[1]))];
   for (const suffix of [".css", ".js"]) {
     const path = assetPaths.find((value) => value.endsWith(suffix));
@@ -252,6 +263,7 @@ try {
   check(upgraded.text.includes("Productos editoriales"), "Null legacy pin upgrades to saved checkpoint after activation");
   const preview = await request(port, host, `/__storefront-next-preview?${previewQuery()}`, { headers: { cookie: "fixture_admin=1" } });
   check(preview.status === 200 && preview.text.includes("Vista previa editorial autorizada"), "Authorized preview renders the same actual Next components");
+  checkAnonymousScripts(preview.text, "Signed preview");
   check(preview.headers["x-frame-options"] === "SAMEORIGIN" && /noindex/.test(preview.headers["x-robots-tag"] || "") && /no-store/.test(preview.headers["cache-control"] || ""), "Preview overrides DENY and cannot be indexed/cached");
   check(!preview.headers["access-control-allow-origin"] && !preview.headers["access-control-allow-credentials"], "Private preview must not inherit static-asset CORS");
   check(preview.text.includes('data-storefront-section-id="products-1"') && preview.text.includes("next-storefront-preview"), "Preview contains the section-selection surface");
