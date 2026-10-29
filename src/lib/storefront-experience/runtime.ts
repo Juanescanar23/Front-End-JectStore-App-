@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { isIP } from "node:net";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { parseNextStorefrontDocument, type NextStorefrontDocument } from "./document";
@@ -206,11 +207,15 @@ export function configuredOrigin(kind: "backend" | "native"): URL {
 }
 
 export function safeRequestHeaders(incoming: Headers, host: string, protocol: string): Headers {
+  // This one header is overwritten by the trusted ingress, never synthesized
+  // from public XFF/Real-IP. Keep it for the server GraphQL signer/native hop.
+  const ingressIp = incoming.get("x-jectstore-client-ip");
   const result = new Headers(incoming);
   for (const name of [...result.keys()]) {
     if (["forwarded", "x-tenant-host", "x-storefront-host", "x-original-host", "x-forwarded-host", "x-forwarded-proto"].includes(name)
       || name.startsWith("x-jectstore-") || name.startsWith("x-storefront-experience-")) result.delete(name);
   }
+  if (ingressIp && !/[\s%,]/.test(ingressIp) && isIP(ingressIp)) result.set("x-jectstore-client-ip", ingressIp);
   result.set("x-tenant-host", host);
   result.set("x-storefront-host", host);
   result.set("x-forwarded-host", host);

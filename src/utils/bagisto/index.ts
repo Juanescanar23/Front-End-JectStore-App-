@@ -1,6 +1,6 @@
 import { cookies, headers as nextHeaders } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { storefrontCacheTags } from "../storefront-cache-scope";
+import { backgroundGraphqlEndpoint, clientContextFetch, clientContextHost, optionalRequestHeaders, StorefrontConnectionUnavailable } from "@/utils/server/client-context";
 import {
   BagistoCreateUserOperation,
   BagistoProductInfo,
@@ -41,10 +41,10 @@ const normalizeBase = (value?: string) => {
   return value.replace(/\/+$/, "");
 };
 
-const resolveGraphqlUrl = async () => {
+const resolveGraphqlUrl = (headerStore: Pick<Headers, "get"> | null) => {
+  if (!headerStore) return backgroundGraphqlEndpoint(GRAPHQL_URL);
   if (!GRAPHQL_URL) return GRAPHQL_URL;
-  const headerStore = await nextHeaders();
-  const runtimeHost = requestHost(headerStore);
+  const runtimeHost = clientContextHost(headerStore);
 
   if (!runtimeHost) return GRAPHQL_URL;
 
@@ -58,14 +58,14 @@ const resolveGraphqlUrl = async () => {
 };
 
 export async function bagistoFetch<T>({
-  cache = "force-cache",
+  cache: _cache = "force-cache",
   headers,
   query,
-  tags,
+  tags: _tags,
   variables,
   isCookies = true,
   guestToken,
-  revalidate = 60,
+  revalidate: _revalidate = 60,
 }: {
   cache?: RequestCache;
   headers?: HeadersInit | Record<string, string>;
@@ -77,17 +77,20 @@ export async function bagistoFetch<T>({
   revalidate?: number;
 }): Promise<{ status: number; body: T } | never> {
   try {
+    const headerStore = await optionalRequestHeaders();
+    const endpoint = resolveGraphqlUrl(headerStore);
+    const send = clientContextFetch(endpoint, headerStore);
     const queryString =
       typeof query === "string" ? query : query.loc?.source?.body ?? "";
-    const localeCode = await getStorefrontLocaleCode();
+    const localeCode = headerStore ? await getStorefrontLocaleCode() : undefined;
 
     let bagistoCartId = "";
     let accessToken: string | undefined = undefined;
 
-    if (isCookies) {
+    if (isCookies && headerStore) {
       const cookieStore = await cookies();
       bagistoCartId = cookieStore.get(BAGISTO_SESSION)?.value ?? "";
-      const sessions = await getServerSession(createTenantAuthOptions(requestHost(await nextHeaders())));
+      const sessions = await getServerSession(createTenantAuthOptions(requestHost(headerStore)));
       accessToken = (sessions as any)?.user?.accessToken;
 
     }
@@ -98,10 +101,9 @@ export async function bagistoFetch<T>({
       "x-locale": localeCode || "es",
     };
 
-    const headerStore = await nextHeaders();
     Object.assign(
       baseHeaders,
-      buildTenantForwardHeaders(requestHost(headerStore)),
+      buildTenantForwardHeaders(headerStore ? requestHost(headerStore) : ""),
     );
 
     if (accessToken) {
@@ -123,20 +125,15 @@ export async function bagistoFetch<T>({
       }
     }
 
-    const cacheHost = requestHost(headerStore);
-    const effectiveCache = cacheHost ? cache : "no-store";
-    const result = await fetch(await resolveGraphqlUrl(), {
+    // Signed transport is never a Next fetch-cache entry: headers contain a
+    // short-lived client proof. Public query caching remains in graphqlRequest.
+    const result = await send(endpoint, {
       method: "POST",
       headers: baseHeaders,
       body: JSON.stringify({
         query: queryString,
         ...(variables && { variables }),
       }),
-      cache: effectiveCache,
-      next: {
-        revalidate: effectiveCache === "no-store" ? 0 : revalidate || 60,
-        tags: cacheHost ? await storefrontCacheTags(cacheHost, tags) : [],
-      },
     });
 
     const body = await result.json();
@@ -151,11 +148,11 @@ export async function bagistoFetch<T>({
 
 export async function bagistoFetchNoSession<T>({
   query,
-  tags,
+  tags: _tags,
   variables,
   headers,
-  cache = "force-cache",
-  revalidate = 60,
+  cache: _cache = "force-cache",
+  revalidate: _revalidate = 60,
 }: {
   query: string;
   tags?: string[];
@@ -166,13 +163,13 @@ export async function bagistoFetchNoSession<T>({
   revalidate?: number,
 }): Promise<{ status: number; body: T } | never> {
   try {
-    const localeCode = await getStorefrontLocaleCode();
-    const headerStore = await nextHeaders();
-    const tenantHeaders = buildTenantForwardHeaders(requestHost(headerStore));
+    const headerStore = await optionalRequestHeaders();
+    const endpoint = resolveGraphqlUrl(headerStore);
+    const send = clientContextFetch(endpoint, headerStore);
+    const localeCode = headerStore ? await getStorefrontLocaleCode() : undefined;
+    const tenantHeaders = buildTenantForwardHeaders(headerStore ? requestHost(headerStore) : "");
 
-    const cacheHost = requestHost(headerStore);
-    const effectiveCache = cacheHost ? cache : "no-store";
-    const result = await fetch(await resolveGraphqlUrl(), {
+    const result = await send(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -185,11 +182,6 @@ export async function bagistoFetchNoSession<T>({
         ...(query && { query }),
         ...(variables && { variables }),
       }),
-      cache: effectiveCache,
-      next: {
-        revalidate: effectiveCache === "no-store" ? 0 : revalidate || 60,
-        tags: cacheHost ? await storefrontCacheTags(cacheHost, tags) : [],
-      },
     });
 
     const body = await result.json();
@@ -203,6 +195,7 @@ export async function bagistoFetchNoSession<T>({
       body,
     };
   } catch (e) {
+    if (e instanceof StorefrontConnectionUnavailable) throw e;
     throw { error: e, query };
   }
 }

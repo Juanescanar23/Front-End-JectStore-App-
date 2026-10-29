@@ -1,0 +1,17 @@
+{
+  "purpose": "Synthetic interoperability fixture; not a runtime secret",
+  "key": "synthetic-only-client-context-v1-key-not-production",
+  "now": 1793180020,
+  "body": "{\"query\":\"query Viewer { ping }\",\"variables\":{}}",
+  "claims": {
+    "v": 1,
+    "host": "tenant-a.test",
+    "ip": "203.0.113.10",
+    "method": "POST",
+    "path": "/graphql",
+    "body_sha256": "564d936d6db71d652aac0680b649b41c0c060af6a65c4ef39a021a1acff10864",
+    "issued_at": 1793180000,
+    "expires_at": 1793180060
+  },
+  "proof": "eyJ2IjoxLCJob3N0IjoidGVuYW50LWEudGVzdCIsImlwIjoiMjAzLjAuMTEzLjEwIiwibWV0aG9kIjoiUE9TVCIsInBhdGgiOiIvZ3JhcGhxbCIsImJvZHlfc2hhMjU2IjoiNTY0ZDkzNmQ2ZGI3MWQ2NTJhYWMwNjgwYjY0OWI0MWMwYzA2MGFmNmE2NWM0ZWYzOWEwMjFhMWFjZmYxMDg2NCIsImlzc3VlZF9hdCI6MTc5MzE4MDAwMCwiZXhwaXJlc19hdCI6MTc5MzE4MDA2MH0.b40594c8a875ce00311a1e8c7e632ba3a563d86d5d1007ce7255c864249e3ccb"
+}

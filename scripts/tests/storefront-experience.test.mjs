@@ -365,11 +365,12 @@ test("request loader memoizes one backend revision for home and shell", async (t
 });
 
 test("actual GraphQL cache scope uses verified channel/locale/engine/revision, not spoofed hint headers", async (t) => {
-  env(t, { NODE_ENV: "production", STOREFRONT_REALTIME_MODE: "false", STOREFRONT_EXPERIENCES_ENABLED: "true" });
+  env(t, { NODE_ENV: "production", STOREFRONT_REALTIME_MODE: "false", STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_RUNTIME_SIGNING_KEY: KEY });
   let verified = runtime.parseStorefrontExperience(experience());
   const keys = []; const clients = [];
-  const incoming = new Headers({ host: HOST, "x-tenant-host": "forged.test", "x-locale": "xx", "x-jectstore-experience-channel": "999", "x-jectstore-experience-revision": "999" });
+  const incoming = new Headers({ host: HOST, "x-jectstore-client-ip": "203.0.113.10", "x-tenant-host": "forged.test", "x-locale": "xx", "x-jectstore-experience-channel": "999", "x-jectstore-experience-revision": "999" });
   const graphql = loadSource("src/lib/graphql-fetch.ts", {
+    "server-only": {},
     "next/cache": { unstable_cache: (fn, key) => { keys.push(key[0]); return fn; } },
     "next/headers": { headers: async () => incoming }, graphql: { print: () => "fixture-query" },
     "./apollo-client": { __esModule: true, default: (options) => { clients.push(options); return { query: async () => ({ data: { ok: true } }) }; } },

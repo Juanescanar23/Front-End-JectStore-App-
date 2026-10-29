@@ -4,15 +4,10 @@ import { setContext } from "@apollo/client/link/context";
 import { getSession } from "next-auth/react";
 import { resolveTenantScopedGraphqlUrl } from "@/utils/graphql-endpoint";
 
-type ServerFetchInit = RequestInit & {
-  next?: {
-    revalidate?: number;
-  };
-};
-
 export default function initializeApollo(options?: {
   uri?: string;
   extraHeaders?: Record<string, string>;
+  serverFetch?: typeof fetch;
 }) {
   const ssrMode = typeof window === "undefined";
   const cache = new InMemoryCache();
@@ -20,13 +15,10 @@ export default function initializeApollo(options?: {
   const configuredUri = options?.uri ?? GRAPHQL_URL;
   const graphqlUri =
     resolveTenantScopedGraphqlUrl(configuredUri, runtimeHost) ?? configuredUri;
+  // This module is also imported by the browser provider. The server-only
+  // signer is injected by graphql-fetch; never import its key/crypto here.
   const serverFetch = ssrMode
-    ? (input: RequestInfo | URL, init?: RequestInit) =>
-        fetch(input, {
-          ...(init ?? {}),
-          cache: "no-store",
-          next: { revalidate: 0 },
-        } as ServerFetchInit)
+    ? options?.serverFetch ?? (() => Promise.reject(new Error("No pudimos conectar con la tienda. Vuelve a intentarlo.")))
     : undefined;
 
   const httpLink = new HttpLink({

@@ -85,12 +85,16 @@ test("request-scoped auth options issue host claims only after login and never e
 test("actual GraphQL/cart wrapper and COD host helper ignore public tenant hints", async (t) => {
   const previousFetch = globalThis.fetch;
   const previousEndpoint = process.env.BAGISTO_SERVER_ENDPOINT;
+  const previousSigningKey = process.env.STOREFRONT_RUNTIME_SIGNING_KEY;
   process.env.BAGISTO_SERVER_ENDPOINT = "http://127.0.0.1:9";
+  process.env.STOREFRONT_RUNTIME_SIGNING_KEY = secret;
   t.after(() => { globalThis.fetch = previousFetch; if (previousEndpoint === undefined) delete process.env.BAGISTO_SERVER_ENDPOINT; else process.env.BAGISTO_SERVER_ENDPOINT = previousEndpoint; });
-  const headers = new Headers({ host: `${B}:8089`, "x-tenant-host": A, "x-storefront-host": A, "x-forwarded-host": A });
+  t.after(() => { if (previousSigningKey === undefined) delete process.env.STOREFRONT_RUNTIME_SIGNING_KEY; else process.env.STOREFRONT_RUNTIME_SIGNING_KEY = previousSigningKey; });
+  const headers = new Headers({ host: `${B}:8089`, "x-jectstore-client-ip": "203.0.113.20", "x-tenant-host": A, "x-storefront-host": A, "x-forwarded-host": A });
   const requests = []; const sessionHosts = [];
   globalThis.fetch = async (url, options) => { requests.push({ url, options }); return { status: 200, json: async () => ({ data: { ok: true } }) }; };
   const mocks = {
+    "server-only": {},
     "next/headers": { headers: async () => headers, cookies: async () => ({ get: () => undefined }) },
     "next-auth": { getServerSession: async (options) => { sessionHosts.push(options.fixtureHost); return null; } },
     "@utils/auth": { createTenantAuthOptions: (host) => ({ fixtureHost: host }) },
@@ -105,9 +109,11 @@ test("actual GraphQL/cart wrapper and COD host helper ignore public tenant hints
   assert.deepEqual(sessionHosts, [B]);
   for (const { url, options } of requests) {
     assert.equal(url, "http://127.0.0.1:9/graphql");
-    assert.equal(options.headers["x-tenant-host"], B);
-    assert.equal(options.headers["x-storefront-host"], B);
-    assert.equal(options.headers.Authorization, undefined);
+    const sent = new Headers(options.headers);
+    assert.equal(sent.get("x-tenant-host"), B);
+    assert.equal(sent.get("x-storefront-host"), B);
+    assert.equal(sent.has("authorization"), false);
+    assert.ok(sent.has("X-JectStore-Client-Context"));
   }
   const tenant = loadSource("src/utils/server/tenant-runtime.ts", mocks);
   assert.equal(await tenant.getRuntimeHost(), B);
