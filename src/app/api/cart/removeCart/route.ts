@@ -1,4 +1,5 @@
 import { REMOVE_CART_ITEM } from "@/graphql";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
 import { RemoveCartItemOperation } from "@/types/cart/type";
@@ -24,6 +25,8 @@ export async function POST(req: Request) {
       data: { ...res?.body.data },
     });
   } catch (error) {
+    const unavailable = storefrontUnavailableResponse(error);
+    if (unavailable) return unavailable;
     if (isBagistoError(error)) {
       return Response.json(
         {

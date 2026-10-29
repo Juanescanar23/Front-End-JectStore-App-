@@ -92,7 +92,7 @@ test("actual GraphQL/cart wrapper and COD host helper ignore public tenant hints
   t.after(() => { if (previousSigningKey === undefined) delete process.env.STOREFRONT_RUNTIME_SIGNING_KEY; else process.env.STOREFRONT_RUNTIME_SIGNING_KEY = previousSigningKey; });
   const headers = new Headers({ host: `${B}:8089`, "x-jectstore-client-ip": "203.0.113.20", "x-tenant-host": A, "x-storefront-host": A, "x-forwarded-host": A });
   const requests = []; const sessionHosts = [];
-  globalThis.fetch = async (url, options) => { requests.push({ url, options }); return { status: 200, json: async () => ({ data: { ok: true } }) }; };
+  globalThis.fetch = async (url, options) => { requests.push({ url, options }); return Response.json({ data: { ok: true } }); };
   const mocks = {
     "server-only": {},
     "next/headers": { headers: async () => headers, cookies: async () => ({ get: () => undefined }) },

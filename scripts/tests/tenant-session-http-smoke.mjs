@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { createServer, request as httpRequest } from "node:http";
 import { spawn } from "node:child_process";
 import { encode, decode } from "next-auth/jwt";
@@ -10,6 +10,8 @@ const run = randomBytes(5).toString("hex");
 const A = `auth-a-${run}.jectstore.test`; const B = `auth-b-${run}.jectstore.test`;
 const central = "127.0.0.1";
 const secret = randomBytes(32).toString("hex");
+const contextKey = randomBytes(32).toString("hex");
+const ingressIp = "203.0.113.41";
 const calls = []; let assertions = 0; let child; let output = "";
 const check = (condition, label) => { assert.ok(condition, label); assertions++; };
 const provider = createServer(async (req, res) => {
@@ -17,7 +19,16 @@ const provider = createServer(async (req, res) => {
   for await (const chunk of req) { text += chunk; if (text.length > 65536) { req.destroy(); return; } }
   const host = String(req.headers["x-tenant-host"] || "");
   let query; try { query = JSON.parse(text).query || ""; } catch { res.writeHead(400).end(); return; }
-  calls.push({ host, authorization: req.headers.authorization, query });
+  const proof = String(req.headers["x-jectstore-client-context"] || "");
+  const [payload, signature] = proof.split(".");
+  assert.equal(signature, createHmac("sha256", contextKey).update(`jectstore.client-context.v1\n${payload}`).digest("hex"), "Backend must receive a genuine server context, not the browser's proof");
+  const context = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  assert.equal(context.host, host); assert.equal(context.ip, ingressIp);
+  assert.equal(context.method, req.method); assert.equal(context.path, req.url);
+  assert.equal(context.body_sha256, createHash("sha256").update(text).digest("hex"));
+  assert.equal(context.expires_at - context.issued_at, 60); assert.ok(context.expires_at > Date.now() / 1000);
+  assert.equal(req.headers["x-jectstore-client-ip"], undefined);
+  calls.push({ host, authorization: req.headers.authorization, query, context });
   if (![A, B].includes(host)) { res.writeHead(403).end(); return; }
   const bearer = `synthetic-bearer-for-${host}`;
   res.writeHead(200, { "Content-Type": "application/json" });
@@ -31,9 +42,14 @@ const provider = createServer(async (req, res) => {
 await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
 const portProbe = createServer(); await new Promise((resolve) => portProbe.listen(0, "127.0.0.1", resolve));
 const port = portProbe.address().port; await new Promise((resolve) => portProbe.close(resolve));
-function request(host, path, { cookie = "", body, headers = {} } = {}) {
+function request(host, path, { cookie = "", body, headers = {}, trustedIngress = true } = {}) {
+  // Model the private ingress boundary: overwrite the caller's IP, never rely
+  // on a backend-mock-only injection or a product bypass flag.
+  const outgoing = new Headers({ Host: host, Cookie: cookie, ...headers });
+  outgoing.delete("X-Jectstore-Client-IP");
+  if (trustedIngress) outgoing.set("X-Jectstore-Client-IP", ingressIp);
   return new Promise((resolve, reject) => {
-    const req = httpRequest({ hostname: "127.0.0.1", port, path, method: body === undefined ? "GET" : "POST", timeout: 15000, headers: { Host: host, Cookie: cookie, ...headers } }, (res) => {
+    const req = httpRequest({ hostname: "127.0.0.1", port, path, method: body === undefined ? "GET" : "POST", timeout: 15000, headers: Object.fromEntries(outgoing) }, (res) => {
       let text = ""; res.setEncoding("utf8"); res.on("data", (chunk) => { text += chunk; });
       res.on("end", () => { let json; try { json = JSON.parse(text); } catch {} resolve({ status: res.statusCode, headers: res.headers, text, json }); });
     });
@@ -45,6 +61,7 @@ const spoof = { "x-tenant-host": A, "x-storefront-host": A, "x-forwarded-host": 
 try {
   child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port), "-H", "127.0.0.1"], {
     env: { ...process.env, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", NEXTAUTH_SECRET: secret, NEXTAUTH_URL: `http://127.0.0.1:${port}`,
+      STOREFRONT_RUNTIME_SIGNING_KEY: contextKey,
       BAGISTO_SERVER_ENDPOINT: `http://127.0.0.1:${provider.address().port}`, NEXT_PUBLIC_LANDLORD_HOST: central, NEXT_PUBLIC_LANDLORD_SCHEME: "http", STOREFRONT_EXPERIENCES_ENABLED: "false", STOREFRONT_EXPERIENCE_HOSTS: "" },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -52,11 +69,16 @@ try {
   for (let i = 0; i < 100 && !output.includes("Ready in"); i++) { if (child.exitCode !== null) throw new Error("Local Next exited"); await new Promise((resolve) => setTimeout(resolve, 100)); }
   check(output.includes("Ready in"), "Built Next starts");
 
+  const missingIngress = await request(B, "/api/cart-detail", { body: "{}", trustedIngress: false, headers: { "Content-Type": "application/json", "X-Forwarded-For": ingressIp, "X-JectStore-Client-Context": "browser-forgery" } });
+  check(missingIngress.status === 503 && missingIngress.json?.message === "No pudimos conectar con la tienda. Vuelve a intentarlo." && !missingIngress.json?.error, "Missing ingress fails closed with generic HTTP503 and no error details");
+  check(/no-store/.test(missingIngress.headers["cache-control"] || "") && missingIngress.headers["retry-after"] === "5", "Unavailable context cannot be cached and exposes only a bounded retry hint");
+  check(calls.length === 0, "Unsigned active request cannot contact the backend or adopt a browser proof");
+
   const csrf = await request(B, "/api/auth/csrf", { headers: spoof });
   check(csrf.status === 200 && typeof csrf.json?.csrfToken === "string", "Actual NextAuth CSRF endpoint");
   const csrfCookie = (csrf.headers["set-cookie"] || []).map((value) => value.split(";", 1)[0]).join("; ");
   const login = await request(B, "/api/auth/callback/credentials", {
-    cookie: csrfCookie, headers: { ...spoof, "Content-Type": "application/x-www-form-urlencoded" },
+    cookie: csrfCookie, headers: { ...spoof, "Content-Type": "application/x-www-form-urlencoded", "X-JectStore-Client-Context": "browser-forgery", "X-Jectstore-Client-IP": "198.51.100.99" },
     body: new URLSearchParams({ csrfToken: csrf.json.csrfToken, username: "qa@example.invalid", password: "synthetic-only", callbackUrl: `http://${B}/`, json: "true" }).toString(),
   });
   check(login.status === 200, "Actual credentials callback succeeds for owning host");
@@ -66,6 +88,7 @@ try {
   const claims = await decode({ token: jwt, secret });
   check(claims.tenant_host === B && claims.tenant_session_version === 1, "Actual login cryptographically binds the ingress host, not spoofed headers");
   check(calls.filter((call) => call.query.includes("loginCustomer")).every((call) => call.host === B && !call.authorization), "Login goes only to B without inheriting a session bearer");
+  check(calls.some((call) => call.query.includes("customerLogin") && call.context.ip === ingressIp), "Actual login replaces the invented proof with the trusted ingress context");
   const own = await request(B, "/api/auth/session", { cookie: sessionCookie(jwt), headers: spoof });
   check(own.status === 200 && own.json?.user?.accessToken === `synthetic-bearer-for-${B}`, "Owning tenant can read its own session");
 

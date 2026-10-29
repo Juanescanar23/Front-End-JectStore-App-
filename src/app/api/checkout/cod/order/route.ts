@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 import { CodOrderRequestBody } from "@/types/cod";
 import { processCodOrder } from "@/utils/server/cod-order";
 import { getRuntimeHost } from "@/utils/server/tenant-runtime";
@@ -58,6 +59,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result.data, { status: 200 });
   } catch (error) {
+    const unavailable = storefrontUnavailableResponse(error);
+    if (unavailable) return unavailable;
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Error inesperado",

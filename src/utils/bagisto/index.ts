@@ -1,6 +1,7 @@
 import { cookies, headers as nextHeaders } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { backgroundGraphqlEndpoint, clientContextFetch, clientContextHost, optionalRequestHeaders, StorefrontConnectionUnavailable } from "@/utils/server/client-context";
+import { assertStorefrontHttpResponse, StorefrontRateLimited } from "@/utils/server/storefront-http-error";
 import {
   BagistoCreateUserOperation,
   BagistoProductInfo,
@@ -136,6 +137,7 @@ export async function bagistoFetch<T>({
       }),
     });
 
+    assertStorefrontHttpResponse(result);
     const body = await result.json();
 
     if (body.errors) throw body.errors[0];
@@ -184,6 +186,7 @@ export async function bagistoFetchNoSession<T>({
       }),
     });
 
+    assertStorefrontHttpResponse(result);
     const body = await result.json();
 
     if (body.errors) {
@@ -195,7 +198,7 @@ export async function bagistoFetchNoSession<T>({
       body,
     };
   } catch (e) {
-    if (e instanceof StorefrontConnectionUnavailable) throw e;
+    if (e instanceof StorefrontConnectionUnavailable || e instanceof StorefrontRateLimited) throw e;
     throw { error: e, query };
   }
 }

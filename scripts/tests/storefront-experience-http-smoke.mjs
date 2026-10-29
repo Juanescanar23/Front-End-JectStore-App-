@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHmac, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { createServer, request as httpRequest } from "node:http";
 import { spawn } from "node:child_process";
 import { encode as encodeJwt } from "next-auth/jwt";
@@ -9,6 +9,7 @@ import { experience } from "./fixtures/storefront-experience.mjs";
 // PHP authorization has separate backend tests, and browser QA belongs to CUA.
 const key = randomBytes(32).toString("hex");
 const authSecret = randomBytes(32).toString("hex");
+const ingressIp = "203.0.113.42";
 const run = randomBytes(5).toString("hex");
 const host = `next-${run}.jectstore.test`;
 const otherHost = `other-${run}.jectstore.test`;
@@ -22,6 +23,7 @@ let publishBetweenProxyAndRsc = false;
 const counts = { experience: 0, preview: 0, native: 0 };
 const nativeCalls = [];
 const backendCalls = [];
+let signedGraphqlCalls = 0;
 let nextChild;
 let output = "";
 let assertions = 0;
@@ -106,6 +108,15 @@ const provider = createServer(async (req, res) => {
   }
   let text = "";
   for await (const chunk of req) { text += chunk; if (text.length > 65536) { req.destroy(); return; } }
+  const [payload, signature] = String(req.headers["x-jectstore-client-context"] || "").split(".");
+  assert.equal(signature, createHmac("sha256", key).update(`jectstore.client-context.v1\n${payload}`).digest("hex"));
+  const context = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  assert.equal(context.host, targetHost); assert.equal(context.ip, ingressIp);
+  assert.equal(context.method, "POST"); assert.equal(context.path, "/graphql");
+  assert.equal(context.body_sha256, createHash("sha256").update(text).digest("hex"));
+  assert.equal(context.expires_at - context.issued_at, 60); assert.ok(context.expires_at > Date.now() / 1000);
+  assert.equal(req.headers["x-jectstore-client-ip"], undefined);
+  signedGraphqlCalls++;
   const title = `Local runtime ${targetHost}`;
   const products = [1, 2, 3, 4].map((id) => ({ __typename: "Product", id: String(id), sku: `fixture-${id}`, name: `Producto local ${id}`, urlKey: `fixture-${id}`, type: "simple", price: "100", specialPrice: null, isSaleable: [true, false, null, undefined][id - 1], baseImageUrl: "/fixture-product.svg", images: [], cacheBaseImage: [], cacheGalleryImages: [], categories: [] }));
   const categories = [2, 3].map((id) => ({ id: String(id), name: `Categoría local ${id}`, slug: `fixture-${id}`, position: id, logoUrl: "/fixture-category.svg", children: [] }));
@@ -121,7 +132,7 @@ const native = createServer(async (req, res) => {
   counts.native++;
   const nativeHost = req.headers["x-jectstore-native-host"];
   const pin = verifyPin(req.headers["x-jectstore-experience-pin"], new URL(`http://${nativeHost}`).hostname);
-  nativeCalls.push({ method: req.method, path: req.url, host: nativeHost, pin, cookie: req.headers.cookie, rsc: req.headers.rsc, body });
+  nativeCalls.push({ method: req.method, path: req.url, host: nativeHost, pin, cookie: req.headers.cookie, rsc: req.headers.rsc, ip: req.headers["x-jectstore-client-ip"], body });
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
   res.end("<!doctype html><title>Visual nativo local</title><main>NATIVE_VISUAL_FIXTURE</main>");
 });
@@ -157,8 +168,11 @@ async function stop() {
   nextChild = undefined;
 }
 function request(port, targetHost, path = "/", options = {}) {
+  const outgoing = new Headers({ Host: targetHost, ...options.headers });
+  // The trusted ingress replaces a public IP hint before Next receives it.
+  outgoing.set("X-Jectstore-Client-IP", ingressIp);
   return new Promise((resolve, reject) => {
-    const req = httpRequest({ hostname: "127.0.0.1", port, path, method: options.method || "GET", headers: { Host: targetHost, ...options.headers }, timeout: 20000 }, (res) => {
+    const req = httpRequest({ hostname: "127.0.0.1", port, path, method: options.method || "GET", headers: Object.fromEntries(outgoing), timeout: 20000 }, (res) => {
       let text = ""; res.setEncoding("utf8"); res.on("data", (chunk) => { text += chunk; });
       res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, text }));
     });
@@ -171,10 +185,11 @@ const check = (condition, message) => { assert.ok(condition, message); assertion
 try {
   let port = await start();
   const before = counts.experience;
-  const published = await request(port, host, "/", { headers: { "x-tenant-host": otherHost, "x-forwarded-host": otherHost, "x-jectstore-native-host": otherHost } });
+  const published = await request(port, host, "/", { headers: { "x-tenant-host": otherHost, "x-forwarded-host": otherHost, "x-jectstore-native-host": otherHost, "x-jectstore-client-context": "browser-forgery", "x-jectstore-client-ip": "198.51.100.99" } });
   check(published.status === 200 && published.text.includes("Productos editoriales"), `Published Next document must render (status=${published.status}, backend=${JSON.stringify(backendCalls.map((call) => call.host))}, native=${JSON.stringify(nativeCalls)}, html=${published.text.slice(0, 700)})`);
   check(counts.experience - before === 2, "Proxy plus ONE memoized RSC loader; shell/home must share revision");
   check(backendCalls.slice(-2).every((call) => call.host === host), "Spoofed tenant headers must not scope data");
+  check(signedGraphqlCalls > 0, "Real SSR sends verified context even when the browser supplied an invented proof");
   const cookie = cookieFrom(published);
   check(Boolean(cookie) && /HttpOnly/i.test(published.headers["set-cookie"].join(";")), "Server issues HttpOnly engine pin");
   check(!Object.keys(published.headers).some((name) => name.startsWith("x-jectstore-")), "Internal selection must not leak to response headers");
@@ -206,6 +221,7 @@ try {
   const visual = await request(port, host, "/category/item?q=one%20two", { headers: { cookie: "fixture_cookie=preserved", rsc: "1" } });
   check(visual.status === 200 && visual.text.includes("NATIVE_VISUAL_FIXTURE"), "Fresh visitor receives native Visual");
   check(nativeCalls.at(-1).host === host && nativeCalls.at(-1).path === "/category/item?q=one%20two" && nativeCalls.at(-1).rsc === "1", "Native rewrite preserves tenant, path, query and RSC");
+  check(nativeCalls.at(-1).ip === ingressIp, "Native private hop retains the ingress-owned client IP");
   check(nativeCalls.at(-1).pin.mode === "request" && nativeCalls.at(-1).pin.published_revision_id === 22 && nativeCalls.at(-1).pin.expires_at - nativeCalls.at(-1).pin.issued_at === 60, "Native resolver receives the authenticated exact request revision, not just plaintext hints");
   const visualWithPort = await request(port, `${host}:8089`, "/category/item?q=port", { headers: { "x-forwarded-host": `${otherHost}:9999`, "x-tenant-host": otherHost, "x-jectstore-native-host": `${otherHost}:9999` } });
   check(visualWithPort.status === 200 && nativeCalls.at(-1).host === `${host}:8089`, "Native URL generation receives the real validated ingress authority including its port, never spoofed forwarding headers");

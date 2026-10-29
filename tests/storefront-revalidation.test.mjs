@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { mkdtemp, realpath, chmod, rm, readdir, mkdir, symlink, writeFile, utimes, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -18,6 +18,7 @@ function loadTs(relative, mocks = {}) {
   const testModule = { exports: {} };
   const localRequire = (id) => {
     if (Object.hasOwn(mocks, id)) return mocks[id];
+    if (id === "server-only") return {};
     if (id.startsWith(".")) return loadTs(resolve(dirname(filename), `${id}.ts`), mocks);
     if (id.startsWith("@/")) return loadTs(`src/${id.slice(2)}.ts`, mocks);
     return require(id);
@@ -30,6 +31,12 @@ const scope = loadTs("src/utils/storefront-cache-scope.ts");
 const KEY = "fixture-signing-key-not-a-real-secret-2026";
 const NOW = Math.floor(Date.now() / 1000);
 const PREFIX = "jectstore.storefront.revalidate.v1\n";
+function clientContextFixture(t) {
+  const values = { STOREFRONT_RUNTIME_SIGNING_KEY: KEY, STOREFRONT_EXPERIENCES_ENABLED: "false" };
+  const previous = Object.fromEntries(Object.keys(values).map(key => [key, process.env[key]]));
+  Object.assign(process.env, values);
+  t.after(() => { for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } });
+}
 function payload(overrides = {}) {
   return { protocol_version: 1, tenant_id: "fixture-a", hosts: ["a.jectstore.test"], event: "channel.updated", issued_at: NOW, request_id: "d99b0a8e-b843-41a5-8d9e-d6ce251c6886", ...overrides };
 }
@@ -181,7 +188,8 @@ test("legacy routes are failclosed without reading credentials or invalidating",
   }
 });
 
-test("graphql cache keys remain deterministic and actual query caches only invalidate owner A", async () => {
+test("graphql cache keys remain deterministic and actual query caches only invalidate owner A", async (t) => {
+  clientContextFixture(t);
   const previousNodeEnv = process.env.NODE_ENV;
   const previousRealtime = process.env.STOREFRONT_REALTIME_MODE;
   process.env.NODE_ENV = "production";
@@ -200,7 +208,7 @@ test("graphql cache keys remain deterministic and actual query caches only inval
     };
     const graphql = loadTs("src/lib/graphql-fetch.ts", {
       "next/cache": mockedCache,
-      "next/headers": { headers: async () => new Headers({ host }) },
+      "next/headers": { headers: async () => new Headers({ host, "X-Jectstore-Client-IP": "203.0.113.45" }) },
       "graphql": { print: () => "query Products { products { id } }" },
       "./apollo-client": { default: () => ({ query: async () => ({ data: { sequence: ++fetches, host } }) }) },
       "@/utils/constants": { GRAPHQL_URL: "/graphql" },
@@ -229,13 +237,14 @@ test("graphql cache keys remain deterministic and actual query caches only inval
   }
 });
 
-test("both legacy fetch wrappers always add owner tags, not just optional entity tags", async () => {
+test("both signed fetch wrappers bypass the fetch cache while public owner-tag caching stays in graphqlRequest", async (t) => {
+  clientContextFixture(t);
   const previousFetch = globalThis.fetch;
   const calls = [];
-  globalThis.fetch = async (_url, options) => { calls.push(options); return { status: 200, json: async () => ({ data: {} }) }; };
+  globalThis.fetch = async (_url, options) => { calls.push(options); return Response.json({ data: {} }); };
   try {
     const fetcher = loadTs("src/utils/bagisto/index.ts", {
-      "next/headers": { headers: async () => new Headers({ host: "a.jectstore.test" }), cookies: async () => ({ get: () => undefined }) },
+      "next/headers": { headers: async () => new Headers({ host: "a.jectstore.test", "X-Jectstore-Client-IP": "203.0.113.45" }), cookies: async () => ({ get: () => undefined }) },
       "next/server": { NextResponse: { json: (body, options) => ({ body, ...options }) } },
       "next-auth": { getServerSession: async () => null },
       "../constants": { BAGISTO_SESSION: "fixture", HIDDEN_PRODUCT_TAG: "fixture", STOREFRONT_KEY: "fixture" },
@@ -247,11 +256,18 @@ test("both legacy fetch wrappers always add owner tags, not just optional entity
     await fetcher.bagistoFetch({ query: "query X { id }", isCookies: false });
     await fetcher.bagistoFetchNoSession({ query: "query X { id }", tags: ["products"] });
     assert.equal(calls.length, 2);
-    const owner = await scope.storefrontHostTag("a.jectstore.test");
-    assert.deepEqual(calls[0].next.tags, [owner]);
-    assert.equal(calls[1].next.tags[0], owner);
-    assert.equal(calls[1].next.tags.includes("products"), false);
-    assert.equal(calls[1].headers["x-tenant-host"], "a.jectstore.test");
+    for (const call of calls) {
+      assert.equal(call.cache, "no-store");
+      assert.deepEqual(call.next, { revalidate: 0 });
+      const headers = new Headers(call.headers);
+      assert.equal(headers.get("x-tenant-host"), "a.jectstore.test");
+      const [payload, signature] = headers.get("X-JectStore-Client-Context").split(".");
+      assert.equal(signature, createHmac("sha256", KEY).update(`jectstore.client-context.v1\n${payload}`).digest("hex"));
+      const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+      assert.equal(claims.host, "a.jectstore.test");
+      assert.equal(claims.ip, "203.0.113.45");
+      assert.equal(claims.body_sha256, createHash("sha256").update(call.body).digest("hex"));
+    }
   } finally { globalThis.fetch = previousFetch; }
 });
 

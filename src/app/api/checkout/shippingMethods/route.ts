@@ -1,4 +1,5 @@
 import { GET_CHECKOUT_SHIPPING_RATES } from "@/graphql";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 import { bagistoFetch } from "@/utils/bagisto";
 import { getAuthToken } from "@/utils/helper";
 
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
+    const unavailable = storefrontUnavailableResponse(error);
+    if (unavailable) return unavailable;
     return Response.json(
       {
         message: "Error querying the GraphQL API",

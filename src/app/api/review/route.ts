@@ -1,4 +1,5 @@
 import { CREATE_PRODUCT_REVIEW } from "@/graphql";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
 import { getAuthToken } from "@/utils/helper";
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
             data: { ...response.body.data },
         });
     } catch (error) {
+        const unavailable = storefrontUnavailableResponse(error);
+        if (unavailable) return unavailable;
         if (isBagistoError(error)) {
             return Response.json(
                 {

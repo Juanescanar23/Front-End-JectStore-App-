@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
 import { CREATE_CHECKOUT_PAYMENT_METHODS } from "@/graphql";
@@ -25,6 +26,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data: res?.body?.data }, { status: 200 });
   } catch (error) {
+    const unavailable = storefrontUnavailableResponse(error);
+    if (unavailable) return unavailable;
     if (isBagistoError(error)) {
       return NextResponse.json(
         {

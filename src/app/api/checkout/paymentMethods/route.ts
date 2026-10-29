@@ -1,4 +1,5 @@
 import { GET_CHECKOUT_PAYMENT_METHODS } from "@/graphql";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 import { CheckoutPaymentMethodsOperation } from "@/types/checkout/type";
 import { bagistoFetch } from "@/utils/bagisto";
 import { isBagistoError } from "@/utils/type-guards";
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
+    const unavailable = storefrontUnavailableResponse(error);
+    if (unavailable) return unavailable;
     if (isBagistoError(error)) {
       return Response.json(
         {

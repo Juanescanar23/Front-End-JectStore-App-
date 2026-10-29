@@ -11,6 +11,7 @@ const directory = await realpath(await mkdtemp(join(tmpdir(), "jectstore-http-sm
 const key = randomBytes(32).toString("hex");
 const port = 3005;
 const host = "app.jectstore.test";
+const ingressIp = "203.0.113.43";
 const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port), "-H", "127.0.0.1"], {
   env: { ...process.env, STOREFRONT_REVALIDATE_SIGNING_KEY: key, STOREFRONT_REVALIDATE_ALLOWED_HOSTS: host, STOREFRONT_REVALIDATE_REPLAY_DIR: directory },
   stdio: ["ignore", "pipe", "pipe"],
@@ -29,7 +30,7 @@ try {
   const body = JSON.stringify({ protocol_version: 1, tenant_id: "fixture-a", hosts: ["a.jectstore.test"], event: "smoke.test", issued_at: Math.floor(Date.now() / 1000), request_id: randomUUID() });
   const signature = `sha256=${createHmac("sha256", key).update("jectstore.storefront.revalidate.v1\n").update(body).digest("hex")}`;
   const request = (signed) => new Promise((resolve, reject) => {
-    const req = httpRequest({ hostname: "127.0.0.1", port, path: "/api/internal/storefront/revalidate", method: "POST", headers: { Host: host, "X-Forwarded-Host": host, "X-Forwarded-Proto": "http", "Content-Type": "application/json", ...(signed ? { "X-JectStore-Revalidate-Signature": signature } : {}) } }, (res) => {
+    const req = httpRequest({ hostname: "127.0.0.1", port, path: "/api/internal/storefront/revalidate", method: "POST", headers: { Host: host, "X-Jectstore-Client-IP": ingressIp, "X-Forwarded-Host": host, "X-Forwarded-Proto": "http", "Content-Type": "application/json", ...(signed ? { "X-JectStore-Revalidate-Signature": signature } : {}) } }, (res) => {
       let text = "";
       res.setEncoding("utf8");
       res.on("data", (chunk) => { text += chunk; });
@@ -46,7 +47,7 @@ try {
   assert.equal(result.tenant_id, "fixture-a");
   assert.deepEqual(result.hosts, ["a.jectstore.test"]);
   assert.equal((await request(true)).status, 409);
-  const legacy = await fetch(`http://127.0.0.1:${port}/api/revalidate`, { method: "POST", headers: { Host: host } });
+  const legacy = await fetch(`http://127.0.0.1:${port}/api/revalidate`, { method: "POST", headers: { Host: host, "X-Jectstore-Client-IP": ingressIp } });
   assert.equal(legacy.status, 410);
   console.log("Real Next HTTP smoke PASS: unsigned401, signedACK200, persistent replay409, legacy410.");
 } finally {
