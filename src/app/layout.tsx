@@ -17,6 +17,7 @@ import PortalShell from "@/app/portal/PortalShell";
 import { getRequestBaseUrl } from "@/utils/server/request-base-url";
 import { getStorefrontSeoPayload } from "@/utils/server/storefront-seo";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
+import { PREVIEW_QUERY_HEADER } from "@/lib/storefront-experience/runtime";
 
 const LANDLORD_HOST = "app.jectstore.com";
 
@@ -61,11 +62,14 @@ export default async function RootLayout({
   const landlord = await isLandlordHost();
   const storefrontLocale = await getStorefrontLocaleCode();
   const htmlLang = storefrontLocale || "es";
+  // The proxy removes client-supplied internal headers and sets this marker
+  // only for its scoped preview route; backend preview authorization remains.
+  const readonlyPreview = (await headers()).has(PREVIEW_QUERY_HEADER);
 
   return (
     <html lang={htmlLang} suppressHydrationWarning>
         <head>
-        <script
+        {!readonlyPreview && <script
           type="speculationrules"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
@@ -91,7 +95,7 @@ export default async function RootLayout({
               ],
             }),
           }}
-        />
+        />}
       </head>
       <body  className={clsx(
           "min-h-screen font-outfit text-foreground bg-background antialiased",
@@ -99,7 +103,7 @@ export default async function RootLayout({
         )}>
         <main>
         <ThemeProvider>
-          <SessionProvider>
+          <SessionProvider readonlyPreview={readonlyPreview}>
             <ToastProvider>
               <ReactQueryProvider>
                 <ReduxProvider>
@@ -112,7 +116,7 @@ export default async function RootLayout({
               </ReactQueryProvider>
             </ToastProvider>
           </SessionProvider>
-           <SpeculationRules />
+           {!readonlyPreview && <SpeculationRules />}
         </ThemeProvider>
         </main>
         <span className="dsv-2025.04.19-7e29"/>
