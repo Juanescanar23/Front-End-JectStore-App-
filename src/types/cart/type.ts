@@ -181,6 +181,7 @@ export interface CreateMergeCartData {
 export interface CreateMergeCartVariables {
   // token removed - now passed in Authorization header
   cartId: number;
+  guestCartToken?: string;
 }
 export interface CreateMergeCartOperation {
   data: CreateMergeCartData;

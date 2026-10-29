@@ -15,7 +15,7 @@ const routes = [
   "checkout/savePayment", "checkout/saveShipping", "checkout/shippingMethods", "checkout/cod/order",
 ];
 const legacy500 = new Set(["checkout/saveAddress", "checkout/shippingMethods", "checkout/cod/order"]);
-const body = { cartId: 1, cartItemId: 2, productId: 3, quantity: 1, useForShipping: true, mode: "single", product_id: 3, shipping_address: { name: "Synthetic fixture", address1: "", city_id: "fixture", country_code: "CO", region_id: "fixture" } };
+const body = { cartId: 1, guestCartToken: "synthetic-guest-merge-proof", cartItemId: 2, productId: 3, quantity: 1, useForShipping: true, mode: "single", product_id: 3, shipping_address: { name: "Synthetic fixture", address1: "", city_id: "fixture", country_code: "CO", region_id: "fixture" } };
 
 function loader(mocks = {}, exposeCod = false) {
   const cache = new Map();

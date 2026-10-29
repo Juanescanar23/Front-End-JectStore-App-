@@ -11,7 +11,10 @@ import { addItem } from "@/store/slices/cart-slice";
 interface MergeCartInput {
   token: string;
   cartId: number;
+  guestCartToken: string;
 }
+
+const MERGE_ERROR = "No se pudo unir el carrito. Intenta de nuevo.";
 
 export function useMergeCart() {
   const { showToast } = useCustomToast();
@@ -23,17 +26,31 @@ export function useMergeCart() {
     isPending: isLoading,
     error,
   } = useMutation({
-    mutationFn: ({ token, ...input }: MergeCartInput) =>
-      fetchHandler({
-        url: "cart/mergeCart",
-        method: "POST",
-        contentType: true,
-        body: { ...input },
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }),
+    mutationFn: async ({ token, ...input }: MergeCartInput) => {
+      try {
+        const response = await fetchHandler({
+          url: "cart/mergeCart",
+          method: "POST",
+          contentType: true,
+          body: { ...input },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const cartId = response?.data?.createMergeCart?.mergeCart?.id;
+        if (
+          response?.error || response?.errors ||
+          (typeof cartId !== "string" && typeof cartId !== "number") ||
+          !/^[1-9]\d*$/.test(String(cartId)) || !Number.isSafeInteger(Number(cartId))
+        ) {
+          throw new Error(MERGE_ERROR);
+        }
+        return response;
+      } catch {
+        throw new Error(MERGE_ERROR);
+      }
+    },
 
     onSuccess: (response) => {
       const responseData = response?.data?.createMergeCart?.mergeCart
@@ -58,13 +75,13 @@ export function useMergeCart() {
       dispatch(addItem(responseData));
     },
 
-    onError: (err) => {
-      showToast(err?.message || "Merge cart failed!", "danger");
+    onError: () => {
+      showToast(MERGE_ERROR, "danger");
     },
   });
 
-  const mergeCart = async (token: string, cartId: number) => {
-    await mergeCartRequest({ token, cartId });
+  const mergeCart = async (token: string, cartId: number, guestCartToken: string) => {
+    return await mergeCartRequest({ token, cartId, guestCartToken });
   };
 
   return {

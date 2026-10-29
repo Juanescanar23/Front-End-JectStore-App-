@@ -11,7 +11,7 @@ import { EMAIL_REGEX, SIGNIN_IMG } from "@/utils/constants";
 import InputText from "@components/common/form/Input";
 import { useCustomToast } from "@/utils/hooks/useToast";
 import { useMergeCart } from "@utils/hooks/useMergeCart";
-import { getCookie } from "@utils/getCartToken";
+import { getCartToken, getCookie } from "@utils/getCartToken";
 import { setCookie } from "@utils/helper";
 import { setLocalStorage } from "@/store/local-storage";
 import { useAppDispatch } from "@/store/hooks";
@@ -42,9 +42,11 @@ export default function LoginForm() {
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     try {
-      // First, handle cart merging before sign in
-      const guestCartId = getCookie(GUEST_CART_ID);
-      const guestCartToken = getCookie(GUEST_CART_TOKEN);
+      // Preserve the raw guest proof before sign-in can change session state.
+      const isGuest = getCookie(IS_GUEST) !== "false";
+      const guestCartId = isGuest ? getCookie(GUEST_CART_ID) : null;
+      const guestCartToken = isGuest ? getCartToken() : null;
+      const hadGuestCart = isGuest && Boolean(guestCartId || getCookie(GUEST_CART_TOKEN));
 
       const result = await signIn("credentials", {
         redirect: false,
@@ -62,23 +64,23 @@ export default function LoginForm() {
       const session = await getSession();
       const userToken: string | undefined = session?.user?.accessToken;
 
-      if (!userToken) {
-        console.warn("No API token available in session after login");
-      }
-
       if (session?.user) {
         dispatch(setUser(session.user as any));
       }
 
       // Only merge cart if user had a guest cart before login
-      if (userToken && guestCartId && guestCartToken) {
-        try {
-          await mergeCart(userToken, parseInt(guestCartId, 10));
-          setCookie(GUEST_CART_TOKEN, userToken);
-          setCookie(IS_GUEST, "false");
-          await getCartDetail();
-        } catch (err) {
-          console.error("mergeCart failed:", err);
+      if (userToken && hadGuestCart) {
+        if (!guestCartId || !guestCartToken) {
+          showToast("No se pudo unir el carrito. Intenta de nuevo.", "danger");
+        } else {
+          try {
+            await mergeCart(userToken, Number(guestCartId), guestCartToken);
+            setCookie(GUEST_CART_TOKEN, userToken);
+            setCookie(IS_GUEST, "false");
+            await getCartDetail();
+          } catch {
+            // The hook reports a generic error. Keep the guest proof for retry.
+          }
         }
       } else if (userToken) {
         // User logged in without a guest cart, just set the token
@@ -91,8 +93,7 @@ export default function LoginForm() {
       }, 100);
 
 
-    } catch (error) {
-      console.error(error);
+    } catch {
       showToast("Algo salió mal. Intenta de nuevo.", "danger");
     }
   };

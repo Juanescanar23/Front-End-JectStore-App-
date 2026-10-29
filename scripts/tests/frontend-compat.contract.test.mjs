@@ -405,7 +405,7 @@ function loginFormFixture() {
     "@utils/constants": constants,
     "@/utils/hooks/useToast": { useCustomToast: () => ({ showToast: (...args) => notices.push(args) }) },
     "@utils/hooks/useMergeCart": { useMergeCart: () => ({ mergeCart: forbidden("cart merge") }) },
-    "@utils/getCartToken": { getCookie: () => null },
+    "@utils/getCartToken": { getCookie: () => null, getCartToken: () => null },
     "@utils/helper": { setCookie: forbidden("cookie write") },
     "@/store/local-storage": { setLocalStorage: forbidden("storage write") },
     "@/store/hooks": { useAppDispatch: () => forbidden("dispatch") },
