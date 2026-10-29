@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   crossOrigin: "anonymous",
+  // Separate retained pre-CORS CDN entries from this public asset policy.
+  deploymentId: "jectstore-cors-v1-20261028",
   typescript: {
     ignoreBuildErrors: false,
   },

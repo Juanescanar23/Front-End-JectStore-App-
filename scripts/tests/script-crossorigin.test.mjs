@@ -11,6 +11,7 @@ import ts from "typescript";
 const require = createRequire(import.meta.url);
 const root = resolve(import.meta.dirname, "../..");
 const { getRequiredScripts } = require("next/dist/server/app-render/required-scripts");
+const { getAssetQueryString } = require("next/dist/server/app-render/get-asset-query-string");
 const configModule = { exports: {} };
 const configSource = ts.transpileModule(readFileSync(resolve(root, "next.config.ts"), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -23,9 +24,10 @@ new Function("require", "module", "exports", configSource)(
 );
 const config = configModule.exports.default;
 
-test("Next config requests anonymous scripts without an asset-identity workaround", () => {
+test("Next config uses anonymous scripts and an explicit static response-policy version", () => {
   assert.equal(config.crossOrigin, "anonymous");
-  assert.equal(config.deploymentId, undefined);
+  assert.equal(config.deploymentId, "jectstore-cors-v1-20261028");
+  assert.equal(getAssetQueryString({ sharedContext: { clientAssetToken: config.deploymentId } }, false), `?dpl=${config.deploymentId}`);
 });
 
 for (const integrity of [undefined, {
@@ -33,9 +35,10 @@ for (const integrity of [undefined, {
   "static/runtime.js": "sha256-runtime-fixture",
 }]) {
   test(`installed Next and React carry anonymous mode to bootstrap, preinit and preload${integrity ? " with integrity" : ""}`, async () => {
+    const query = getAssetQueryString({ sharedContext: { clientAssetToken: config.deploymentId } }, false);
     const [preinit, bootstrap] = getRequiredScripts(
       { rootMainFiles: ["static/bootstrap.js", "static/runtime.js"] },
-      "", config.crossOrigin, integrity, "", undefined, "/fixture",
+      "", config.crossOrigin, integrity, query, undefined, "/fixture",
     );
     assert.equal(bootstrap.crossOrigin, "anonymous");
     function App() {
@@ -59,7 +62,10 @@ for (const integrity of [undefined, {
     assert.equal(scripts.length, 2, "Both the actual bootstrap and preinit must be present");
     assert.ok(preloads.length > 0, "React must preload the bootstrap script");
     // React normalizes anonymous to an empty attribute. Absence is NOT equivalent.
-    for (const tag of [...scripts, ...preloads]) assert.match(tag, /\bcrossorigin="(?:anonymous)?"/);
+    for (const tag of [...scripts, ...preloads]) {
+      assert.match(tag, /\bcrossorigin="(?:anonymous)?"/);
+      assert.ok(tag.includes(`?dpl=jectstore-cors-v1-20261028`), "Every bootstrap resource uses the versioned response policy");
+    }
     assert.ok(scripts.some(tag => tag.includes("/_next/static/bootstrap.js")));
     assert.ok(scripts.some(tag => tag.includes("/_next/static/runtime.js")));
   });

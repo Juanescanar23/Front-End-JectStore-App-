@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { createServer, request as httpRequest } from "node:http";
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { encode as encodeJwt } from "next-auth/jwt";
 import { experience } from "./fixtures/storefront-experience.mjs";
 
@@ -181,15 +183,38 @@ function request(port, targetHost, path = "/", options = {}) {
 }
 const cookieFrom = (response) => (response.headers["set-cookie"] || []).find((value) => value.startsWith("jectstore_experience="))?.split(";")[0];
 const check = (condition, message) => { assert.ok(condition, message); assertions++; };
-function checkAnonymousScripts(html, surface) {
+async function checkScriptPolicy(port, html, surface) {
+  const buildConfig = JSON.parse(readFileSync(".next/required-server-files.json", "utf8")).config;
+  assert.equal(buildConfig.crossOrigin, "anonymous");
+  assert.equal(buildConfig.deploymentId, "jectstore-cors-v1-20261028");
+  const manifest = JSON.parse(readFileSync(".next/build-manifest.json", "utf8"));
+  const bootstrapPaths = new Set([...manifest.rootMainFiles, ...manifest.polyfillFiles].map(path => `/_next/${path}`));
   const scripts = [...html.matchAll(/<script\b[^>]*>/gi)].map(match => match[0]).filter(tag => /\bsrc="\/_next\/static\//i.test(tag));
   const preloads = [...html.matchAll(/<link\b[^>]*>/gi)].map(match => match[0]).filter(tag => /\brel="(?:preload|modulepreload)"/i.test(tag) && /\bas="script"/i.test(tag) && /\bhref="\/_next\/static\//i.test(tag));
   // An empty crossorigin attribute is React's serialization of anonymous mode.
-  // Missing attributes use no-cors and can reuse stale CDN response policies.
-  const nonAnonymous = [...scripts, ...preloads].filter(tag => !/\bcrossorigin="(?:anonymous)?"/i.test(tag));
-  check(scripts.length > 0 && preloads.length > 0 && nonAnonymous.length === 0,
-    `${surface}: every Next script and script preload must use anonymous CORS: ${JSON.stringify(nonAnonymous)}`);
-  console.log(`${surface} anonymous script assets PASS: ${scripts.length} scripts, ${preloads.length} preloads; no credentials.`);
+  // Next 16.4.3 can omit it on unused layer scripts. Those must use the explicit
+  // response-policy version, never an unversioned no-cors CDN cache entry.
+  const resources = [...scripts, ...preloads].map(tag => {
+    const url = new URL(tag.match(/\b(?:src|href)="([^"]+)"/i)[1].replaceAll("&amp;", "&"), "http://fixture.local");
+    const anonymous = /\bcrossorigin="(?:anonymous)?"/i.test(tag);
+    assert.ok(!/\bcrossorigin="use-credentials"/i.test(tag), "Public assets must not include credentials");
+    assert.equal(url.searchParams.get("dpl"), buildConfig.deploymentId, "All static script URLs must pin the built response policy");
+    if (bootstrapPaths.has(url.pathname) || preloads.includes(tag)) assert.ok(anonymous, "Bootstrap and script preloads still require anonymous CORS");
+    return { url, anonymous };
+  });
+  for (const { url, anonymous } of resources) {
+    const asset = await request(port, host, url.pathname + url.search, { headers: { ...(anonymous ? { origin: "null" } : {}), "sec-fetch-site": "cross-site", "sec-fetch-mode": anonymous ? "cors" : "no-cors", "sec-fetch-dest": "script" } });
+    assert.equal(asset.status, 200);
+    assert.equal(asset.headers["cross-origin-resource-policy"], "cross-origin");
+    assert.equal(asset.headers["access-control-allow-origin"], "*");
+    assert.equal(asset.headers["access-control-allow-credentials"], undefined);
+    assert.match(asset.headers["cache-control"], /immutable/);
+    const file = resolve(".next", url.pathname.slice("/_next/".length));
+    assert.ok(file.startsWith(resolve(".next/static") + "/"));
+    assert.equal(createHash("sha256").update(asset.text).digest("hex"), createHash("sha256").update(readFileSync(file)).digest("hex"), "Every response must match its current built asset, not a historical chunk");
+  }
+  check(scripts.length > 0 && preloads.length > 0, `${surface}: real bootstrap and layer assets must be present`);
+  console.log(`${surface} script policy PASS: ${scripts.length} scripts, ${preloads.length} preloads; anonymous or versioned, current headers and exact bodies.`);
 }
 
 try {
@@ -203,10 +228,10 @@ try {
   const cookie = cookieFrom(published);
   check(Boolean(cookie) && /HttpOnly/i.test(published.headers["set-cookie"].join(";")), "Server issues HttpOnly engine pin");
   check(!Object.keys(published.headers).some((name) => name.startsWith("x-jectstore-")), "Internal selection must not leak to response headers");
-  checkAnonymousScripts(published.text, "Public storefront");
+  await checkScriptPolicy(port, published.text, "Public storefront");
   const assetPaths = [...new Set([...published.text.matchAll(/(?:href|src)="(\/_next\/static\/[^" ]+)"/g)].map((match) => match[1]))];
   for (const suffix of [".css", ".js"]) {
-    const path = assetPaths.find((value) => value.endsWith(suffix));
+    const path = assetPaths.find((value) => new URL(value, "http://fixture.local").pathname.endsWith(suffix));
     assert.ok(path, "The built page must reference its actual static assets");
     const asset = await request(port, host, path, { headers: { origin: "null", "sec-fetch-site": "cross-site" } });
     check(asset.status === 200 && asset.headers["cross-origin-resource-policy"] === "cross-origin" && asset.headers["access-control-allow-origin"] === "*" && !asset.headers["access-control-allow-credentials"], "Opaque preview can load a public static asset without credentials");
@@ -263,7 +288,7 @@ try {
   check(upgraded.text.includes("Productos editoriales"), "Null legacy pin upgrades to saved checkpoint after activation");
   const preview = await request(port, host, `/__storefront-next-preview?${previewQuery()}`, { headers: { cookie: "fixture_admin=1" } });
   check(preview.status === 200 && preview.text.includes("Vista previa editorial autorizada"), "Authorized preview renders the same actual Next components");
-  checkAnonymousScripts(preview.text, "Signed preview");
+  await checkScriptPolicy(port, preview.text, "Signed preview");
   check(preview.headers["x-frame-options"] === "SAMEORIGIN" && /noindex/.test(preview.headers["x-robots-tag"] || "") && /no-store/.test(preview.headers["cache-control"] || ""), "Preview overrides DENY and cannot be indexed/cached");
   check(!preview.headers["access-control-allow-origin"] && !preview.headers["access-control-allow-credentials"], "Private preview must not inherit static-asset CORS");
   check(preview.text.includes('data-storefront-section-id="products-1"') && preview.text.includes("next-storefront-preview"), "Preview contains the section-selection surface");
