@@ -104,7 +104,7 @@ test("navbar preserves long Unicode labels, branding, category limits, failure f
   }
 });
 
-function checkLayout(tree) {
+function checkLayout(tree, { editorial = false } = {}) {
   const nav = nodes(tree, (node) => node.type === "nav")[0];
   const [brandAndMenu, search, actions] = nav.props.children.props.children;
   for (const flexible of [brandAndMenu, search]) {
@@ -121,7 +121,9 @@ function checkLayout(tree) {
   assert.ok(tokens(list).has("min-w-0"));
   for (const item of nodes(list, (node) => node.type === "li")) {
     assert.ok(tokens(item).has("min-w-0"));
-    assert.ok(tokens(item).has("flex-1"), "Long labels must share space without starving neighboring links");
+    assert.ok(tokens(item).has(editorial ? "flex-initial" : "flex-1"), editorial
+      ? "Editorial links must use their content width and remain shrinkable"
+      : "Long category labels must share space without starving neighboring links");
     assert.ok(tokens(item.props.children).has("truncate"));
   }
   for (const region of [nav, brandAndMenu, search, actions]) {
@@ -138,9 +140,13 @@ test("navbar has a shrinking text/search chain and protected actions; the pre-fi
 test("editorial menus preserve exact destinations and keep even the first long link shrinkable", async () => {
   const editorial = { brand_name: "Marca editable", logo_url: "/fixture-editorial.svg", menu_links: Array.from({ length: 6 }, (_, index) => ({ label: names[index % names.length], url: `/help/topic-${index}?locale=es` })) };
   const { tree, calls } = await renderNavbar({ editorial });
+  checkLayout(tree, { editorial: true });
   assert.equal(calls.length, 0, "An explicit menu must not be overwritten by category data");
   const list = nodes(tree, (node) => node.type === "ul")[0];
-  for (const item of nodes(list, (node) => node.type === "li")) assert.ok(!tokens(item).has("first:flex-none"));
+  for (const item of nodes(list, (node) => node.type === "li")) {
+    assert.ok(!tokens(item).has("first:flex-none"));
+    assert.ok(!tokens(item).has("flex-1"), "Six long editorial links must shrink from content, not equal zero bases");
+  }
   assert.deepEqual(nodes(list, (node) => node.type === "Link").map((node) => node.props.href), editorial.menu_links.map((link) => link.url));
   const mobile = nodes(tree, (node) => node.type === "MobileMenu")[0];
   assert.deepEqual(mobile.props.menu.map((link) => link.href), editorial.menu_links.map((link) => link.url));
@@ -148,7 +154,42 @@ test("editorial menus preserve exact destinations and keep even the first long l
   assert.equal(nodes(tree, (node) => node.type === "UserAccount").length, 1);
 });
 
-test("Tailwind emits the navbar child min-width override and nonshrinking action rule", async () => {
+test("three short editorial labels keep their complete text and independent content-width bases", async () => {
+  const menu_links = [
+    { label: "Todo", url: "/search" },
+    { label: "Celulares", url: "/search/celulares" },
+    { label: "Cómputo", url: "/search/computadores" },
+  ];
+  const { tree, calls } = await renderNavbar({ editorial: { brand_name: "Marca editable", logo_url: "", menu_links } });
+  checkLayout(tree, { editorial: true });
+  assert.equal(calls.length, 0);
+  const list = nodes(tree, (node) => node.type === "ul")[0];
+  assert.ok(tokens(list).has("gap-4"));
+  assert.ok(tokens(list).has("xl:gap-6"));
+  assert.ok(tokens(list).has("text-sm"));
+  const links = nodes(list, (node) => node.type === "Link");
+  assert.deepEqual(links.map((link) => link.props.children), menu_links.map((link) => link.label));
+  for (const item of nodes(list, (node) => node.type === "li")) {
+    assert.equal(item.props.className, "min-w-0 flex-initial");
+    assert.equal(item.props.children.props.title, item.props.children.props.children);
+  }
+  assert.equal(nodes(tree, (node) => node.type === "ThemeSwitcher").length, 1);
+  assert.equal(nodes(tree, (node) => node.type === "Cart").length, 1);
+  assert.equal(nodes(tree, (node) => node.type === "UserAccount").length, 1);
+});
+
+test("automatic category menus keep their prior sizing, including empty editorial-menu fallback", async () => {
+  for (const editorial of [undefined, { brand_name: "Marca editable", logo_url: "", menu_links: [] }]) {
+    const { tree } = await renderNavbar({ editorial });
+    checkLayout(tree);
+    const list = nodes(tree, (node) => node.type === "ul")[0];
+    for (const item of nodes(list, (node) => node.type === "li")) {
+      assert.equal(item.props.className, "min-w-0 flex-1 first:flex-none");
+    }
+  }
+});
+
+test("Tailwind emits navbar content-basis, child min-width and nonshrinking action rules", async () => {
   const file = path.join(root, "src/app/globals.css");
   const result = await postcss([tailwind({ base: root, optimize: true })]).process(readFileSync(file, "utf8"), { from: file });
   const css = postcss.parse(result.css);
@@ -162,6 +203,11 @@ test("Tailwind emits the navbar child min-width override and nonshrinking action
     if (rule.selectors.includes(".shrink-0")) {
       rule.walkDecls("flex-shrink", (decl) => { if (decl.value === "0") found.add("actions"); });
     }
+    if (rule.selectors.includes(".flex-initial")) {
+      rule.walkDecls("flex", (decl) => {
+        if (["0 auto", "0 1 auto"].includes(decl.value)) found.add("content-basis");
+      });
+    }
   });
-  assert.deepEqual([...found].sort(), ["actions", "search"]);
+  assert.deepEqual([...found].sort(), ["actions", "content-basis", "search"]);
 });

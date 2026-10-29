@@ -80,7 +80,7 @@ export default async function Navbar({
               <ul className="hidden min-w-0 flex-1 gap-4 text-sm md:items-center lg:flex xl:gap-6">
                 {menuData.map(
                   (item) => (
-                    <li key={item?.id + item?.name} className={`min-w-0 flex-1${editorial?.menu_links.length ? "" : " first:flex-none"}`}>
+                    <li key={item?.id + item?.name} className={`min-w-0 ${editorial?.menu_links.length ? "flex-initial" : "flex-1 first:flex-none"}`}>
                       <Link
                         className="relative block truncate text-neutral-500 before:absolute before:bottom-0 before:left-0 before:h-px before:w-0 before:bg-current before:transition-all before:duration-300 before:content-[''] hover:text-black hover:before:w-full dark:text-neutral-400 dark:hover:text-neutral-300"
                         href={item.href ?? (item.slug ? `/search/${item.slug}` : "/search")}
