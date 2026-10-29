@@ -246,7 +246,7 @@ export const useCheckout = () => {
       const responseData = response?.data?.createCheckoutOrder?.checkoutOrder;
 
       if (isObject(responseData)) {
-        showToast("Order Placed Successfully!", "success");
+        showToast("Pedido realizado correctamente.", "success");
         setCookie(ORDER_ID, responseData?.orderId as string);
         dispatch(clearCart())
         router.replace("/success");

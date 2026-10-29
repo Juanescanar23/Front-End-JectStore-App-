@@ -23,7 +23,7 @@ export default function OrderDetail() {
         se realizó correctamente
       </h1>
       <p className="text-center text-lg font-normal text-black/60 dark:text-neutral-300">
-        Te enviaremos un correo con los detalles de tu compra.
+        Guarda el número de tu pedido para futuras consultas.
       </p>
     </div>
   );
