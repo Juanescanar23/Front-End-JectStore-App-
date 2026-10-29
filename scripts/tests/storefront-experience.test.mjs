@@ -180,7 +180,7 @@ test("network origins come only from configuration and reject credentials/insecu
 });
 
 test("pilot routing requires both the feature flag and an exact canonical host opt-in", (t) => {
-  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOSTS: "" });
+  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOST_POLICY: "", STOREFRONT_EXPERIENCE_HOSTS: "" });
   assert.equal(runtime.experiencesEnabledForHost(HOST), false);
   process.env.STOREFRONT_EXPERIENCE_HOSTS = `*.jectstore.test,https://${HOST},${HOST}:443`;
   assert.equal(runtime.experiencesEnabledForHost(HOST), false);
@@ -189,6 +189,42 @@ test("pilot routing requires both the feature flag and an exact canonical host o
   assert.equal(runtime.experiencesEnabledForHost("not-a.jectstore.test"), false);
   process.env.STOREFRONT_EXPERIENCES_ENABLED = "false";
   assert.equal(runtime.experiencesEnabledForHost(HOST), false);
+});
+
+test("backend-registered policy accepts canonical domain candidates without a static tenant list", (t) => {
+  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOST_POLICY: "backend-registered", STOREFRONT_EXPERIENCE_HOSTS: "", NEXT_PUBLIC_LANDLORD_HOST: "app.jectstore.test" });
+  for (const host of [HOST, "custom-shop.example", "future-tenant.jectstore.test", "xn--bcher-kva.example"]) {
+    assert.equal(runtime.experiencesEnabledForHost(host), true, host);
+  }
+  assert.equal(runtime.experiencesEnabledForHost("app.jectstore.test"), false);
+  for (const host of ["https://custom-shop.example", "custom-shop.example:443", "CUSTOM-SHOP.example", "custom-shop.example.", "127.0.0.1", "169.254.169.254", "[::1]", "user@custom-shop.example", "custom-shop.example/path", "*.example", "bad,host", ""]) {
+    assert.equal(runtime.experiencesEnabledForHost(host), false, host);
+  }
+  process.env.STOREFRONT_EXPERIENCES_ENABLED = "false";
+  assert.equal(runtime.experiencesEnabledForHost(HOST), false, "the global runtime switch still disables registered mode");
+});
+
+test("unknown host policies fail closed even when the exact pilot list contains the host", (t) => {
+  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOST_POLICY: "invalid", STOREFRONT_EXPERIENCE_HOSTS: HOST });
+  for (const policy of ["invalid", "*", "all", "Backend-Registered", "backend-registered,pilot"]) {
+    process.env.STOREFRONT_EXPERIENCE_HOST_POLICY = policy;
+    assert.equal(runtime.experiencesEnabledForHost(HOST), false, policy);
+  }
+});
+
+test("registered domain resolution keeps its fixed upstream and rejects an unknown backend tenant without fallback", async (t) => {
+  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOST_POLICY: "backend-registered", STOREFRONT_EXPERIENCE_HOSTS: "", STOREFRONT_BACKEND_ORIGIN: "http://127.0.0.1:9123" });
+  let calls = 0;
+  const unknown = "unknown-customer.example";
+  await assert.rejects(runtime.fetchStorefrontExperience({ host: unknown, fetcher: async (url, options) => {
+    calls++;
+    assert.equal(url.href, "http://127.0.0.1:9123/api/storefront/experience");
+    assert.equal(new Headers(options.headers).get("host"), unknown);
+    assert.equal(options.redirect, "error");
+    assert.equal(options.cache, "no-store");
+    return new Response(JSON.stringify({ error: "unregistered tenant" }), { status: 404, headers: { "Content-Type": "application/json" } });
+  } }), /backend-404/);
+  assert.equal(calls, 1);
 });
 
 test("untrusted forwarded and internal selector headers cannot choose a tenant/engine", () => {
@@ -351,7 +387,7 @@ test("intro cannot become empty, executable markup, foreign navigation or arbitr
 });
 
 test("request loader memoizes one backend revision for home and shell", async (t) => {
-  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOSTS: HOST, STOREFRONT_RUNTIME_SIGNING_KEY: KEY });
+  env(t, { STOREFRONT_EXPERIENCES_ENABLED: "true", STOREFRONT_EXPERIENCE_HOST_POLICY: "pilot", STOREFRONT_EXPERIENCE_HOSTS: HOST, STOREFRONT_RUNTIME_SIGNING_KEY: KEY });
   const current = Math.floor(Date.now() / 1000);
   const selection = runtime.encodeExperiencePin(pin({ mode: "request", issued_at: current, expires_at: current + 60 }), KEY);
   let count = 0;

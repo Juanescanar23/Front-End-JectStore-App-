@@ -53,9 +53,17 @@ export function isCentralExperienceHost(host: string): boolean {
   return host === canonicalExperienceHost(process.env.NEXT_PUBLIC_LANDLORD_HOST || "app.jectstore.com");
 }
 
-/** Pilot opt-in is exact and explicit; an empty/malformed list never means all tenants. */
+/** Eligibility is not tenant authority: the fixed backend must resolve every
+ * registered domain before rendering or issuing a release pin. Pilot remains
+ * the default; an empty/malformed list and unknown policies never mean all. */
 export function experiencesEnabledForHost(host: string): boolean {
-  if (!experiencesEnabled() || isCentralExperienceHost(host)) return false;
+  if (!experiencesEnabled()) return false;
+  try {
+    if (canonicalExperienceHost(host) !== host || isIP(host) || isCentralExperienceHost(host)) return false;
+  } catch { return false; }
+  const policy = process.env.STOREFRONT_EXPERIENCE_HOST_POLICY || "pilot";
+  if (policy === "backend-registered") return true;
+  if (policy !== "pilot") return false;
   return (process.env.STOREFRONT_EXPERIENCE_HOSTS || "").split(",").some((entry) => {
     const candidate = entry.trim().toLowerCase();
     try { return candidate === canonicalExperienceHost(candidate) && candidate === host; }

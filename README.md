@@ -181,3 +181,27 @@ Bagisto headless eCommerce framework that will always remain free under the [MIT
 
 ## Security Vulnerabilities
 If you think that you have found a security issue in Bagisto Headless Commerce, please do not use the issue tracker and do not post it publicly. Instead, all security issues must be sent to [mailto:support@bagisto.com](mailto:support@bagisto.com).
+
+## JectStore multi-tenant storefront routing
+
+`STOREFRONT_EXPERIENCES_ENABLED=true` enables the release-aware runtime. Its
+default `STOREFRONT_EXPERIENCE_HOST_POLICY=pilot` still requires each exact,
+canonical domain in `STOREFRONT_EXPERIENCE_HOSTS`; an empty list enables none.
+Wildcards, URLs and ports are not accepted as pilot entries.
+
+The explicit `backend-registered` policy removes the static domain list for
+existing and future tenants, including registered custom domains. It only
+allows a domain to be checked: Laravel must resolve its tenant, channel and
+published release before the runtime renders or issues a host-bound cookie.
+Unknown domains, unavailable backends and invalid release responses fail closed;
+they never fall back to another tenant. The landlord and IP hosts are excluded.
+Network destinations remain the configured backend/native origins, never the
+request host, and redirects are not followed.
+
+This policy does not select a template, publish a draft, seed a database or
+change plan permissions. Legacy Next channels retain their existing GraphQL
+presentation when Laravel explicitly returns the legacy contract. Before a
+global rollout, verify any legacy native/custom themes have an explicit
+compatible routing contract; do not silently reclassify them as Next. Editor
+access, registered-domain ownership, suspension and publication authorization
+remain backend responsibilities. Unknown policy values fail closed.

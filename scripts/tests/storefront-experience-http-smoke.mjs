@@ -19,12 +19,16 @@ const brokenHost = `broken-${run}.jectstore.test`;
 const legacyHost = `legacy-${run}.jectstore.test`;
 const usdHost = `usd-${run}.jectstore.test`;
 const unlistedHost = `outside-${run}.jectstore.test`;
+const customHost = `custom-${run}.example.test`;
+const futureHost = `future-${run}.jectstore.test`;
+const unknownHost = `unregistered-${run}.example.test`;
 const active = new Map([[host, "next"], [otherHost, "visual"], [brokenHost, "broken"], [legacyHost, "legacy"], [usdHost, "next"], [unlistedHost, "legacy"]]);
 let latestNextRevision = 11;
 let publishBetweenProxyAndRsc = false;
 const counts = { experience: 0, preview: 0, native: 0 };
 const nativeCalls = [];
 const backendCalls = [];
+const rejectedHosts = [];
 let signedGraphqlCalls = 0;
 let nextChild;
 let output = "";
@@ -72,7 +76,7 @@ function previewQuery(targetHost = host, valid = true) {
 const provider = createServer(async (req, res) => {
   const url = new URL(req.url, "http://fixture.local");
   const targetHost = String((url.pathname === "/graphql" ? req.headers["x-tenant-host"] : null) || req.headers.host || "").replace(/:\d+$/, "");
-  if (!active.has(targetHost)) { console.error(`Local fixture rejected host ${targetHost} at ${url.pathname}`); return json(res, { error: "unknown tenant" }, 404); }
+  if (!active.has(targetHost)) { rejectedHosts.push({ host: targetHost, path: url.pathname }); return json(res, { error: "unknown tenant" }, 404); }
   if (url.pathname === "/api/storefront/experience") {
     counts.experience++;
     backendCalls.push({ host: targetHost, headers: req.headers });
@@ -145,13 +149,14 @@ async function freePort() {
   const server = createServer(); await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const value = server.address().port; await new Promise((resolve) => server.close(resolve)); return value;
 }
-async function start(enabled = true) {
+async function start(enabled = true, policy = "pilot") {
   const port = await freePort(); output = "";
   nextChild = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port), "-H", "127.0.0.1"], {
     env: { ...process.env, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", STOREFRONT_REALTIME_MODE: "false",
       BAGISTO_SERVER_ENDPOINT: `http://127.0.0.1:${providerPort}`, STOREFRONT_BACKEND_ORIGIN: `http://127.0.0.1:${providerPort}`, STOREFRONT_NATIVE_ORIGIN: `http://127.0.0.1:${nativePort}`,
       STOREFRONT_EXPERIENCES_ENABLED: String(enabled), STOREFRONT_RUNTIME_SIGNING_KEY: key, NEXTAUTH_SECRET: authSecret,
-      STOREFRONT_EXPERIENCE_HOSTS: [host, otherHost, brokenHost, legacyHost, usdHost].join(","),
+      STOREFRONT_EXPERIENCE_HOST_POLICY: policy,
+      STOREFRONT_EXPERIENCE_HOSTS: policy === "pilot" ? [host, otherHost, brokenHost, legacyHost, usdHost].join(",") : "",
       NEXT_PUBLIC_LANDLORD_HOST: "127.0.0.1", NEXT_PUBLIC_LANDLORD_SCHEME: "http", NEXTAUTH_URL: `http://127.0.0.1:${port}` },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -305,12 +310,35 @@ try {
   const notPilot = await request(port, unlistedHost);
   check(notPilot.status === 200 && notPilot.text.includes("Banner LEGACY existente") && !cookieFrom(notPilot) && counts.experience === beforeReserved, "Host outside the exact pilot list remains legacy without backend lookup or pin");
   await stop();
+  port = await start(true, "backend-registered");
+  const registryLegacy = await request(port, unlistedHost);
+  check(registryLegacy.status === 200 && registryLegacy.text.includes("Banner LEGACY existente") && Boolean(cookieFrom(registryLegacy)), "Registered legacy tenant outside the former pilot list keeps its exact legacy presentation");
+  active.set(customHost, "next");
+  const custom = await request(port, customHost, "/", { headers: { "x-forwarded-host": otherHost, "x-tenant-host": otherHost } });
+  check(custom.status === 200 && custom.text.includes("Productos editoriales"), "Registered custom domain is resolved without a static host entry");
+  check(verifyPin(cookieFrom(custom).split("=")[1], customHost).host === customHost && backendCalls.at(-1).host === customHost, "Custom-domain identity cannot be selected by spoofed forwarding headers");
+  active.set(futureHost, "next");
+  const future = await request(port, futureHost);
+  check(future.status === 200 && verifyPin(cookieFrom(future).split("=")[1], futureHost).host === futureHost, "Tenant registered after runtime start works without an environment edit or restart");
+  const beforeUnknown = { native: counts.native, graphql: signedGraphqlCalls };
+  const unknown = await request(port, unknownHost);
+  check(unknown.status === 503 && !unknown.text.includes("Banner LEGACY existente") && !cookieFrom(unknown), "Unknown domain fails closed without rendering legacy content or issuing a release cookie");
+  check(rejectedHosts.some(entry => entry.host === unknownHost && entry.path === "/api/storefront/experience") && counts.native === beforeUnknown.native && signedGraphqlCalls === beforeUnknown.graphql, "Fixed local backend rejects the unknown domain before any native or catalog request");
+  const beforeRegistryReserved = counts.experience;
+  const registryProviders = await request(port, customHost, "/api/auth/providers");
+  check(registryProviders.status === 200 && counts.experience === beforeRegistryReserved, "Universal eligibility does not move reserved authentication APIs into storefront routing");
+  const customPreview = await request(port, customHost, `/__storefront-next-preview?${previewQuery(customHost)}`, { headers: { cookie: "fixture_admin=1" } });
+  check(customPreview.status === 200 && customPreview.text.includes("Vista previa editorial autorizada") && !cookieFrom(customPreview), "Custom-domain preview still requires the backend-authorized signed admin session and cannot alter public release pins");
+  const refusedPreview = await request(port, customHost, `/__storefront-next-preview?${previewQuery(customHost, false)}`, { headers: { cookie: "fixture_admin=1" } });
+  check(refusedPreview.status >= 400 || !refusedPreview.text.includes("Vista previa editorial autorizada"), "Registered-domain policy does not bypass signed preview authorization");
+  check((await request(port, brokenHost)).status === 503, "Registered-domain policy never turns an invalid backend release into legacy fallback");
+  await stop();
   port = await start(false);
   const beforeDisabled = counts.experience;
   const disabled = await request(port, brokenHost);
   check(disabled.status === 200 && disabled.text.includes("Banner LEGACY existente") && counts.experience === beforeDisabled, "Feature off retains legacy and makes zero experience requests");
   check((await request(port, host, `/__storefront-next-preview?${previewQuery()}`)).status === 404, "Preview is unavailable while the feature is off");
-  console.log(`Storefront experience real HTTP PASS: ${assertions} checks; Next/Visual, fixed upstream, revision pin, legacy auth/guest, signed preview, ownership and feature-off.`);
+  console.log(`Storefront experience real HTTP PASS: ${assertions} checks; Next/Visual, exact pilot and registered-domain policies, fixed upstream, revision pin, legacy auth/guest, signed preview, ownership and feature-off.`);
 } catch (error) {
   console.error(output.slice(-2500));
   throw error;
