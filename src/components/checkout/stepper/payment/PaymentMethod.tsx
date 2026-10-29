@@ -69,7 +69,7 @@ export default function PaymentMethod({
         <>
         <div className="mt-4  justify-between hidden sm:flex ">
           <div className="flex">
-            <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
+            <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
               Método de pago
             </p>
             <p className="text-base font-normal">
@@ -81,14 +81,14 @@ export default function PaymentMethod({
             onClick={() => {
               setIsOpen(true);
             }}
-            className="cursor-pointer text-base font-normal text-black/60 underline dark:text-neutral-300"
+            className="cursor-pointer text-base font-normal text-black/60 underline"
          >
             Cambiar
           </button>
         </div>
         <div className="mt-4 flex sm:hidden justify-between relative">
           <div className="flex justify-between justify-between  flex-1 wrap">
-            <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
+            <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
               Método de pago
             </p>
             <p className="text-base font-normal">
@@ -100,7 +100,7 @@ export default function PaymentMethod({
             onClick={() => {
               setIsOpen(true);
             }}
-            className="cursor-pointer absolute right-0 text-base font-normal text-black/60 underline dark:text-neutral-300"
+            className="cursor-pointer absolute right-0 text-base font-normal text-black/60 underline"
           style={{ top: "-36px" }}
          >
             Cambiar
@@ -134,7 +134,7 @@ export default function PaymentMethod({
                         className={
                           method?.disabled
                             ? "text-neutral-400"
-                            : "text-neutral-700 dark:text-white"
+                            : "text-neutral-700"
                         }
                       >
                         {method?.title}
@@ -172,6 +172,8 @@ const CustomRadio = (props: CustomRadioProps) => {
           "data-[selected=true]:border-neutral-900 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
         ),
         hiddenInput: "peer absolute h-0 w-0 opacity-0",
+        label: "text-neutral-700",
+        description: "text-neutral-600",
       }}
     >
       {children}

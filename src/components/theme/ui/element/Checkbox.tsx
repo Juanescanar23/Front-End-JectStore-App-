@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { forwardRef } from "react";
 
 const CheckBox = forwardRef<HTMLInputElement, any>(
-  ({ id, label, name, className, defaultValue, ...rest }, ref) => {
+  ({ id, label, name, className, labelClassName, defaultValue, ...rest }, ref) => {
     return (
       <div className={clsx("inline-flex items-center", className)}>
         <label className="relative flex cursor-pointer items-center gap-x-2">
@@ -32,7 +32,7 @@ const CheckBox = forwardRef<HTMLInputElement, any>(
             </svg>
           </span>
         </label>
-        <span className="ml-3 text-neutral-400 dark:text-white">{label}</span>
+        <span className={clsx("ml-3", labelClassName ?? "text-neutral-400 dark:text-white")}>{label}</span>
       </div>
     );
   },

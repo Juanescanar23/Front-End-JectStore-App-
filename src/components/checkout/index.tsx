@@ -39,7 +39,7 @@ const CheckOut = ({ step }: CheckOutProps) => {
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,440px)] lg:gap-8">
       <div className="min-w-0">
-        <div className="rounded-[28px] border border-neutral-200 bg-white px-4 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-6 sm:py-6 lg:px-8 lg:py-7 dark:[&_input]:text-gray-900">
+        <div className="rounded-[28px] border border-neutral-200 bg-white px-4 py-4 text-neutral-900 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-6 sm:py-6 lg:px-8 lg:py-7 dark:[&_input]:text-gray-900">
           {isLoading ? (
             <CheckoutSkeleton />
           ) : (

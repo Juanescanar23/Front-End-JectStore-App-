@@ -53,7 +53,7 @@ export default function ShippingMethod({
           <>
              <div className="mt-4  justify-between hidden sm:flex">
             <div className="flex">
-              <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
                 Método de envío
               </p>
               <p className="text-base font-normal">{selectedMethodTitle} (${selectedMethodPrice})</p>
@@ -61,7 +61,7 @@ export default function ShippingMethod({
           <div className="flex">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer text-base font-normal text-black/[60%] underline dark:text-neutral-300"
+              className="cursor-pointer text-base font-normal text-black/[60%] underline"
             >
               Cambiar
             </button>
@@ -70,7 +70,7 @@ export default function ShippingMethod({
 
             <div className="mt-4 block sm:hidden flex flex-col justify-between sm:flex-row relative  ">
             <div className="flex justify-between  flex-1 wrap">
-              <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
                 Método de envío
               </p>
               <p className="text-base font-normal">{selectedMethodTitle} (${selectedMethodPrice})</p>
@@ -78,7 +78,7 @@ export default function ShippingMethod({
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline dark:text-neutral-300"
+              className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline"
               style={{ top: "-36px" }}
             >
               Cambiar
@@ -107,7 +107,7 @@ export default function ShippingMethod({
                           description={"$" + method?.price}
                           value={method?.method}
                         >
-                          <span className="text-neutral-700 dark:text-white">
+                          <span className="text-neutral-700">
                             {method?.label}
                           </span>
                         </CustomRadio>
@@ -147,7 +147,7 @@ export default function ShippingMethod({
                           description={"$" + method?.price}
                           value={method?.method}
                         >
-                          <span className="text-neutral-700 dark:text-white">
+                          <span className="text-neutral-700">
                             {method?.label}
                           </span>
                         </CustomRadio>
@@ -181,6 +181,8 @@ const CustomRadio = (props: CustomRadioProps) => {
           "data-[selected=true]:border-primary"
         ),
         hiddenInput: "peer absolute h-0 w-0 opacity-0",
+        label: "text-neutral-700",
+        description: "text-neutral-600",
       }}
     >
       {children}

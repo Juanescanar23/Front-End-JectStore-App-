@@ -32,7 +32,7 @@ const Payment: FC<{
   const token = getCartToken();
   const cart = useAppSelector((state) => state.cartDetail.cart);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, isFetched, isError, refetch } = useQuery({
     queryKey: ["paymentMethods", token],
     enabled: !!token,
     queryFn: () =>
@@ -47,7 +47,8 @@ const Payment: FC<{
         },
       }),
   });
-  const paymentMethods = Array.isArray(data?.data) ? data.data : [];
+  const hasPaymentError = isError || Boolean(data?.error) || !Array.isArray(data?.data);
+  const paymentMethods = !hasPaymentError ? data.data : [];
   const uniqueProductIds = useMemo<number[]>(() => {
     const items = Array.isArray(cart?.items?.edges) ? cart.items.edges : [];
 
@@ -165,8 +166,29 @@ const Payment: FC<{
     : selectedPayment;
   const effectiveIsOpen = isOpen || !effectiveSelectedPayment;
 
-  if (isLoading || (hasCodMethod && isCheckingCodAvailability)) {
+  if ((isLoading && !isFetched) || (hasCodMethod && isCheckingCodAvailability)) {
     return <CartCheckoutPageSkeleton />;
+  }
+
+  if (normalizedMethods.length === 0) {
+    return (
+      <div className="mt-6">
+        <p role="status" className="text-base text-neutral-700">
+          {hasPaymentError
+            ? "No pudimos consultar los métodos de pago."
+            : "No hay métodos de pago disponibles para este pedido."}{" "}
+          Consultar los métodos no realiza cobros.
+        </p>
+        <button
+          type="button"
+          className="mt-3 min-h-11 text-base text-blue-600 underline disabled:cursor-wait disabled:opacity-60"
+          disabled={isFetching || !token}
+          onClick={() => { void refetch(); }}
+        >
+          Volver a consultar
+        </button>
+      </div>
+    );
   }
 
   return (

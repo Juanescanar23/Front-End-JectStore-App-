@@ -31,6 +31,47 @@ interface CheckOutProps {
   selectedShippingRateTitle?: string;
 }
 
+// Stable component identity keeps completed step forms/summaries mounted while cart data refreshes.
+function StepItem({ step, currentStep, currentStepId }: { step: Step; currentStep: string; currentStepId: number }) {
+  const isActive = step.key === currentStep;
+  const isCompleted = step.id <= currentStepId;
+
+  return (
+    <div
+      className="rounded-[26px] border border-neutral-200 bg-white/80 p-4 shadow-sm sm:p-5"
+    >
+      <div className="flex items-center justify-between font-outfit">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+              isCompleted
+                ? "bg-blue-600 text-white"
+                : "bg-neutral-100 text-neutral-900"
+            }`}
+          >
+            {step.id}
+          </div>
+          <span
+            className={`text-lg font-medium max-md:text-base ${
+              isActive
+                ? "text-neutral-950"
+                : "text-neutral-700"
+            }`}
+          >
+            {step.title}
+          </span>
+        </div>
+      </div>
+
+      {isCompleted ? (
+        <section className="relative mt-5 border-t border-neutral-200 pt-5">
+          {step.component}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
 export default function Stepper(
   {
     billingAddress,
@@ -116,47 +157,6 @@ export default function Stepper(
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
 
-  const StepItem = ({ step }: { step: Step }) => {
-    const isActive = step.key === currentStep;
-    const isCompleted = step.id <= (steps[currentStepIndex]?.id || 1);
-
-    return (
-      <div
-        key={step.id}
-        className="rounded-[26px] border border-neutral-200 bg-white/80 p-4 shadow-sm sm:p-5"
-      >
-        <div className="flex items-center justify-between font-outfit">
-          <div className="flex items-center gap-3">
-            <div
-              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
-                isCompleted
-                  ? "bg-blue-600 text-white"
-                  : "bg-neutral-100 text-neutral-900"
-              }`}
-            >
-              {step.id}
-            </div>
-            <span
-              className={`text-lg font-medium max-md:text-base ${
-                isActive
-                  ? "text-neutral-950"
-                  : "text-neutral-700"
-              }`}
-            >
-              {step.title}
-            </span>
-          </div>
-        </div>
-
-        {isCompleted ? (
-          <section className="relative mt-5 border-t border-neutral-200 pt-5">
-            {step.component}
-          </section>
-        ) : null}
-      </div>
-    );
-  };
-
   return (
     <div className="mx-auto w-full">
       <header className="pb-6">
@@ -193,7 +193,7 @@ export default function Stepper(
       <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 h-[calc(100dvh-260px)] overflow-y-auto pr-1 lg:h-[calc(100dvh-190px)]">
         <div className="flex h-full flex-col gap-y-5 px-0 sm:px-1">
           {steps.map((step) => (
-            <StepItem key={step.id} step={step} />
+            <StepItem key={step.id} step={step} currentStep={currentStep} currentStepId={steps[currentStepIndex]?.id || 1} />
           ))}
         </div>
       </div>

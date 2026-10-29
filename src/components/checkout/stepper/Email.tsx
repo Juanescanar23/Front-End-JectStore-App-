@@ -56,28 +56,28 @@ const Email = () => {
         <>
           <div className="mt-4  justify-between hidden sm:flex">
             <div className="flex">
-              <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
                 Correo electrónico
               </p>
-              <p className="font-normal block text-base text-black/60 dark:text-white/60">{email}</p>
+              <p className="font-normal block text-base text-black/60">{email}</p>
             </div>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer text-base font-normal text-black/[60%] underline dark:text-neutral-300"
+              className="cursor-pointer text-base font-normal text-black/[60%] underline"
             >
               Cambiar
             </button>
           </div>
           <div className=" relative mt-4 flex sm:hidden flex-col justify-end gap-y-2 sm:flex-row sm:justify-between sm:gap-y-0">
             <div className="flex justify-between  flex-1 flex-wrap">
-              <p className="w-auto text-base font-normal text-black/60 dark:text-white/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
                 Correo electrónico
               </p>
-              <p className="font-normal block text-base text-black/60 dark:text-white/60">{email}</p>
+              <p className="font-normal block text-base text-black/60">{email}</p>
             </div>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline dark:text-neutral-300"
+              className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline"
               style={{ top: "-36px" }}
             >
               Cambiar
@@ -117,7 +117,7 @@ function EmailForm({
       />
 
       {isGuest && (
-        <p className="mb-4 mt-6 font-outfit text-base font-normal text-black/[60%] dark:text-neutral-300">
+        <p className="mb-4 mt-6 font-outfit text-base font-normal text-black/[60%]">
           ¿Ya tienes cuenta? No pasa nada, solo{" "}
           <br className="block sm:hidden" />
           <Link
