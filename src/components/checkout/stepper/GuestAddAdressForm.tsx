@@ -11,6 +11,7 @@ import { ProceedToCheckout } from "./ProceedToCheckout";
 import CheckBox from "@components/theme/ui/element/Checkbox";
 import { useDispatch } from "react-redux";
 import { setCheckoutAddresses } from "@/store/slices/cart-slice";
+import { checkoutCountryCode, checkoutLocationAfterCountryChange, checkoutLocationError, checkoutLocationForReset, checkoutRegionCode, isCheckoutAddressSaveSuccessful, type CheckoutLocations } from "@/utils/checkout-address-location";
 
 
 export const GuestAddAdressForm: FC<{
@@ -25,12 +26,20 @@ export const GuestAddAdressForm: FC<{
   );
   const [shippingAddress, setShippingAddress] =
     useState<AddressDataTypes | null>(initialShipping ?? null);
+  const [locations, setLocations] = useState<CheckoutLocations>({ countries: [], states: {} });
+  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [locationsError, setLocationsError] = useState(false);
+  const [locationAttempt, setLocationAttempt] = useState(0);
 
   const {
     register,
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
+    getFieldState,
+    clearErrors,
     formState: { errors },
   } = useForm({
     mode: "onSubmit",
@@ -41,8 +50,8 @@ export const GuestAddAdressForm: FC<{
         lastName: billingAddress?.lastName || "",
         companyName: billingAddress?.companyName || "",
         address: billingAddress?.address || "",
-        country: billingAddress?.country || "IN",
-        state: billingAddress?.state || "UP",
+        country: checkoutCountryCode(billingAddress?.country),
+        state: billingAddress?.state || "",
         city: billingAddress?.city || "",
         postcode: billingAddress?.postcode || "",
         phone: billingAddress?.phone || "",
@@ -53,8 +62,8 @@ export const GuestAddAdressForm: FC<{
         lastName: shippingAddress?.lastName || "",
         companyName: shippingAddress?.companyName || "",
         address: shippingAddress?.address || "",
-        country: shippingAddress?.country || "IN",
-        state: shippingAddress?.state || "UP",
+        country: checkoutCountryCode(shippingAddress?.country),
+        state: shippingAddress?.state || "",
         city: shippingAddress?.city || "",
         postcode: shippingAddress?.postcode || "",
         phone: shippingAddress?.phone || "",
@@ -62,6 +71,28 @@ export const GuestAddAdressForm: FC<{
       useForShipping: true,
     },
   });
+
+  const billingCountry = useWatch({ control, name: "billing.country" });
+  const shippingCountry = useWatch({ control, name: "shipping.country" });
+  const billingState = useWatch({ control, name: "billing.state" });
+  const shippingState = useWatch({ control, name: "shipping.state" });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetch("/api/checkout/locations", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("locations-unavailable");
+        const data = await response.json() as CheckoutLocations;
+        if (!Array.isArray(data.countries) || data.countries.length === 0 || !data.states) throw new Error("locations-unavailable");
+        if (active) { setLocations(data); setLocationsLoading(false); setLocationsError(false); }
+      })
+      .catch(() => {
+        if (active) { setLocationsError(true); setLocationsLoading(false); }
+      });
+    return () => { active = false; clearTimeout(timeout); controller.abort(); };
+  }, [locationAttempt]);
 
   useEffect(() => {
     if (initialBilling || initialShipping) {
@@ -72,6 +103,12 @@ export const GuestAddAdressForm: FC<{
         setShippingAddress(shipping);
       });
 
+      const editedBillingCountry = getFieldState("billing.country");
+      const editedShippingCountry = getFieldState("shipping.country");
+      const billingLocation = checkoutLocationForReset({ country: checkoutCountryCode(initialBilling?.country), state: initialBilling?.state || "" },
+        getValues("billing"), editedBillingCountry.isDirty || editedBillingCountry.isTouched);
+      const shippingLocation = checkoutLocationForReset({ country: checkoutCountryCode(initialShipping?.country), state: initialShipping?.state || "" },
+        getValues("shipping"), editedShippingCountry.isDirty || editedShippingCountry.isTouched);
       reset({
         billing: {
           email: initialBilling?.email ?? email ?? "",
@@ -79,8 +116,8 @@ export const GuestAddAdressForm: FC<{
           lastName: initialBilling?.lastName || "",
           companyName: initialBilling?.companyName || "",
           address: initialBilling?.address || "",
-          country: initialBilling?.country || "IN",
-          state: initialBilling?.state || "UP",
+          country: billingLocation.country,
+          state: billingLocation.state,
           city: initialBilling?.city || "",
           postcode: initialBilling?.postcode || "",
           phone: initialBilling?.phone || "",
@@ -91,16 +128,16 @@ export const GuestAddAdressForm: FC<{
           lastName: initialShipping?.lastName || "",
           companyName: initialShipping?.companyName || "",
           address: initialShipping?.address || "",
-          country: initialShipping?.country || "IN",
-          state: initialShipping?.state || "UP",
+          country: shippingLocation.country,
+          state: shippingLocation.state,
           city: initialShipping?.city || "",
           postcode: initialShipping?.postcode || "",
           phone: initialShipping?.phone || "",
         },
         useForShipping: true,
-      });
+      }, { keepDirtyValues: true });
     }
-  }, [initialBilling, initialShipping, reset, email]);
+  }, [initialBilling, initialShipping, reset, email, getValues, getFieldState]);
 
   const { isLoadingToSave, saveCheckoutAddress } = useCheckout();
 
@@ -123,8 +160,8 @@ export const GuestAddAdressForm: FC<{
       billingEmail: billing.email ?? email ?? "",
       billingAddress: billing.address,
       billingCity: billing.city,
-      billingCountry: billing.country || "IN",
-      billingState: billing.state || "UP",
+      billingCountry: checkoutCountryCode(billing.country),
+      billingState: checkoutRegionCode(billing.country, billing.state, locations),
       billingPostcode: billing.postcode,
       billingPhoneNumber: billing.phone,
       billingCompanyName: billing.companyName,
@@ -137,15 +174,16 @@ export const GuestAddAdressForm: FC<{
       payload.shippingEmail = shipping.email ?? email ?? "";
       payload.shippingAddress = shipping.address;
       payload.shippingCity = shipping.city;
-      payload.shippingCountry = shipping.country;
-      payload.shippingState = shipping.state;
+      payload.shippingCountry = checkoutCountryCode(shipping.country);
+      payload.shippingState = checkoutRegionCode(shipping.country, shipping.state, locations);
       payload.shippingPostcode = shipping.postcode;
       payload.shippingPhoneNumber = shipping.phone;
       payload.shippingCompanyName = shipping.companyName;
     }
 
     try {
-      await saveCheckoutAddress(payload as any);
+      const response = await saveCheckoutAddress(payload as any);
+      if (!isCheckoutAddressSaveSuccessful(response)) return;
       dispatch(
         setCheckoutAddresses({
           billing: {
@@ -175,6 +213,62 @@ export const GuestAddAdressForm: FC<{
   };
 
   const showSummary = isObject(shippingAddress) && isObject(billingAddress);
+
+  const locationFields = (kind: "billing" | "shipping") => {
+    const country = kind === "billing" ? billingCountry : shippingCountry;
+    const state = kind === "billing" ? billingState : shippingState;
+    const regions = locations.states[checkoutCountryCode(country)] || [];
+    const countryRegistration = register(`${kind}.country`, {
+      validate: (value) => !locationsLoading && !locationsError
+        && checkoutLocationError(value, "", locations) !== "country" || "Selecciona un país de la lista",
+    });
+    const stateRegistration = register(`${kind}.state`, {
+      validate: (value) => checkoutLocationError(country, value, locations) !== "state" || "Selecciona el estado o región de ese país",
+    });
+    const stateCode = checkoutRegionCode(country, state, locations);
+    const savedState = Boolean(state && !regions.some((region) => region.code === state));
+    const countryError = errors[kind]?.country?.message;
+    const stateError = errors[kind]?.state?.message;
+    const fieldClass = "min-h-11 w-full rounded-[0.62rem] border border-gray-300 bg-white px-3 py-2 text-base text-neutral-950 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60";
+    return (
+      <div className="col-span-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor={`${kind}.country`} className="mb-1 block text-sm font-medium text-neutral-900">País *</label>
+          <select {...countryRegistration} id={`${kind}.country`} autoComplete="country" className={fieldClass}
+            aria-invalid={Boolean(countryError)} aria-describedby={countryError ? `${kind}.country-error` : undefined}
+            disabled={locationsLoading || locationsError}
+            onChange={(event) => {
+              void countryRegistration.onChange(event);
+              const next = checkoutLocationAfterCountryChange(country, event.target.value, state);
+              setValue(`${kind}.state`, next.state, { shouldDirty: true });
+              clearErrors(`${kind}.state`);
+            }}>
+            <option value="">{locationsLoading ? "Cargando países…" : "Selecciona un país"}</option>
+            {country && !locations.countries.some((entry) => entry.code === country) && <option value={country}>{country}</option>}
+            {locations.countries.map((entry) => <option key={entry.code} value={entry.code}>{entry.name}</option>)}
+          </select>
+          {countryError && <p id={`${kind}.country-error`} className="mt-1 text-sm text-red-600" role="alert">{countryError}</p>}
+        </div>
+        <div>
+          <label htmlFor={`${kind}.state`} className="mb-1 block text-sm font-medium text-neutral-900">Estado / región{regions.length > 0 ? " *" : ""}</label>
+          {regions.length > 0 ? (
+            <select {...stateRegistration} id={`${kind}.state`} autoComplete="address-level1" className={fieldClass}
+              aria-invalid={Boolean(stateError)} aria-describedby={stateError ? `${kind}.state-error` : undefined}>
+              <option value="">Selecciona un estado o región</option>
+              {savedState && <option value={state}>{regions.find((region) => region.code === stateCode)?.name || state}</option>}
+              {regions.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
+            </select>
+          ) : (
+            <input {...stateRegistration} id={`${kind}.state`} autoComplete="address-level1" className={fieldClass}
+              placeholder={country ? "Estado o región, si corresponde" : "Selecciona primero el país"}
+              disabled={!country || locationsLoading || locationsError}
+              aria-invalid={Boolean(stateError)} aria-describedby={stateError ? `${kind}.state-error` : undefined} />
+          )}
+          {stateError && <p id={`${kind}.state-error`} className="mt-1 text-sm text-red-600" role="alert">{stateError}</p>}
+        </div>
+      </div>
+    );
+  };
 
   if (showSummary && isOpen) {
     return (
@@ -316,6 +410,10 @@ export const GuestAddAdressForm: FC<{
 
   return (
     <form className="my-5" onSubmit={handleSubmit(addGuestAddress)}>
+      {locationsError && <div className="my-4 text-sm text-red-600" role="alert">
+        No pudimos cargar los países y estados. Tus datos siguen en el formulario.{" "}
+        <button type="button" className="underline" onClick={() => { setLocationsLoading(true); setLocationsError(false); setLocationAttempt((attempt) => attempt + 1); }}>Reintentar</button>
+      </div>}
       <div className="my-7 grid grid-cols-6 gap-4">
         <InputText
           {...register("billing.firstName", {
@@ -368,6 +466,7 @@ export const GuestAddAdressForm: FC<{
           label="Dirección *"
           size="md"
         />
+        {locationFields("billing")}
         <InputText
           {...register("billing.city", {
             required: "La ciudad es obligatoria",
@@ -472,6 +571,7 @@ export const GuestAddAdressForm: FC<{
             label="Dirección *"
             size="md"
           />
+          {locationFields("shipping")}
           <InputText
             {...register("shipping.city", {
               required: "La ciudad es obligatoria",
@@ -515,7 +615,7 @@ export const GuestAddAdressForm: FC<{
       )}
 
       <div className="justify-self-end">
-        <ProceedToCheckout buttonName="Siguiente" pending={isLoadingToSave} />
+        <ProceedToCheckout buttonName="Siguiente" pending={isLoadingToSave || locationsLoading || locationsError} />
       </div>
     </form>
   );

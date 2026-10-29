@@ -9,6 +9,7 @@ import { useGuestCartToken } from './useGuestCartToken';
 import { useDispatch } from "react-redux";
 import { clearCart } from "@/store/slices/cart-slice";
 import { ORDER_ID, IS_GUEST } from "@/utils/constants";
+import { isCheckoutAddressSaveSuccessful } from "@/utils/checkout-address-location";
 
 export interface InputDataTypes {
   input: {
@@ -72,13 +73,13 @@ export const useCheckout = () => {
         const responseData =
           response?.data?.createCheckoutAddress?.checkoutAddress;
 
-        if (isObject(responseData)) {
+        if (isCheckoutAddressSaveSuccessful(response)) {
           showToast(responseData?.message as string, "success");
           queryClient.invalidateQueries({ queryKey: ["cart-detail"] });
           queryClient.invalidateQueries({ queryKey: ["address"] });
           router.replace("/checkout?step=shipping");
         } else {
-          showToast(response?.error?.message, "warning");
+          showToast(response?.error?.message || "No pudimos guardar la dirección. Revisa los datos e inténtalo nuevamente.", "warning");
         }
       },
 
@@ -89,7 +90,7 @@ export const useCheckout = () => {
 
   const saveCheckoutAddress = async (input: any) => {
     const token = getCartToken();
-    await saveAddressToCheckout({
+    return await saveAddressToCheckout({
       token: token || "",
       ...input,
     });
