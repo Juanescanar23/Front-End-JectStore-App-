@@ -1,18 +1,25 @@
+"use client";
+
+import { useStorefrontCurrency } from "@/providers/StorefrontCurrencyProvider";
+import { formatStorefrontPrice, normalizeCurrencyCode } from "@/utils/storefront-money";
+
 export const Price = ({
   amount,
   className,
-  currencyCode = "USD",
+  currencyCode,
   ...rest
 }: {
   amount: string;
   className?: string;
-  currencyCode: string;
-} & React.ComponentProps<"p">) => (
-  <p className={className} suppressHydrationWarning={true} data-currency={currencyCode} {...rest}>
-    {`${new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: currencyCode,
-      currencyDisplay: "narrowSymbol",
-    }).format(parseFloat(amount))}`}
-  </p>
-);
+  /** Omitted: channel currency. Null: explicitly unknown (e.g. a legacy order). */
+  currencyCode?: string | null;
+} & React.ComponentProps<"p">) => {
+  const channelCurrency = useStorefrontCurrency();
+  const resolvedCurrency = normalizeCurrencyCode(currencyCode === undefined ? channelCurrency : currencyCode);
+
+  return (
+    <p className={className} suppressHydrationWarning={true} data-currency={resolvedCurrency ?? undefined} {...rest}>
+      {formatStorefrontPrice(amount, resolvedCurrency)}
+    </p>
+  );
+};

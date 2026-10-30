@@ -6,7 +6,7 @@ import { NextImage } from "@/components/common/NextImage";
 import { Price } from "@/components/theme/ui/Price";
 
 export const ProductCard: FC<{
-  currency: string;
+  currency?: string | null;
   price: string;
   specialPrice?: string;
   imageUrl: string;

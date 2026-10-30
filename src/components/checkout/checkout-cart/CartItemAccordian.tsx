@@ -64,7 +64,6 @@ export default function CartItemAccordion({
             <Price
               className=""
               amount={cartItems?.grandTotal || "0"}
-              currencyCode={"USD"}
             />
           }
         >
@@ -118,7 +117,6 @@ export default function CartItemAccordion({
                         <Price
                           className="flex justify-end space-y-2 text-right text-sm"
                           amount={item?.node?.price}
-                          currencyCode={"USD"}
                         />
                       </div>
                     </div>
@@ -134,7 +132,6 @@ export default function CartItemAccordion({
                 <Price
                   className="text-right text-base text-sf-content"
                   amount={cartItems?.subtotal || "0"}
-                  currencyCode={"USD"}
                 />
               </div>
               <div className="mb-3 flex items-center justify-between pb-1 pt-1">
@@ -145,7 +142,6 @@ export default function CartItemAccordion({
                   <Price
                     amount={cartItems?.shippingAmount || "0"}
                     className="text-right text-base text-sf-content"
-                    currencyCode={"USD"}
                   />
                 ) : (
                   <p className="text-right text-base text-sf-muted">
@@ -158,7 +154,6 @@ export default function CartItemAccordion({
                 <Price
                   className="text-right text-base text-sf-content"
                   amount={cartItems?.grandTotal || "0"}
-                  currencyCode={"USD"}
                 />
               </div>
             </div>

@@ -10,7 +10,7 @@ export default function ProductGridItems({
     const imageUrl = getProductImageUrl(product);
     const price = product?.price ?? "0";
     const specialPrice = product?.specialPrice ?? null;
-    const currency = product?.priceHtml?.currencyCode || "USD";
+    const currency = product?.priceHtml?.currencyCode || undefined;
     return (
       <ProductCard
         key={index}

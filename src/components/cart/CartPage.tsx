@@ -194,7 +194,6 @@ export default function CartPage() {
                       <Price
                         amount={item?.node?.price}
                         className="text-left text-lg font-semibold text-neutral-950 sm:text-right"
-                        currencyCode={"USD"}
                       />
                       <div className="flex items-center gap-2">
                         <DeleteItemButton item={item} />
@@ -231,7 +230,6 @@ export default function CartPage() {
                 <Price
                   amount={cartObj?.subtotal || "0"}
                   className="text-right text-base text-white"
-                  currencyCode={"USD"}
                 />
               </div>
 
@@ -240,7 +238,6 @@ export default function CartPage() {
                 <Price
                   amount={cartObj?.taxAmount || "0"}
                   className="text-right text-base text-white"
-                  currencyCode={"USD"}
                 />
               </div>
 
@@ -250,7 +247,6 @@ export default function CartPage() {
                   <Price
                     amount={cartObj?.shippingAmount}
                     className="text-right text-base text-white"
-                    currencyCode={"USD"}
                   />
                 ) : (
                   <span className="text-right text-sm text-white/60">
@@ -267,7 +263,6 @@ export default function CartPage() {
               <Price
                 amount={cartObj?.grandTotal || "0"}
                 className="text-right text-2xl font-semibold text-white"
-                currencyCode={"USD"}
               />
             </div>
 

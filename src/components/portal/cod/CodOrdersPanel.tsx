@@ -134,19 +134,19 @@ export default function CodOrdersPanel() {
               <div className="mt-2 space-y-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-500">Subtotal</span>
-                  <Price amount={String(order.subtotal)} className="font-medium" currencyCode="USD" />
+                  <Price amount={String(order.subtotal)} className="font-medium" currencyCode={order.currency_code ?? null} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-500">Envío</span>
-                  <Price amount={String(order.shipping_total)} className="font-medium" currencyCode="USD" />
+                  <Price amount={String(order.shipping_total)} className="font-medium" currencyCode={order.currency_code ?? null} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-500">Fee COD</span>
-                  <Price amount={String(order.cod_fee_total)} className="font-medium" currencyCode="USD" />
+                  <Price amount={String(order.cod_fee_total)} className="font-medium" currencyCode={order.currency_code ?? null} />
                 </div>
                 <div className="mt-1 flex items-center justify-between border-t border-neutral-200 pt-1 text-sm font-semibold">
                   <span>Total</span>
-                  <Price amount={String(order.grand_total)} className="font-semibold" currencyCode="USD" />
+                  <Price amount={String(order.grand_total)} className="font-semibold" currencyCode={order.currency_code ?? null} />
                 </div>
               </div>
             </div>

@@ -168,7 +168,7 @@ export default function Stepper(
           <LogoIcon />
         </Link>
 
-        <div className="mt-3 rounded-[26px] bg-sf-subtle px-4 py-5 sm:px-5 lg:px-0 lg:py-0">
+        <div className="mt-3 px-4 py-5 sm:px-5 lg:px-0 lg:py-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sf-muted">

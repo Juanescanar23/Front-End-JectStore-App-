@@ -352,7 +352,7 @@ export function safePriceValue(product: ProductData): number {
   return getNumber(product?.price);
 }
 
-export function safeCurrencyCode(product: ProductData): string {
+export function safeCurrencyCode(product: ProductData): string | undefined {
   if (product?.priceHtml?.currencyCode) return product.priceHtml.currencyCode;
 
   if (
@@ -364,7 +364,7 @@ export function safeCurrencyCode(product: ProductData): string {
     return product.price.currencyCode;
   }
 
-  return "USD";
+  return undefined;
 }
 
 

@@ -85,7 +85,6 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
                             <Price
                               amount={item?.node?.price}
                               className="space-y-2 text-start font-outfit text-lg font-medium text-sf-content xl:text-right"
-                              currencyCode={"USD"}
                             />
                           </div>
                         </div>
@@ -94,7 +93,6 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
                         <Price
                           amount={item?.node?.price}
                           className="space-y-2 text-start font-outfit text-lg font-medium text-sf-content xl:text-right"
-                          currencyCode={"USD"}
                         />
                       </div>
                     </div>
@@ -111,7 +109,6 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
               <Price
                 amount={cartItems?.subtotal || "0"}
                 className="text-right text-base text-sf-content"
-                currencyCode={"USD"}
               />
             </div>
 
@@ -123,7 +120,6 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
                 <Price
                   amount={cartItems?.shippingAmount}
                   className="text-right text-base text-sf-content"
-                  currencyCode={"USD"}
                 />
               ) : (
                 <p className="text-right text-base text-sf-muted">
@@ -139,7 +135,6 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
               <Price
                 amount={(cartItems as any)?.grandTotal || "0"}
                 className="text-right font-outfit text-2xl font-normal text-sf-content"
-                currencyCode={"USD"}
               />
             </div>
 

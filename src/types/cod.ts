@@ -170,6 +170,8 @@ export interface CodTenantSettings {
 }
 
 export interface CodPortalOrder {
+  /** Historical order unit, only when the order response explicitly supplies it. */
+  currency_code?: string | null;
   order_id: string;
   order_number: string;
   product_id: number;

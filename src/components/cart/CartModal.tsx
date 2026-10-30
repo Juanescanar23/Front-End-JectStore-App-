@@ -181,7 +181,6 @@ export default function CartModal({
                                       <Price
                                         amount={item?.node?.price}
                                         className="flex justify-end space-y-2 text-right font-outfit text-base font-medium"
-                                        currencyCode={"USD"}
                                       />
                                       <div className="flex items-center gap-x-2">
                                         <DeleteItemButton item={item} />
@@ -216,7 +215,6 @@ export default function CartModal({
                             <Price
                               amount={(cartDetail as any)?.cart?.taxAmount}
                               className="text-right text-base font-medium text-black dark:text-white"
-                              currencyCode={"USD"}
                             />
                           </div>}
 
@@ -227,7 +225,6 @@ export default function CartModal({
                             <Price
                               amount={(cartDetail as any)?.cart?.grandTotal}
                               className="text-right text-base font-medium text-black dark:text-white"
-                              currencyCode={"USD"}
                             />
                           </div>
                         </div>
@@ -360,7 +357,6 @@ export default function CartModal({
                                       <Price
                                         amount={item?.node?.price}
                                         className="flex justify-end space-y-2 text-right font-outfit text-base font-medium"
-                                        currencyCode={"USD"}
                                       />
                                       <div className="flex items-center gap-x-2">
                                         <DeleteItemButton item={item} />
@@ -395,7 +391,6 @@ export default function CartModal({
                             <Price
                               amount={(cartDetail as any)?.cart?.taxAmount}
                               className="text-right text-base font-medium text-black dark:text-white"
-                              currencyCode={"USD"}
                             />
                           </div>}
                           <div className="mb-3 flex items-center justify-between pb-1">
@@ -405,7 +400,6 @@ export default function CartModal({
                             <Price
                               amount={(cartDetail as any)?.cart?.grandTotal}
                               className="text-right text-base font-medium text-black dark:text-white"
-                              currencyCode={"USD"}
                             />
                           </div>
                         </div>

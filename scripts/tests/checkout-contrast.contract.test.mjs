@@ -435,7 +435,13 @@ test("both parent pending and form pending natively disable Proceed without chan
 });
 
 test("desktop and real HeroUI mobile summary keep paired surfaces, text and keyboard focus", () => {
-  const prices = load("src/components/theme/ui/Price.tsx", { "react/jsx-runtime": reactJsx }, "Price");
+  const money = load("src/utils/storefront-money.ts", {}, null);
+  const currency = load("src/providers/StorefrontCurrencyProvider.tsx", {
+    ...sharedReact, "@/utils/storefront-money": money,
+  }, null);
+  const prices = load("src/components/theme/ui/Price.tsx", {
+    ...sharedReact, "@/utils/storefront-money": money, "@/providers/StorefrontCurrencyProvider": currency,
+  }, "Price");
   const deps = { ...sharedReact,
     "@/utils/constants": { DEFAULT_OPTION: "Default" },
     "@utils/constants": { NOT_IMAGE: "/image/placeholder.webp" },
@@ -452,7 +458,7 @@ test("desktop and real HeroUI mobile summary keep paired surfaces, text and keyb
   const Mobile = load("src/components/checkout/checkout-cart/CartItemAccordian.tsx", deps);
   const Desktop = load("src/components/checkout/checkout-cart/CheckoutCart.tsx", { ...deps, "./CartItemAccordian": interop(Mobile) });
   const cartItems = { items: { edges: [{ node: { name: "Producto de prueba", productUrlKey: "fixture", sku: "FIXTURE", quantity: 1, total: "12", baseImage: "/image/placeholder.webp" } }] }, grandTotal: "12", subTotal: "12" };
-  const html = renderToStaticMarkup(React.createElement(Desktop, { cartItems }));
+  const html = renderToStaticMarkup(React.createElement(currency.StorefrontCurrencyProvider, { currencyCode: "USD" }, React.createElement(Desktop, { cartItems })));
   assertSurfaceTextRoles(html);
   assert.match(html, /bg-sf-surface\/95/);
   assert.match(html, /<h2[^>]*class="[^"]*sticky top-0 z-50 bg-sf-surface px-4/);
