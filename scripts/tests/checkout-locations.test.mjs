@@ -213,6 +213,7 @@ test("real checkout hook returns the mutation result, including a resolved Graph
     let payload;
     const action = arrowFromSource("src/utils/hooks/useCheckout.ts", "saveCheckoutAddress", {
       getCartToken: () => "synthetic-guest-token", saveAddressToCheckout: async (value) => { payload = value; return result; },
+      submitOnce: loader()("src/utils/checkout-submit.ts").createCheckoutSubmissionGuard(),
     });
     assert.equal(await action({ billingCountry: "CO" }), result);
     assert.deepEqual(payload, { token: "synthetic-guest-token", billingCountry: "CO" });
@@ -246,6 +247,7 @@ test("real guest submit preserves fields and summary state on failure, then summ
     const changes = [], submitted = [];
     const action = arrowFromSource("src/components/checkout/stepper/GuestAddAdressForm.tsx", "addGuestAddress", {
       ...helper, locations: catalog, email: "synthetic@fixture.invalid",
+      isLoadingToSave: false, locationsLoading: false, locationsError: false,
       saveCheckoutAddress: async (value) => { submitted.push(value); return result; },
       dispatch: (value) => changes.push(["dispatch", value]), setCheckoutAddresses: (value) => value,
       setBillingAddress: (value) => changes.push(["billing", value]), setShippingAddress: (value) => changes.push(["shipping", value]),

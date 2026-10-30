@@ -173,7 +173,7 @@ const Payment: FC<{
   if (normalizedMethods.length === 0) {
     return (
       <div className="mt-6">
-        <p role="status" className="text-base text-neutral-700">
+        <p role="status" className="text-base text-sf-muted">
           {hasPaymentError
             ? "No pudimos consultar los métodos de pago."
             : "No hay métodos de pago disponibles para este pedido."}{" "}
@@ -181,7 +181,7 @@ const Payment: FC<{
         </p>
         <button
           type="button"
-          className="mt-3 min-h-11 text-base text-blue-600 underline disabled:cursor-wait disabled:opacity-60"
+          className="mt-3 min-h-11 text-base text-sf-link underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60"
           disabled={isFetching || !token}
           onClick={() => { void refetch(); }}
         >

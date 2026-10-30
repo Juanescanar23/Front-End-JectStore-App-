@@ -26,7 +26,7 @@ export default function CartItemAccordion({
   const scrollTo = useScrollTo();
 
   return (
-    <div className="mobile-heading fixed bottom-0 left-0 z-50 w-full border-t border-neutral-200 bg-white/95 pb-[calc(env(safe-area-inset-bottom)+56px)] shadow-[0_-18px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+    <div className="fixed bottom-0 left-0 z-50 w-full border-t border-sf-border bg-sf-surface/95 pb-[calc(env(safe-area-inset-bottom)+56px)] shadow-[0_-18px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
       <Accordion
         selectionMode="multiple"
         className="!px-0"
@@ -46,14 +46,17 @@ export default function CartItemAccordion({
           key="1"
           indicator={({ isOpen }) =>
             isOpen ? (
-              <ChevronLeftIcon className="h-5 w-5 stroke-neutral-800 dark:stroke-white" />
+              <ChevronLeftIcon className="h-5 w-5 stroke-sf-content" />
             ) : (
-              <ChevronRightIcon className="h-5 w-5 stroke-neutral-800 dark:stroke-white" />
+              <ChevronRightIcon className="h-5 w-5 stroke-sf-content" />
             )
           }
           classNames={{
-            heading: "px-4",
-            content: "px-4",
+            heading: "sticky top-0 z-50 bg-sf-surface px-4",
+            content: "px-4 text-sf-content",
+            title: "text-sf-content",
+            subtitle: "text-sf-muted",
+            trigger: "focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2",
           }}
           aria-label="Resumen del pedido"
           title="Resumen del pedido"
@@ -66,7 +69,7 @@ export default function CartItemAccordion({
           }
         >
           <div className="flex h-full flex-col justify-between px-4">
-            <div className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+            <div className="rounded-2xl bg-sf-subtle px-4 py-3 text-sm text-sf-muted">
               {cart.length} {cart.length === 1 ? "producto" : "productos"} listos para checkout.
             </div>
 
@@ -86,7 +89,7 @@ export default function CartItemAccordion({
                         className="z-30 flex flex-row items-center space-x-4"
                         aria-label={`${item?.node?.name}`}
                       >
-                        <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+                        <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-sf-border bg-sf-subtle ">
                           <Image
                             className="h-full w-full object-cover"
                             width={64}
@@ -98,20 +101,20 @@ export default function CartItemAccordion({
                         </div>
 
                         <div className="flex flex-1 flex-col text-base">
-                          <span className="leading-tight text-neutral-900 line-clamp-1 dark:text-white">
+                          <span className="leading-tight text-sf-content line-clamp-1">
                             {item?.node?.name}
                           </span>
-                          <span className="font-normal text-black dark:text-white">
+                          <span className="font-normal text-sf-content">
                             Cantidad: {item.node.quantity}
                           </span>
                           {item.name !== DEFAULT_OPTION ? (
-                            <p className="text-sm lowercase line-clamp-1 text-neutral-500 dark:text-neutral-400">
+                            <p className="text-sm lowercase line-clamp-1 text-sf-muted">
                               {item?.node?.sku}
                             </p>
                           ) : null}
                         </div>
                       </Link>
-                      <div className="flex h-16 flex-col justify-between text-black/[60%] dark:!text-neutral-300">
+                      <div className="flex h-16 flex-col justify-between text-sf-muted">
                         <Price
                           className="flex justify-end space-y-2 text-right text-sm"
                           amount={item?.node?.price}
@@ -123,37 +126,37 @@ export default function CartItemAccordion({
                 );
               })}
             </ul>
-            <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
+            <div className="py-4 text-sm text-sf-muted">
               <div className="mb-3 flex items-center justify-between pb-1">
-                <p className="font-outfit text-base font-normal text-black/[60%]">
+                <p className="font-outfit text-base font-normal text-sf-muted">
                   Subtotal
                 </p>
                 <Price
-                  className="text-right text-base text-black"
+                  className="text-right text-base text-sf-content"
                   amount={cartItems?.subtotal || "0"}
                   currencyCode={"USD"}
                 />
               </div>
               <div className="mb-3 flex items-center justify-between pb-1 pt-1">
-                <p className="font-outfit text-base font-normal text-black/[60%]">
+                <p className="font-outfit text-base font-normal text-sf-muted">
                   Envío
                 </p>
                 {cartItems?.shippingAmount ? (
                   <Price
                     amount={cartItems?.shippingAmount || "0"}
-                    className="text-right text-base text-black"
+                    className="text-right text-base text-sf-content"
                     currencyCode={"USD"}
                   />
                 ) : (
-                  <p className="text-right text-base text-neutral-600">
+                  <p className="text-right text-base text-sf-muted">
                     Calculado en el siguiente paso
                   </p>
                 )}
               </div>
               <div className="mb-3 flex items-center justify-between pb-1 pt-1">
-                <p className="text-xl font-bold text-neutral-950">Total</p>
+                <p className="text-xl font-bold text-sf-content">Total</p>
                 <Price
-                  className="text-right text-base text-black"
+                  className="text-right text-base text-sf-content"
                   amount={cartItems?.grandTotal || "0"}
                   currencyCode={"USD"}
                 />

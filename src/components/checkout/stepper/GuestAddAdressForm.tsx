@@ -40,7 +40,7 @@ export const GuestAddAdressForm: FC<{
     getValues,
     getFieldState,
     clearErrors,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     mode: "onSubmit",
     defaultValues: {
@@ -148,6 +148,7 @@ export const GuestAddAdressForm: FC<{
   });
 
   const addGuestAddress = async (data: any) => {
+    if (isLoadingToSave || locationsLoading || locationsError) return;
     const billing = data?.billing;
     const shipping = data?.shipping;
 
@@ -229,12 +230,12 @@ export const GuestAddAdressForm: FC<{
     const savedState = Boolean(state && !regions.some((region) => region.code === state));
     const countryError = errors[kind]?.country?.message;
     const stateError = errors[kind]?.state?.message;
-    const fieldClass = "min-h-11 w-full rounded-[0.62rem] border border-gray-300 bg-white px-3 py-2 text-base text-neutral-950 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60";
+    const fieldClass = "min-h-11 w-full rounded-[0.62rem] border border-sf-control-border bg-sf-surface px-3 py-2 text-base text-sf-content caret-sf-content placeholder:text-sf-placeholder enabled:hover:border-sf-control-hover focus:outline-none focus:ring-2 focus:ring-sf-focus focus:ring-offset-2 focus:ring-offset-sf-surface disabled:cursor-not-allowed disabled:bg-sf-subtle disabled:text-sf-muted aria-[invalid=true]:border-sf-error aria-[invalid=true]:enabled:hover:border-sf-error";
     return (
       <div className="col-span-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor={`${kind}.country`} className="mb-1 block text-sm font-medium text-neutral-900">País *</label>
-          <select {...countryRegistration} id={`${kind}.country`} autoComplete="country" className={fieldClass}
+          <label htmlFor={`${kind}.country`} className="mb-1 block text-sm font-medium text-sf-content">País *</label>
+          <select {...countryRegistration} id={`${kind}.country`} autoComplete={`section-${kind} country`} className={fieldClass}
             aria-invalid={Boolean(countryError)} aria-describedby={countryError ? `${kind}.country-error` : undefined}
             disabled={locationsLoading || locationsError}
             onChange={(event) => {
@@ -247,24 +248,24 @@ export const GuestAddAdressForm: FC<{
             {country && !locations.countries.some((entry) => entry.code === country) && <option value={country}>{country}</option>}
             {locations.countries.map((entry) => <option key={entry.code} value={entry.code}>{entry.name}</option>)}
           </select>
-          {countryError && <p id={`${kind}.country-error`} className="mt-1 text-sm text-red-600" role="alert">{countryError}</p>}
+          {countryError && <p id={`${kind}.country-error`} className="mt-1 text-sm text-sf-error" role="alert">{countryError}</p>}
         </div>
         <div>
-          <label htmlFor={`${kind}.state`} className="mb-1 block text-sm font-medium text-neutral-900">Estado / región{regions.length > 0 ? " *" : ""}</label>
+          <label htmlFor={`${kind}.state`} className="mb-1 block text-sm font-medium text-sf-content">Estado / región{regions.length > 0 ? " *" : ""}</label>
           {regions.length > 0 ? (
-            <select {...stateRegistration} id={`${kind}.state`} autoComplete="address-level1" className={fieldClass}
+            <select {...stateRegistration} id={`${kind}.state`} autoComplete={`section-${kind} address-level1`} className={fieldClass}
               aria-invalid={Boolean(stateError)} aria-describedby={stateError ? `${kind}.state-error` : undefined}>
               <option value="">Selecciona un estado o región</option>
               {savedState && <option value={state}>{regions.find((region) => region.code === stateCode)?.name || state}</option>}
               {regions.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
             </select>
           ) : (
-            <input {...stateRegistration} id={`${kind}.state`} autoComplete="address-level1" className={fieldClass}
+            <input {...stateRegistration} id={`${kind}.state`} autoComplete={`section-${kind} address-level1`} className={fieldClass}
               placeholder={country ? "Estado o región, si corresponde" : "Selecciona primero el país"}
               disabled={!country || locationsLoading || locationsError}
               aria-invalid={Boolean(stateError)} aria-describedby={stateError ? `${kind}.state-error` : undefined} />
           )}
-          {stateError && <p id={`${kind}.state-error`} className="mt-1 text-sm text-red-600" role="alert">{stateError}</p>}
+          {stateError && <p id={`${kind}.state-error`} className="mt-1 text-sm text-sf-error" role="alert">{stateError}</p>}
         </div>
       </div>
     );
@@ -276,7 +277,7 @@ export const GuestAddAdressForm: FC<{
         <div className="mt-4  items-start  hidden sm:flex">
           <div className="flex flex-col justify-between px-2 w-full">
             <div className="flex">
-              <p className="w-[184px] text-base font-normal text-black/60">
+              <p className="w-[184px] text-base font-normal text-sf-muted">
                 Dirección de facturación
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
@@ -285,25 +286,25 @@ export const GuestAddAdressForm: FC<{
                     {`${billingAddress?.firstName || ""} ${billingAddress?.lastName || ""
                       }`}
                   </p>
-                  <p className="text-base font-medium text-zinc-500">
+                  <p className="text-base font-medium text-sf-muted">
                     {`${billingAddress?.companyName || ""}`}
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`${billingAddress?.address || ""}, ${billingAddress?.postcode || ""
                     }`}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-sf-muted">
                   {billingAddress?.city || ""} {billingAddress?.state || ""},
                   {billingAddress?.country || ""}
                 </p>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`T: ${billingAddress?.phone || ""}`}
                 </p>
               </div>
             </div>
             <div className="flex">
-              <p className="w-[184px] text-base font-normal text-black/60">
+              <p className="w-[184px] text-base font-normal text-sf-muted">
                 Dirección de envío
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
@@ -312,19 +313,19 @@ export const GuestAddAdressForm: FC<{
                     {`${shippingAddress?.firstName || ""} ${shippingAddress?.lastName || ""
                       }`}
                   </p>
-                  <p className="text-base font-medium text-zinc-500">
+                  <p className="text-base font-medium text-sf-muted">
                     {`${shippingAddress?.companyName || ""}`}
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`${shippingAddress?.address || ""}, ${shippingAddress?.postcode || ""
                     }`}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-sf-muted">
                   {shippingAddress?.city || ""} {shippingAddress?.state || ""},
                   {shippingAddress?.country || ""}
                 </p>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`T: ${shippingAddress?.phone || ""}`}
                 </p>
               </div>
@@ -333,7 +334,7 @@ export const GuestAddAdressForm: FC<{
 
           <button
             onClick={() => setIsOpen(false)}
-            className="cursor-pointer text-base font-normal text-black/[60%] underline"
+            className="cursor-pointer text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
           >
             Cambiar
           </button>
@@ -341,7 +342,7 @@ export const GuestAddAdressForm: FC<{
         <div className="mt-4 flex sm:hidden items-start justify-between relative">
           <div className="flex flex-col justify-between px-2 w-full">
             <div className="flex justify-between justify-between  flex-1 wrap">
-              <p className="w-[184px] text-base font-normal text-black/60">
+              <p className="w-[184px] text-base font-normal text-sf-muted">
                 Dirección de facturación
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
@@ -350,25 +351,25 @@ export const GuestAddAdressForm: FC<{
                     {`${billingAddress?.firstName || ""} ${billingAddress?.lastName || ""
                       }`}
                   </p>
-                  <p className="text-base font-medium text-zinc-500">
+                  <p className="text-base font-medium text-sf-muted">
                     {`${billingAddress?.companyName || ""}`}
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`${billingAddress?.address || ""}, ${billingAddress?.postcode || ""
                     }`}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-sf-muted">
                   {billingAddress?.city || ""} {billingAddress?.state || ""},
                   {billingAddress?.country || ""}
                 </p>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`T: ${billingAddress?.phone || ""}`}
                 </p>
               </div>
             </div>
             <div className="flex justify-between justify-between  flex-1 wrap">
-              <p className="w-[184px] text-base font-normal text-black/60">
+              <p className="w-[184px] text-base font-normal text-sf-muted">
                 Dirección de envío
               </p>
               <div className="block cursor-pointer rounded-xl p-2 max-sm:rounded-lg">
@@ -377,19 +378,19 @@ export const GuestAddAdressForm: FC<{
                     {`${shippingAddress?.firstName || ""} ${shippingAddress?.lastName || ""
                       }`}
                   </p>
-                  <p className="text-base font-medium text-zinc-500">
+                  <p className="text-base font-medium text-sf-muted">
                     {`${shippingAddress?.companyName || ""}`}
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`${shippingAddress?.address || ""}, ${shippingAddress?.postcode || ""
                     }`}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-sf-muted">
                   {shippingAddress?.city || ""} {shippingAddress?.state || ""},
                   {shippingAddress?.country || ""}
                 </p>
-                <p className="mt-2 text-sm text-zinc-500 max-md:mt-2 max-sm:mt-0">
+                <p className="mt-2 text-sm text-sf-muted max-md:mt-2 max-sm:mt-0">
                   {`T: ${shippingAddress?.phone || ""}`}
                 </p>
               </div>
@@ -398,7 +399,7 @@ export const GuestAddAdressForm: FC<{
 
           <button
             onClick={() => setIsOpen(false)}
-            className="cursor-pointer absolute right-0 text-base font-normal text-black/[60%] underline"
+            className="cursor-pointer absolute right-0 text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
             style={{ top: "-36px" }}
           >
             Cambiar
@@ -410,9 +411,9 @@ export const GuestAddAdressForm: FC<{
 
   return (
     <form className="my-5" onSubmit={handleSubmit(addGuestAddress)}>
-      {locationsError && <div className="my-4 text-sm text-red-600" role="alert">
+      {locationsError && <div className="my-4 text-sm text-sf-error" role="alert">
         No pudimos cargar los países y estados. Tus datos siguen en el formulario.{" "}
-        <button type="button" className="underline" onClick={() => { setLocationsLoading(true); setLocationsError(false); setLocationAttempt((attempt) => attempt + 1); }}>Reintentar</button>
+        <button type="button" className="underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2" onClick={() => { setLocationsLoading(true); setLocationsError(false); setLocationAttempt((attempt) => attempt + 1); }}>Reintentar</button>
       </div>}
       <div className="my-7 grid grid-cols-6 gap-4">
         <InputText
@@ -426,6 +427,8 @@ export const GuestAddAdressForm: FC<{
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.firstName?.message}
           label="Nombre *"
+          tone="surface"
+          autoComplete="section-billing given-name"
           size="md"
         />
         <InputText
@@ -439,6 +442,8 @@ export const GuestAddAdressForm: FC<{
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.lastName?.message}
           label="Apellido *"
+          tone="surface"
+          autoComplete="section-billing family-name"
           size="md"
         />
         <InputText
@@ -451,6 +456,8 @@ export const GuestAddAdressForm: FC<{
           className="col-span-6 mb-2"
           errorMsg={errors?.billing?.companyName?.message}
           label="Empresa"
+          tone="surface"
+          autoComplete="section-billing organization"
           size="md"
         />
         <InputText
@@ -464,6 +471,8 @@ export const GuestAddAdressForm: FC<{
           className="col-span-6 mb-4"
           errorMsg={errors?.billing?.address?.message}
           label="Dirección *"
+          tone="surface"
+          autoComplete="section-billing street-address"
           size="md"
         />
         {locationFields("billing")}
@@ -478,6 +487,8 @@ export const GuestAddAdressForm: FC<{
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.city?.message}
           label="Ciudad *"
+          tone="surface"
+          autoComplete="section-billing address-level2"
           size="md"
         />
         <InputText
@@ -491,6 +502,8 @@ export const GuestAddAdressForm: FC<{
           className="col-span-6 xxs:col-span-3"
           errorMsg={errors?.billing?.postcode?.message}
           label="Código postal *"
+          tone="surface"
+          autoComplete="section-billing postal-code"
           size="md"
         />
         <InputText
@@ -503,10 +516,11 @@ export const GuestAddAdressForm: FC<{
           })}
           type="tel"
           inputMode="tel"
-          autoComplete="tel"
+          autoComplete="section-billing tel"
           className="col-span-6"
           errorMsg={errors?.billing?.phone?.message}
           label="Teléfono *"
+          tone="surface"
           size="md"
         />
         <CheckBox
@@ -514,7 +528,7 @@ export const GuestAddAdressForm: FC<{
           defaultValue={watchUseForShipping}
           id="useForShipping"
           label="¿Usar la misma dirección para envío?"
-          labelClassName="text-neutral-700"
+          tone="surface"
           {...register("useForShipping")}
         />
       </div>
@@ -532,6 +546,8 @@ export const GuestAddAdressForm: FC<{
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.firstName?.message}
             label="Nombre *"
+            tone="surface"
+            autoComplete="section-shipping given-name"
             size="md"
           />
           <InputText
@@ -545,6 +561,8 @@ export const GuestAddAdressForm: FC<{
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.lastName?.message}
             label="Apellido *"
+            tone="surface"
+            autoComplete="section-shipping family-name"
             size="md"
           />
           <InputText
@@ -557,6 +575,8 @@ export const GuestAddAdressForm: FC<{
             className="col-span-6 mb-4"
             errorMsg={errors?.shipping?.companyName?.message}
             label="Empresa"
+            tone="surface"
+            autoComplete="section-shipping organization"
             size="md"
           />
           <InputText
@@ -570,6 +590,8 @@ export const GuestAddAdressForm: FC<{
             className="col-span-6 mb-4"
             errorMsg={errors?.shipping?.address?.message}
             label="Dirección *"
+            tone="surface"
+            autoComplete="section-shipping street-address"
             size="md"
           />
           {locationFields("shipping")}
@@ -584,6 +606,8 @@ export const GuestAddAdressForm: FC<{
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.city?.message}
             label="Ciudad *"
+            tone="surface"
+            autoComplete="section-shipping address-level2"
             size="md"
           />
           <InputText
@@ -597,6 +621,8 @@ export const GuestAddAdressForm: FC<{
             className="col-span-3"
             errorMsg={errors?.shipping?.postcode?.message}
             label="Código postal *"
+            tone="surface"
+            autoComplete="section-shipping postal-code"
             size="md"
           />
           <InputText
@@ -610,13 +636,17 @@ export const GuestAddAdressForm: FC<{
             className="col-span-6"
             errorMsg={errors?.shipping?.phone?.message}
             label="Teléfono *"
+            tone="surface"
+            typeName="tel"
+            inputMode="tel"
+            autoComplete="section-shipping tel"
             size="md"
           />
         </div>
       )}
 
       <div className="justify-self-end">
-        <ProceedToCheckout buttonName="Siguiente" pending={isLoadingToSave || locationsLoading || locationsError} />
+        <ProceedToCheckout buttonName="Siguiente" pending={isSubmitting || isLoadingToSave || locationsLoading || locationsError} />
       </div>
     </form>
   );

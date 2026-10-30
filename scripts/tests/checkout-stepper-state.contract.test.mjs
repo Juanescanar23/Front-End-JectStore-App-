@@ -79,12 +79,12 @@ test("step component identity and keys remain stable across navigation and serve
   }
 });
 
-test("completed steps keep existing summary mounting, pending steps stay closed, presentation is unchanged", () => {
+test("completed steps keep summary mounting and geometry while surfaces follow the checkout theme", () => {
   for (const [current, completed] of [["email", 1], ["address", 2], ["shipping", 3], ["payment", 4], ["review", 5]]) {
     const rows = steps(render(current, true));
     for (const row of rows) {
       const card = row.type(row.props);
-      for (const token of ["rounded-[26px]", "border-neutral-200", "bg-white/80", "p-4", "sm:p-5"]) {
+      for (const token of ["rounded-[26px]", "border-sf-border", "bg-sf-surface/80", "p-4", "sm:p-5"]) {
         assert.ok(card.props.className.includes(token));
       }
       assert.equal(children(card, (node) => node.type === "section").length, row.props.step.id <= completed ? 1 : 0);

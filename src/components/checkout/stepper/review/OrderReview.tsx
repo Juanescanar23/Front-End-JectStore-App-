@@ -20,21 +20,22 @@ export default function OrderReview({
   selectedShippingRateTitle?: string;
 }) {
   const { isPlaceOrder, SavePlaceOrder } = useCheckout();
-  const { handleSubmit } = useForm();
-  const onSubmit = () => {
-    SavePlaceOrder();
+  const { handleSubmit, formState: { isSubmitting } } = useForm();
+  const onSubmit = async () => {
+    if (isPlaceOrder) return;
+    return await SavePlaceOrder();
   };
 
   return (
     <div className="mt-4 flex-col mb-20 sm:mb-0">
       <div className="relative">
         {isObject(shippingAddress) && (
-          <table className="w-full text-left text-sm text-gray-500">
+          <table className="w-full text-left text-sm text-sf-muted">
             <tbody>
               <tr className="">
                 <td className="py-4">Contacto</td>
                 <th
-                  className="break-all px-6 py-4 font-medium text-gray-900"
+                  className="break-all px-6 py-4 font-medium text-sf-content"
                   scope="row"
                 >
                   {shippingAddress?.email}
@@ -43,7 +44,7 @@ export default function OrderReview({
               <tr className="">
                 <td className="py-4">Facturación</td>
                 <th
-                  className="break-all px-6 py-4 font-medium text-gray-900"
+                  className="break-all px-6 py-4 font-medium text-sf-content"
                   scope="row"
                 >
                   {billingAddress?.firstName}, {billingAddress?.lastName},{" "}
@@ -55,7 +56,7 @@ export default function OrderReview({
               <tr className="">
                 <td className="py-4">Envío</td>
                 <th
-                  className="break-all px-6 py-4 font-medium text-gray-900"
+                  className="break-all px-6 py-4 font-medium text-sf-content"
                   scope="row"
                 >
                   {shippingAddress?.firstName}, {shippingAddress?.lastName},{" "}
@@ -67,7 +68,7 @@ export default function OrderReview({
               <tr className="">
                 <td className="py-4">Método</td>
                 <th
-                  className="break-all px-6 py-4 font-medium text-gray-900"
+                  className="break-all px-6 py-4 font-medium text-sf-content"
                   scope="row"
                 >
                   {selectedShippingRateTitle}
@@ -76,7 +77,7 @@ export default function OrderReview({
               <tr className="">
                 <td className="py-4">Pago</td>
                 <th
-                  className="break-all px-6 py-4 font-medium text-gray-900"
+                  className="break-all px-6 py-4 font-medium text-sf-content"
                   scope="row"
                 >
                   {selectedPaymentTitle}
@@ -91,7 +92,7 @@ export default function OrderReview({
           <div className="justify-self-end">
             <ProceedToCheckout
               buttonName="Realizar pedido"
-              pending={isPlaceOrder}
+              pending={isPlaceOrder || isSubmitting}
             />
           </div>
         </form>

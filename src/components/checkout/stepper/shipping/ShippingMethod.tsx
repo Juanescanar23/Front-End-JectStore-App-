@@ -20,7 +20,7 @@ export default function ShippingMethod({
   const { isSaving, saveCheckoutShipping } = useCheckout();
   const { showToast } = useCustomToast();
   const [isOpen, setIsOpen] = useState(true);
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit, formState: { isSubmitting } } = useForm({
     mode: "onSubmit",
     defaultValues: {
       method: selectedShippingRate ?? "",
@@ -34,6 +34,7 @@ export default function ShippingMethod({
   )?.price;
 
   const onSubmit = async (data: FieldValues) => {
+    if (isSaving) return;
     if (!data?.method) {
       showToast("Selecciona el método de envío", "warning");
       return;
@@ -53,7 +54,7 @@ export default function ShippingMethod({
           <>
              <div className="mt-4  justify-between hidden sm:flex">
             <div className="flex">
-              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-sf-muted sm:w-[192px]">
                 Método de envío
               </p>
               <p className="text-base font-normal">{selectedMethodTitle} (${selectedMethodPrice})</p>
@@ -61,7 +62,7 @@ export default function ShippingMethod({
           <div className="flex">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer text-base font-normal text-black/[60%] underline"
+              className="cursor-pointer text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
             >
               Cambiar
             </button>
@@ -70,7 +71,7 @@ export default function ShippingMethod({
 
             <div className="mt-4 block sm:hidden flex flex-col justify-between sm:flex-row relative  ">
             <div className="flex justify-between  flex-1 wrap">
-              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-sf-muted sm:w-[192px]">
                 Método de envío
               </p>
               <p className="text-base font-normal">{selectedMethodTitle} (${selectedMethodPrice})</p>
@@ -78,7 +79,7 @@ export default function ShippingMethod({
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline"
+              className="cursor-pointer absolute right-0  text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
               style={{ top: "-36px" }}
             >
               Cambiar
@@ -97,17 +98,17 @@ export default function ShippingMethod({
                     <RadioGroup
                       {...field}
                       label=""
-                      value={field.value ?? ""}
+                      value={field.value || null}
                       onValueChange={field.onChange}
                     >
                       {shippingMethod.map((method: any) => (
                         <CustomRadio
                           key={method?.code}
-                          className="inset-0 my-1 border border-solid border-neutral-300 dark:border-neutral-500"
+                          className="inset-0 my-1 border border-solid border-sf-control-border"
                           description={"$" + method?.price}
                           value={method?.method}
                         >
-                          <span className="text-neutral-700">
+                          <span className="text-sf-muted">
                             {method?.label}
                           </span>
                         </CustomRadio>
@@ -119,7 +120,7 @@ export default function ShippingMethod({
             </div>
 
             <div className="my-6 justify-self-end">
-              <ProceedToCheckout buttonName="Siguiente" pending={isSaving} />
+              <ProceedToCheckout buttonName="Siguiente" pending={isSaving || isSubmitting} />
             </div>
           </form>
         )
@@ -135,7 +136,7 @@ export default function ShippingMethod({
                     <RadioGroup
                       {...field}
                       label=""
-                      value={field.value ?? ""}
+                      value={field.value || null}
                       onValueChange={(value) => {
                         field.onChange(value);
                       }}
@@ -143,11 +144,11 @@ export default function ShippingMethod({
                       {shippingMethod.map((method: any) => (
                         <CustomRadio
                           key={method?.code}
-                          className="inset-0 my-1 border border-solid border-neutral-300 dark:border-neutral-500"
+                          className="inset-0 my-1 border border-solid border-sf-control-border"
                           description={"$" + method?.price}
                           value={method?.method}
                         >
-                          <span className="text-neutral-700">
+                          <span className="text-sf-muted">
                             {method?.label}
                           </span>
                         </CustomRadio>
@@ -160,7 +161,7 @@ export default function ShippingMethod({
           </div>
 
           <div className="my-6 justify-self-end">
-            <ProceedToCheckout buttonName="Siguiente" pending={isSaving} />
+            <ProceedToCheckout buttonName="Siguiente" pending={isSaving || isSubmitting} />
           </div>
         </form>
       )}
@@ -176,13 +177,15 @@ const CustomRadio = (props: CustomRadioProps) => {
       {...otherProps}
       classNames={{
         base: cn(
-          "inline-flex m-0 bg-transparent hover:bg-transparent items-center",
+          "inline-flex m-0 bg-sf-surface data-[hover=true]:bg-sf-subtle items-center",
           "flex-row items-baseline max-w-full cursor-pointer rounded-lg gap-4 p-4 border-2 border-transparent",
-          "data-[selected=true]:border-primary"
+          "data-[selected=true]:border-sf-selected-border data-[selected=true]:bg-sf-selected-bg"
         ),
         hiddenInput: "peer absolute h-0 w-0 opacity-0",
-        label: "text-neutral-700",
-        description: "text-neutral-600",
+        wrapper: "border-sf-control-border group-data-[selected=true]:border-sf-selected-border group-data-[hover-unselected=true]:bg-sf-subtle group-data-[focus-visible=true]:ring-sf-focus group-data-[focus-visible=true]:ring-offset-sf-surface",
+        control: "bg-sf-selected-border",
+        label: "text-sf-muted",
+        description: "text-sf-muted",
       }}
     >
       {children}

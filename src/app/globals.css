@@ -75,6 +75,27 @@ body::-webkit-scrollbar-thumb {
   --selected-bottom-dark: #95B6FF;
   --selected-bg-bottom-dark: #314779;
   --input-color: #B3B3B3;
+  /* Storefront roles reuse the active HeroUI palette; consumers opt in. */
+  --sf-surface: hsl(var(--heroui-content1));
+  --sf-subtle: hsl(var(--heroui-content2));
+  --sf-content: hsl(var(--heroui-content1-foreground));
+  --sf-muted: hsl(var(--heroui-foreground-600));
+  --sf-placeholder: hsl(var(--heroui-foreground-500));
+  --sf-border: hsl(var(--heroui-divider) / 0.15);
+  --sf-control-border: hsl(var(--heroui-default-500));
+  --sf-control-hover: hsl(var(--heroui-default-600));
+  --sf-selected-bg: var(--selected-color);
+  --sf-selected-border: var(--color-blue-600);
+  --sf-focus: hsl(var(--heroui-focus));
+  --sf-error: hsl(var(--heroui-danger-600));
+  --sf-link: hsl(var(--heroui-primary-600));
+  --sf-link-hover: hsl(var(--heroui-primary-700));
+  --sf-action: var(--color-blue-600);
+  --sf-action-hover: var(--color-blue-700);
+  --sf-action-active: var(--color-blue-800);
+  --sf-action-content: var(--color-white);
+  --sf-selection-bg: var(--selected-color);
+  --sf-selection-content: hsl(var(--heroui-content1-foreground));
   /* font size  */
   --font-size-xxs: 13px;
   /* Spacing */
@@ -102,6 +123,9 @@ body::-webkit-scrollbar-thumb {
 
   --hero-background: #171717;
   --hero-foreground: #ffffff;
+  --sf-selection-bg: var(--selected-bg-bottom-dark);
+  --sf-selected-bg: var(--selected-bg-bottom-dark);
+  --sf-selected-border: hsl(var(--heroui-primary-700));
 }
 
 
@@ -117,6 +141,26 @@ body::-webkit-scrollbar-thumb {
   --color-selected-bottom-dark: var(--selected-bottom-dark);
   --color-selected-bg-bottom-dark: var(--selected-bg-bottom-dark);
   --color-input-color: var(--input-color);
+  --color-sf-surface: var(--sf-surface);
+  --color-sf-subtle: var(--sf-subtle);
+  --color-sf-content: var(--sf-content);
+  --color-sf-muted: var(--sf-muted);
+  --color-sf-placeholder: var(--sf-placeholder);
+  --color-sf-border: var(--sf-border);
+  --color-sf-control-border: var(--sf-control-border);
+  --color-sf-control-hover: var(--sf-control-hover);
+  --color-sf-selected-bg: var(--sf-selected-bg);
+  --color-sf-selected-border: var(--sf-selected-border);
+  --color-sf-focus: var(--sf-focus);
+  --color-sf-error: var(--sf-error);
+  --color-sf-link: var(--sf-link);
+  --color-sf-link-hover: var(--sf-link-hover);
+  --color-sf-action: var(--sf-action);
+  --color-sf-action-hover: var(--sf-action-hover);
+  --color-sf-action-active: var(--sf-action-active);
+  --color-sf-action-content: var(--sf-action-content);
+  --color-sf-selection-bg: var(--sf-selection-bg);
+  --color-sf-selection-content: var(--sf-selection-content);
 }
 
 

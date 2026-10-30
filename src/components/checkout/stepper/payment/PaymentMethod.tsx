@@ -22,7 +22,7 @@ export default function PaymentMethod({
   const { showToast } = useCustomToast();
   const { isPaymentLoading, saveCheckoutPayment } = useCheckout();
 
-  const { handleSubmit, control, reset } = useForm({
+  const { handleSubmit, control, reset, formState: { isSubmitting } } = useForm({
     mode: "onSubmit",
     defaultValues: {
       method: selectedPayment ?? "",
@@ -38,6 +38,7 @@ export default function PaymentMethod({
   }, [selectedPayment, reset]);
 
   const onSubmit = async (data: FieldValues) => {
+    if (isPaymentLoading) return;
     if (!data?.method) {
       showToast("Selecciona el método de pago", "warning");
       return;
@@ -69,7 +70,7 @@ export default function PaymentMethod({
         <>
         <div className="mt-4  justify-between hidden sm:flex ">
           <div className="flex">
-            <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
+            <p className="w-auto text-base font-normal text-sf-muted sm:w-[192px]">
               Método de pago
             </p>
             <p className="text-base font-normal">
@@ -81,14 +82,14 @@ export default function PaymentMethod({
             onClick={() => {
               setIsOpen(true);
             }}
-            className="cursor-pointer text-base font-normal text-black/60 underline"
+            className="cursor-pointer text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
          >
             Cambiar
           </button>
         </div>
         <div className="mt-4 flex sm:hidden justify-between relative">
           <div className="flex justify-between justify-between  flex-1 wrap">
-            <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
+            <p className="w-auto text-base font-normal text-sf-muted sm:w-[192px]">
               Método de pago
             </p>
             <p className="text-base font-normal">
@@ -100,7 +101,7 @@ export default function PaymentMethod({
             onClick={() => {
               setIsOpen(true);
             }}
-            className="cursor-pointer absolute right-0 text-base font-normal text-black/60 underline"
+            className="cursor-pointer absolute right-0 text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
           style={{ top: "-36px" }}
          >
             Cambiar
@@ -119,13 +120,13 @@ export default function PaymentMethod({
                 <RadioGroup
                   {...field}
                   label=""
-                  value={field.value ?? ""}
+                  value={field.value || null}
                   onValueChange={field.onChange}
                 >
                   {methods?.map((method: any) => (
                     <CustomRadio
                       key={method?.method}
-                      className="my-1 border border-solid border-neutral-300 bg-white dark:border-neutral-500"
+                      className="my-1 border border-solid border-sf-control-border bg-sf-surface"
                       description={method?.helperMessage || method?.description}
                       isDisabled={Boolean(method?.disabled)}
                       value={method?.method}
@@ -133,8 +134,8 @@ export default function PaymentMethod({
                       <span
                         className={
                           method?.disabled
-                            ? "text-neutral-400"
-                            : "text-neutral-700"
+                            ? "text-sf-placeholder"
+                            : "text-sf-muted"
                         }
                       >
                         {method?.title}
@@ -148,7 +149,7 @@ export default function PaymentMethod({
             <div className="my-6 justify-self-end">
                 <ProceedToCheckout
                 buttonName="Pagar ahora"
-                pending={isPaymentLoading}
+                pending={isPaymentLoading || isSubmitting}
               />
             </div>
           </form>
@@ -167,13 +168,15 @@ const CustomRadio = (props: CustomRadioProps) => {
       {...otherProps}
       classNames={{
         base: cn(
-          "inline-flex m-0 bg-transparent hover:bg-transparent items-center",
+          "inline-flex m-0 bg-sf-surface data-[hover=true]:bg-sf-subtle items-center",
           "flex-row items-baseline max-w-full cursor-pointer rounded-lg gap-4 p-4 border-2 border-transparent",
-          "data-[selected=true]:border-neutral-900 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
+          "data-[selected=true]:border-sf-selected-border data-[selected=true]:bg-sf-selected-bg data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
         ),
         hiddenInput: "peer absolute h-0 w-0 opacity-0",
-        label: "text-neutral-700",
-        description: "text-neutral-600",
+        wrapper: "border-sf-control-border group-data-[selected=true]:border-sf-selected-border group-data-[hover-unselected=true]:bg-sf-subtle group-data-[focus-visible=true]:ring-sf-focus group-data-[focus-visible=true]:ring-offset-sf-surface",
+        control: "bg-sf-selected-border",
+        label: "text-sf-muted",
+        description: "text-sf-muted",
       }}
     >
       {children}

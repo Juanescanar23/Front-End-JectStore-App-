@@ -38,15 +38,15 @@ function StepItem({ step, currentStep, currentStepId }: { step: Step; currentSte
 
   return (
     <div
-      className="rounded-[26px] border border-neutral-200 bg-white/80 p-4 shadow-sm sm:p-5"
+      className="rounded-[26px] border border-sf-border bg-sf-surface/80 p-4 shadow-sm sm:p-5"
     >
       <div className="flex items-center justify-between font-outfit">
         <div className="flex items-center gap-3">
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
               isCompleted
-                ? "bg-blue-600 text-white"
-                : "bg-neutral-100 text-neutral-900"
+                ? "bg-sf-action text-sf-action-content"
+                : "bg-sf-subtle text-sf-content"
             }`}
           >
             {step.id}
@@ -54,8 +54,8 @@ function StepItem({ step, currentStep, currentStepId }: { step: Step; currentSte
           <span
             className={`text-lg font-medium max-md:text-base ${
               isActive
-                ? "text-neutral-950"
-                : "text-neutral-700"
+                ? "text-sf-content"
+                : "text-sf-muted"
             }`}
           >
             {step.title}
@@ -64,7 +64,7 @@ function StepItem({ step, currentStep, currentStepId }: { step: Step; currentSte
       </div>
 
       {isCompleted ? (
-        <section className="relative mt-5 border-t border-neutral-200 pt-5">
+        <section className="relative mt-5 border-t border-sf-border pt-5">
           {step.component}
         </section>
       ) : null}
@@ -162,28 +162,28 @@ export default function Stepper(
       <header className="pb-6">
         <Link
           aria-label={SITE_NAME}
-          className="hidden items-center gap-2 text-black md:pt-1 lg:flex"
+          className="hidden items-center gap-2 text-sf-content md:pt-1 lg:flex"
           href="/"
         >
           <LogoIcon />
         </Link>
 
-        <div className="mt-3 rounded-[26px] bg-neutral-50 px-4 py-5 sm:px-5 lg:px-0 lg:py-0">
+        <div className="mt-3 rounded-[26px] bg-sf-subtle px-4 py-5 sm:px-5 lg:px-0 lg:py-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sf-muted">
                 Checkout
               </p>
-              <h1 className="mt-2 text-2xl font-semibold text-neutral-950 sm:text-3xl">
+              <h1 className="mt-2 text-2xl font-semibold text-sf-content sm:text-3xl">
                 Finaliza tu compra
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-sf-muted">
                 Completa tus datos de contacto, envío y pago. Puedes retomar
                 el paso actual sin perder el progreso.
               </p>
             </div>
 
-            <div className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm">
+            <div className="inline-flex w-fit items-center rounded-full bg-sf-surface px-3 py-1.5 text-xs font-semibold text-sf-muted shadow-sm">
               Paso {Math.max(currentStepIndex + 1, 1)} de {steps.length}
             </div>
           </div>

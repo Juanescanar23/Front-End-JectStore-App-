@@ -15,38 +15,26 @@ function SubmitButton({
   className?: string;
 }) {
   const { pending } = useFormStatus();
+  const busy = pending || !availableForSale;
   const buttonClasses =
-    "relative text-base w-fit cursor-pointer rounded-full px-8 py-3 font-bold border-white items-center justify-center bg-blue-600 tracking-wide text-white";
-  const disabledClasses = "cursor-wait opacity-60 hover:opacity-60";
-
-  if (!availableForSale) {
-    return (
-      <button aria-disabled className={clsx(buttonClasses, disabledClasses)}>
-        Procesando...
-      </button>
-    );
-  }
+    "relative text-base w-fit cursor-pointer rounded-full px-8 py-3 font-bold border-white items-center justify-center bg-sf-action tracking-wide text-sf-action-content enabled:hover:bg-sf-action-hover enabled:active:bg-sf-action-active focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60";
 
   return (
     <button
-      aria-disabled={pending}
-      aria-label="Continuar con el pago"
+      type="submit"
+      disabled={busy}
+      aria-disabled={busy}
+      aria-busy={busy}
+      aria-label={buttonName}
       className={clsx(
         buttonClasses,
-        {
-          "hover:opacity-90": true,
-          disabledClasses: pending,
-        },
         className,
       )}
-      onClick={(e: React.FormEvent<HTMLButtonElement>) => {
-        if (pending) e.preventDefault();
-      }}
     >
       <div className="absolute left-0 ml-4">
         {pending && <LoadingDots className="mb-3 bg-white" />}
       </div>
-      {buttonName}
+      {!availableForSale ? "Procesando..." : buttonName}
     </button>
   );
 }

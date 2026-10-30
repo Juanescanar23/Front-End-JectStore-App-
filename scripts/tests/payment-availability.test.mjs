@@ -70,7 +70,7 @@ function assertUnavailable(tree, failed = false) {
   assert.match(text(tree), /Consultar los métodos no realiza cobros/);
   const notice = nodes(tree, "p").find((node) => node.props.role === "status");
   assert.ok(notice);
-  assert.match(notice.props.className, /text-neutral-700/);
+  assert.match(notice.props.className, /text-sf-muted/);
   const button = nodes(tree, "button")[0];
   assert.ok(button);
   assert.equal(button.props.type, "button");

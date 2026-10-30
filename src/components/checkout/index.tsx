@@ -5,9 +5,10 @@ import { CartSkeleton } from "../common/skeleton/ProductCartSkeleton";
 import { useCartDetail } from "@/utils/hooks/useCartDetail";
 import CheckoutCart from "./checkout-cart/CheckoutCart";
 import Stepper from "./stepper";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { useAddressesFromApi } from "@utils/helper";
 import { useScrollToTop } from "@/utils/hooks/useScrollTo";
+import "./checkout-theme.css";
 
 
 
@@ -15,8 +16,16 @@ interface CheckOutProps {
   step: string;
 }
 
+const subscribeToHydration = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 const CheckOut = ({ step }: CheckOutProps) => {
+  // Cookies and localStorage are unavailable in SSR. Keep the first hydration
+  // render identical before mounting the browser-dependent checkout steps.
+  const hydrated = useSyncExternalStore(subscribeToHydration, getClientSnapshot, getServerSnapshot);
   const { isLoading } = useCartDetail();
+  const showLoading = !hydrated || isLoading;
   const { billingAddress, shippingAddress } = useAddressesFromApi();
   const cartDetail = useAppSelector((state) => state.cartDetail);
   const cartItems = cartDetail?.cart;
@@ -37,10 +46,10 @@ const CheckOut = ({ step }: CheckOutProps) => {
 
 
   return (
-    <section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,440px)] lg:gap-8">
+    <section className="sf-checkout grid gap-6 text-sf-content lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,440px)] lg:gap-8">
       <div className="min-w-0">
-        <div className="rounded-[28px] border border-neutral-200 bg-white px-4 py-4 text-neutral-900 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-6 sm:py-6 lg:px-8 lg:py-7 dark:[&_input]:text-gray-900">
-          {isLoading ? (
+        <div className="rounded-[28px] border border-sf-border bg-sf-surface px-4 py-4 text-sf-content shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+          {showLoading ? (
             <CheckoutSkeleton />
           ) : (
             <Stepper
@@ -60,7 +69,7 @@ const CheckOut = ({ step }: CheckOutProps) => {
 
       <div className="min-w-0">
         <div className="w-full lg:sticky lg:top-6">
-          {isLoading ? (
+          {showLoading ? (
             <CartSkeleton className="w-full" />
           ) : (
             <CheckoutCart

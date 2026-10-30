@@ -35,7 +35,7 @@ const Email = () => {
   return (
     <>
       {email === "" || typeof email === "object" ? (
-        <form className="mt-5" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-5" noValidate onSubmit={handleSubmit(onSubmit)}>
           <EmailForm
             register={register}
             errors={errors}
@@ -44,7 +44,7 @@ const Email = () => {
           />
         </form>
       ) : isOpen ? (
-        <form className="mt-5" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-5" noValidate onSubmit={handleSubmit(onSubmit)}>
           <EmailForm
             register={register}
             errors={errors}
@@ -56,28 +56,28 @@ const Email = () => {
         <>
           <div className="mt-4  justify-between hidden sm:flex">
             <div className="flex">
-              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-sf-muted sm:w-[192px]">
                 Correo electrónico
               </p>
-              <p className="font-normal block text-base text-black/60">{email}</p>
+              <p className="font-normal block text-base text-sf-muted">{email}</p>
             </div>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer text-base font-normal text-black/[60%] underline"
+              className="cursor-pointer text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
             >
               Cambiar
             </button>
           </div>
           <div className=" relative mt-4 flex sm:hidden flex-col justify-end gap-y-2 sm:flex-row sm:justify-between sm:gap-y-0">
             <div className="flex justify-between  flex-1 flex-wrap">
-              <p className="w-auto text-base font-normal text-black/60 sm:w-[192px]">
+              <p className="w-auto text-base font-normal text-sf-muted sm:w-[192px]">
                 Correo electrónico
               </p>
-              <p className="font-normal block text-base text-black/60">{email}</p>
+              <p className="font-normal block text-base text-sf-muted">{email}</p>
             </div>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer absolute right-0  text-base font-normal text-black/[60%] underline"
+              className="cursor-pointer absolute right-0  text-base font-normal text-sf-muted underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
               style={{ top: "-36px" }}
             >
               Cambiar
@@ -102,6 +102,9 @@ function EmailForm({
       <InputText
         className="max-w-full"
         id="email"
+        tone="surface"
+        typeName="email"
+        autoComplete="email"
         size="md"
         {...register("email", {
           required: "El correo es obligatorio",
@@ -117,12 +120,12 @@ function EmailForm({
       />
 
       {isGuest && (
-        <p className="mb-4 mt-6 font-outfit text-base font-normal text-black/[60%]">
+        <p className="mb-4 mt-6 font-outfit text-base font-normal text-sf-muted">
           ¿Ya tienes cuenta? No pasa nada, solo{" "}
           <br className="block sm:hidden" />
           <Link
             aria-label="Ir a iniciar sesión"
-            className="text-base font-normal text-primary"
+            className="text-base font-normal text-sf-link hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2"
             href="/customer/login"
           >
             inicia sesión.

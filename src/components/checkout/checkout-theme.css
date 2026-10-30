@@ -1,0 +1,6 @@
+/* Text highlighting is distinct from a selected delivery/payment option. */
+.sf-checkout::selection,
+.sf-checkout ::selection {
+  background-color: var(--sf-selection-bg);
+  color: var(--sf-selection-content);
+}

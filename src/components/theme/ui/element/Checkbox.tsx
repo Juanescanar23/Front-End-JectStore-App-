@@ -2,15 +2,18 @@ import clsx from "clsx";
 import { forwardRef } from "react";
 
 const CheckBox = forwardRef<HTMLInputElement, any>(
-  ({ id, label, name, className, labelClassName, defaultValue, ...rest }, ref) => {
+  ({ id, label, name, className, labelClassName, tone = "default", defaultValue, ...rest }, ref) => {
     return (
       <div className={clsx("inline-flex items-center", className)}>
         <label className="relative flex cursor-pointer items-center gap-x-2">
           <input
             ref={ref}
-            className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow transition-all checked:border-blue-600 checked:bg-blue-600 hover:shadow-md"
+            className={clsx("peer h-5 w-5 cursor-pointer appearance-none rounded border shadow transition-all hover:shadow-md",
+              tone === "surface"
+                ? "border-sf-control-border bg-sf-surface checked:border-sf-action checked:bg-sf-action enabled:hover:border-sf-control-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                : "border-slate-300 checked:border-blue-600 checked:bg-blue-600")}
             defaultChecked={defaultValue}
-            id={id}
+            id={id || name}
             name={name}
             type="checkbox"
             {...rest}
@@ -32,7 +35,7 @@ const CheckBox = forwardRef<HTMLInputElement, any>(
             </svg>
           </span>
         </label>
-        <span className={clsx("ml-3", labelClassName ?? "text-neutral-400 dark:text-white")}>{label}</span>
+        <label htmlFor={id || name} className={clsx("ml-3", labelClassName ?? (tone === "surface" ? "text-sf-content" : "text-neutral-400 dark:text-white"))}>{label}</label>
       </div>
     );
   },

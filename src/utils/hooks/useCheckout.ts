@@ -10,6 +10,8 @@ import { useDispatch } from "react-redux";
 import { clearCart } from "@/store/slices/cart-slice";
 import { ORDER_ID, IS_GUEST } from "@/utils/constants";
 import { isCheckoutAddressSaveSuccessful } from "@/utils/checkout-address-location";
+import { useRef } from "react";
+import { createCheckoutSubmissionGuard } from "@/utils/checkout-submit";
 
 export interface InputDataTypes {
   input: {
@@ -52,6 +54,7 @@ export const useCheckout = () => {
   const { showToast } = useCustomToast();
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
+  const submitOnce = useRef(createCheckoutSubmissionGuard()).current;
 
 
 
@@ -90,10 +93,10 @@ export const useCheckout = () => {
 
   const saveCheckoutAddress = async (input: any) => {
     const token = getCartToken();
-    return await saveAddressToCheckout({
+    return await submitOnce("address", () => saveAddressToCheckout({
       token: token || "",
       ...input,
-    });
+    }));
   };
 
   // ---Get Shipping Rates from checkout
@@ -171,10 +174,10 @@ export const useCheckout = () => {
 
   const saveCheckoutShipping = async (input: any) => {
     const token = getCartToken();
-    await saveShipping({
+    return await submitOnce("shipping", () => saveShipping({
       token: token || "",
       shippingMethod: input
-    });
+    }));
   };
 
   // ---Get Payment Methods from checkout
@@ -223,10 +226,10 @@ export const useCheckout = () => {
 
   const saveCheckoutPayment = async (input: any) => {
     const token = getCartToken();
-    await savePayment({
+    return await submitOnce("payment", () => savePayment({
       token: token || "",
       paymentMethod: input
-    });
+    }));
   };
 
   // -------Finally Place Order---------------//
@@ -262,14 +265,15 @@ export const useCheckout = () => {
 
   const SavePlaceOrder = async () => {
     const token = getCartToken();
-    await placeOrder({
-      token: token || ""
-    });
+    return await submitOnce("order", async () => {
+      const response = await placeOrder({ token: token || "" });
 
-    const isGuest = getCookie(IS_GUEST);
-    if (isGuest === "true") {
-      await resetGuestToken();
-    }
+      const isGuest = getCookie(IS_GUEST);
+      if (isGuest === "true") {
+        await resetGuestToken();
+      }
+      return response;
+    });
   };
 
   return {
