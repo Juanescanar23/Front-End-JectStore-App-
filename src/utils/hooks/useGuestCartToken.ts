@@ -19,6 +19,48 @@ export const useGuestCartToken = () => {
 
   const isResettingRef = useRef(false);
 
+  const persistGuestCart = (cart: { id?: unknown; sessionToken?: unknown; isGuest?: unknown }, expectedToken: string): boolean => {
+    if (cart?.isGuest !== true || getNativeCookie(IS_GUEST) === "false") return false;
+
+    const currentCookie = getNativeCookie(GUEST_CART_TOKEN);
+    const currentToken = currentCookie ? decodeJWT<{ sessionToken: string }>(currentCookie)?.sessionToken : null;
+    // A late Add response must not replace a login, reset, or newer guest cart.
+    if (!expectedToken || currentToken !== expectedToken) return false;
+
+    const newCartId = typeof cart.id === "string" && /^[1-9]\d*$/.test(cart.id)
+      ? Number(cart.id) : typeof cart.id === "number" ? cart.id : NaN;
+    const sessionToken = cart.sessionToken;
+    // This checks only the issued token's wire format. Tenant/DB binding and
+    // its signature remain server authority; never fall back to cartToken/ID.
+    if (!Number.isSafeInteger(newCartId) || newCartId < 1
+      || typeof sessionToken !== "string" || sessionToken.length > 4096
+      || sessionToken !== sessionToken.trim()
+      || !/^[A-Za-z0-9_-]+\.[a-f0-9]{64}$/.test(sessionToken)) return false;
+
+    const encoded = encodeJWT({ sessionToken, cartId: newCartId, isGuest: true });
+    // The encoded envelope is ASCII. Reserve room for the cookie name,
+    // assignment, expiry and path rather than limiting only the raw proof.
+    if (!encoded || encoded.length + GUEST_CART_TOKEN.length + 1 + 64 > 4096) return false;
+
+    try {
+      setCookie(GUEST_CART_TOKEN, encoded);
+      const stored = getNativeCookie(GUEST_CART_TOKEN);
+      const restored = stored ? decodeJWT<{ sessionToken: string; cartId: number; isGuest: boolean }>(stored) : null;
+      if (restored?.sessionToken !== sessionToken || restored.cartId !== newCartId || restored.isGuest !== true) return false;
+
+      setCookie(GUEST_CART_ID, String(newCartId));
+      setCookie(IS_GUEST, "true");
+      if (getNativeCookie(GUEST_CART_ID) !== String(newCartId) || getNativeCookie(IS_GUEST) !== "true") return false;
+    } catch {
+      return false;
+    }
+
+    tokenCreated = true;
+    setToken(sessionToken);
+    setCartId(newCartId);
+    return true;
+  };
+
   const createGuestToken = async (): Promise<string | null> => {
     if (tokenPromise) return tokenPromise;
 
@@ -118,6 +160,7 @@ export const useGuestCartToken = () => {
     cartId,
     isReady,
     createGuestToken,
+    persistGuestCart,
     resetGuestToken,
     deleteCookie,
   };

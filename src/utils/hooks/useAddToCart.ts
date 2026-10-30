@@ -81,7 +81,7 @@ interface RemoveCartAPIResponse {
 
 export const useAddProduct = () => {
   const dispatch = useAppDispatch();
-  const { createGuestToken, resetGuestToken } = useGuestCartToken();
+  const { createGuestToken, persistGuestCart, resetGuestToken } = useGuestCartToken();
   const { showToast } = useCustomToast();
   const localeRoot = detectClientLocaleRoot();
 
@@ -99,24 +99,24 @@ export const useAddProduct = () => {
       }),
 
     onSuccess: (res: {
-      error: any; data: AddToCartAPIResponse
-    }) => {
+      error: any; errors?: unknown[]; data: AddToCartAPIResponse
+    }, variables: AddInput) => {
       const responseData = res?.data?.createAddProductInCart?.addProductInCart;
 
-      if (!responseData?.success) {
-        showToast(res?.error?.message?.message, "danger");
+      if (res?.error || res?.errors?.length || responseData?.success !== true) {
+        showToast(getStorefrontCopy("genericError", localeRoot), "danger");
         return;
       }
-      if (responseData) {
-        if (responseData.success) {
-        dispatch(addItem(responseData as any));
-        showToast(getStorefrontCopy("addToCartSuccess", localeRoot), "success");
-        }
+      if (responseData.isGuest !== false && !persistGuestCart(responseData, variables.token)) {
+        showToast(getStorefrontCopy("createCartSessionFailed", localeRoot), "danger");
+        return;
       }
+      dispatch(addItem(responseData as any));
+      showToast(getStorefrontCopy("addToCartSuccess", localeRoot), "success");
     },
 
-    onError: (err: any) => {
-      showToast(err?.message ?? "Error", "danger");
+    onError: () => {
+      showToast(getStorefrontCopy("genericError", localeRoot), "danger");
     },
   });
 
