@@ -6,21 +6,7 @@ import { safeParse } from "@/utils/helper";
 import { pickTranslationByLocale } from "@/utils/theme-translation";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 import type { NextFooterSettings } from "@/lib/storefront-experience/document";
-
-const getUrlparams = (url?: string | null) => {
-  if (!url) return "/";
-  const splitUrl = url.split("/");
-
-  if (isArray(splitUrl)) {
-    const urlLength = splitUrl.length;
-
-    if (urlLength >= 1) {
-      return `/${splitUrl.at(urlLength - 1)}`;
-    }
-  }
-
-  return "/";
-};
+import { resolveFooterHref } from "@/utils/cms-links";
 
 const FooterMenuItem = ({ item, explicitUrl = false }: { item: ThemeOptions; explicitUrl?: boolean }) => {
   return (
@@ -29,7 +15,7 @@ const FooterMenuItem = ({ item, explicitUrl = false }: { item: ThemeOptions; exp
         aria-label={`${item?.title}`}
         title={`${item?.title}`}
         className={`block px-0 py-1 md:p-2 ${explicitUrl ? "break-words whitespace-normal" : "text-nowrap"} text-sm underline-offset-4 text-selected-black dark:text-neutral-300 hover:text-black hover:underline md:inline-block dark:hover:text-neutral-300`}
-        href={explicitUrl ? item.url || "/" : getUrlparams(item.url)}
+        href={resolveFooterHref(item.url)}
       >
         {item.title}
       </Link>
