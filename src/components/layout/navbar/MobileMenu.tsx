@@ -6,7 +6,7 @@ import {
   DrawerContent,
 } from "@heroui/drawer";
 import { useDisclosure } from "@heroui/react";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import BottomNavbar from "./BottomNavbar";
 import { MobileSearchBar } from "./MobileSearch";
 import { useState } from "react";

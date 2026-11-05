@@ -5,7 +5,7 @@ import { Drawer, DrawerContent, DrawerBody, DrawerHeader, DrawerFooter } from "@
 import { useDisclosure } from "@heroui/react";
 import clsx from "clsx";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { Avatar } from "@heroui/avatar";
 import { useForm } from "react-hook-form";
 import { usePathname, useRouter } from "next/navigation";

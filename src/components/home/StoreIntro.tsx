@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import type { NextStoreIntroSettings } from "@/lib/storefront-experience/document";
 
 /** Literal fallback markup: no extra catalogue padding or mobile search. */

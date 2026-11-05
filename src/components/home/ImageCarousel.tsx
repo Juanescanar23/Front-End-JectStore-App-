@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect, useRef, useSyncExternalStore } from "react";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import Image from "next/image";
 import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import { Shimmer } from "@/components/common/Shimmer";

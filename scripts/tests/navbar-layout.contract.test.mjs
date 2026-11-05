@@ -45,6 +45,7 @@ async function renderNavbar({ baseline = false, data = categories, allowsCheckou
   const calls = [];
   const dependencies = {
     "next/link": { default: "Link", __esModule: true },
+    "@/components/common/StorefrontLink": { default: "Link", __esModule: true },
     react: { Suspense: "Suspense" },
     "react/jsx-runtime": { jsx: element, jsxs: element, Fragment: "Fragment" },
     "./MobileMenu": { default: "MobileMenu", __esModule: true },

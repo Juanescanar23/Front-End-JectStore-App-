@@ -158,6 +158,7 @@ function checkoutComponent(file, { email = "qa@example.invalid", open, pending =
     "@heroui/react": hero,
     "react-redux": { useDispatch: () => () => {} },
     "next/link": interop(({ children, ...props }) => React.createElement("a", props, children)),
+    "@/components/common/StorefrontLink": interop(({ children, ...props }) => React.createElement("a", props, children)),
     "next/navigation": { useRouter: () => ({ push() {} }) },
     "@/store/local-storage": { EMAIL: "email", getLocalStorage: () => email, setLocalStorage() {} },
     "@/store/slices/cart-slice": { setCheckoutAddresses: (value) => value },

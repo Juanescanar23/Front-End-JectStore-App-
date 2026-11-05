@@ -29,7 +29,7 @@ function load(file, dependencies, globals = {}) {
 const documentContract = load("src/lib/storefront-experience/document.ts", { "./banner-composition": load("src/lib/storefront-experience/banner-composition.ts", {}) });
 const dependencies = (react) => ({
   react, "react/jsx-runtime": jsx,
-  "next/link": { __esModule: true, default: "a" },
+  "@/components/common/StorefrontLink": { __esModule: true, default: "a" },
   "next/image": { __esModule: true, default: ImageFixture },
   "@heroicons/react/24/solid": { PauseIcon: IconFixture, PlayIcon: IconFixture },
   "@/components/common/Shimmer": { Shimmer: "shimmer-fixture" },

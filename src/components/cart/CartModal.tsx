@@ -25,7 +25,7 @@ import LoadingDots from "@components/common/icons/LoadingDots";
 import { useFormStatus } from "react-dom";
 import { redirectToCheckout } from "@/utils/actions";
 import { EMAIL, getLocalStorage } from "@/store/local-storage";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { createUrl, isCheckout, useAddressesFromApi } from "@utils/helper";
 import { useMediaQuery } from "@utils/hooks/useMediaQueryHook";
 

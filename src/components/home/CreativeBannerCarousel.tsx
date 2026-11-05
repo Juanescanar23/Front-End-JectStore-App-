@@ -2,7 +2,7 @@
 
 import { useRef, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { creativeBannerHref, type NextCreativeImage } from "@/lib/storefront-experience/document";
 import styles from "./CreativeBannerCarousel.module.css";

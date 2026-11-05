@@ -1,7 +1,7 @@
 "use client"
 
 import { FC } from "react";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { GridTileImage } from "@/components/theme/ui/grid/Tile";
 import { useMediaQuery } from "@utils/hooks/useMediaQueryHook";
 import { getProductImageUrl, NOT_IMAGE } from "@/utils/constants";

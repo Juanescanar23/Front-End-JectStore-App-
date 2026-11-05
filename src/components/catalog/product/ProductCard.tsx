@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { FC } from "react";
 import Grid from "@/components/theme/ui/grid/Grid";
 import AddToCartButton from "@/components/theme/ui/AddToCartButton";

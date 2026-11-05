@@ -82,7 +82,7 @@ test("legacy remains an unmodified separate contract; creative links cannot beco
 const ImageFixture = ({ src, alt, className }) => React.createElement("img", { src, alt, className });
 const IconFixture = props => React.createElement("svg", props);
 const css = new Proxy({}, { get: (_target, name) => name });
-const dependencies = react => ({ react, "react/jsx-runtime": jsx, "next/link": { __esModule: true, default: "a" },
+const dependencies = react => ({ react, "react/jsx-runtime": jsx, "@/components/common/StorefrontLink": { __esModule: true, default: "a" },
   "next/image": { __esModule: true, default: ImageFixture }, "@heroicons/react/24/outline": { ArrowLeftIcon: IconFixture, ArrowRightIcon: IconFixture },
   "@/lib/storefront-experience/document": documentApi, "./CreativeBannerCarousel.module.css": { __esModule: true, default: css } });
 const walk = node => !node || typeof node !== "object" ? [] : Array.isArray(node) ? node.flatMap(walk) : [node, ...walk(node.props?.children)];

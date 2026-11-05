@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { ThemeOptions } from "@/types/types";
 import { FooterColumns, ThemeCustomizationNode } from "@/types/theme/theme-customization";
 import { isArray } from "@/utils/type-guards";

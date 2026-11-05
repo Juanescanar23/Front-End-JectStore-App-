@@ -35,7 +35,7 @@ function nodes(tree, type) {
 async function footer(urls, editorial = false) {
   const Footer = load("src/components/layout/footer/FooterMenu.tsx", {
     "react/jsx-runtime": { jsx, jsxs: jsx },
-    "next/link": interop("Link"),
+    "@/components/common/StorefrontLink": interop("Link"),
     "@/utils/type-guards": { isArray: Array.isArray },
     "@/utils/helper": { safeParse: JSON.parse },
     "@/utils/theme-translation": { pickTranslationByLocale: (translations, locale) => translations.find((item) => item.localeCode === locale) },

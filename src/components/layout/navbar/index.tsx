@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { Suspense } from "react";
 import MobileMenu from "./MobileMenu";
 import Search from "./Search";

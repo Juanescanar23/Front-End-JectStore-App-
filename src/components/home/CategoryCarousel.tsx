@@ -1,5 +1,5 @@
 import { FC } from "react";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { graphqlRequestNoCache } from "../../lib/graphql-fetch";
 import { GET_HOME_CATEGORIES } from "@/graphql/catelog/queries/HomeCategories";
 import { GET_TREE_CATEGORIES } from "@/graphql/catelog/queries/Category";

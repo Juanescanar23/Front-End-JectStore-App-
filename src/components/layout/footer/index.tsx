@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { Suspense } from "react";
 import { isObject } from "@/utils/type-guards";
 import { getThemeCustomization } from "@/utils/bagisto";

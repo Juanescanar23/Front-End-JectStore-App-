@@ -173,6 +173,7 @@ function commerceLoader({ desktop = true, order, locale = "en-US" } = {}) {
     "@heroui/accordion": { Accordion: passthrough, AccordionItem: ({ title, subtitle, children }) => React.createElement("section", null, title, subtitle, children) },
     "@heroicons/react/24/outline": { ArrowLeftIcon: icon, ShoppingCartIcon: icon, ChevronLeftIcon: icon, ChevronRightIcon: icon },
     "next/link": interop(({ children, href, ...props }) => React.createElement("a", { href, ...props }, children)),
+    "@/components/common/StorefrontLink": interop(({ children, href, ...props }) => React.createElement("a", { href, ...props }, children)),
     "next/image": image,
     "@/components/common/NextImage": { NextImage: image.default },
     "@/components/theme/ui/grid/Tile": { GridTileImage: image.default }, "@components/theme/ui/grid/Tile": { GridTileImage: image.default },

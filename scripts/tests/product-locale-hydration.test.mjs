@@ -49,6 +49,7 @@ const clientDependencies = {
     safeParse: value => value, extractNumericId: value => Number(value),
   },
   "next/link": interop(({ children, ...attributes }) => React.createElement("a", attributes, children)),
+  "@/components/common/StorefrontLink": interop(({ children, ...attributes }) => React.createElement("a", attributes, children)),
   "@/utils/whatsapp": { buildProductWhatsAppUrl: () => null },
   "@/components/cod/CodQuickCheckout": interop(empty),
   "@/utils/storefront-copy": copy,

@@ -321,6 +321,7 @@ test("reserved API, admin, auth callbacks and assets never route as storefront H
 const element = (type, props) => ({ type, props: props || {} });
 const componentMocks = {
   react: { Suspense: "Suspense" }, "react/jsx-runtime": { jsx: element, jsxs: element, Fragment: "Fragment" },
+  "@/components/common/StorefrontLink": { default: "a", __esModule: true },
   "./ImageCarousel": { default: "ImageCarousel", __esModule: true }, "./ProductCarousel": { default: "ProductCarousel", __esModule: true },
   "./CategoryCarousel": { default: "CategoryCarousel", __esModule: true }, "@/components/layout/navbar/MobileSearch": { MobileSearchBar: "MobileSearchBar" },
   "@/components/common/skeleton/CategoryCarouselSkeleton": { CategoryCarouselSkeleton: "CategorySkeleton" },
@@ -357,7 +358,7 @@ test("typed store intro preserves legacy content and owns its spacing without ex
   assert.equal(nodes(tree, "MobileSearchBar").length, 0);
   assert.equal(nodes(tree, "section").length, 0, "The intro owns its original section container");
   assert.deepEqual(nodes(tree, "StoreIntro")[0].props.settings, STORE_INTRO_DEFAULTS);
-  const intro = loadSource("src/components/home/StoreIntro.tsx", { ...componentMocks, "next/link": { __esModule: true, default: "a" } }).default({ settings: STORE_INTRO_DEFAULTS });
+  const intro = loadSource("src/components/home/StoreIntro.tsx", { ...componentMocks, "@/components/common/StorefrontLink": { __esModule: true, default: "a" } }).default({ settings: STORE_INTRO_DEFAULTS });
   assert.equal(nodes(intro, "h1")[0].props.children, STORE_INTRO_DEFAULTS.heading);
   assert.deepEqual(nodes(intro, "a").map(link => [link.props.href, link.props.children]), [["/search", "Ver catálogo"], ["/customer/login", "Ingresar"]]);
   assert.equal(nodes(intro, "section")[0].props.className, "mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16");
@@ -449,7 +450,7 @@ test("actual product layouts pass authoritative currency unchanged on desktop an
   assert.equal((await carousel({ options: { filters: {} } })).props.currency, "COP", "Legacy reads the channel instead of assuming USD");
   for (const desktop of [true, false]) {
     const grid = loadSource("src/components/home/ThreeItemGrid.tsx", {
-      "react/jsx-runtime": jsx, "next/link": { __esModule: true, default: "Link" },
+      "react/jsx-runtime": jsx, "@/components/common/StorefrontLink": { __esModule: true, default: "Link" },
       "@/components/theme/ui/grid/Tile": { GridTileImage: "Tile" },
       "@utils/hooks/useMediaQueryHook": { useMediaQuery: () => desktop },
       "@/utils/constants": { getProductImageUrl: () => "/image.svg", NOT_IMAGE: "/fallback.svg" },
@@ -476,13 +477,13 @@ test("carousel preserves catalog salability through both actual product-card CTA
     "react/jsx-runtime": jsx,
     "@components/common/icons/ShoppingCartIcon": { __esModule: true, default: "CartIcon" },
     "@components/common/icons/LoadingDots": { __esModule: true, default: "LoadingDots" },
-    "next/link": { __esModule: true, default: "Link" },
+    "@/components/common/StorefrontLink": { __esModule: true, default: "Link" },
     "@utils/hooks/useAddToCart": { useAddProduct: () => ({ isCartLoading: false, onAddToCart: (value) => added.push(value) }) },
     "@/store/hooks": { useAppSelector: (selector) => selector({ user: { user: null } }) },
     "@utils/hooks/useToast": { useCustomToast: () => ({ showToast: (...args) => warnings.push(args) }) },
   }).default;
   const card = loadSource("src/components/catalog/product/ProductCard.tsx", {
-    "react/jsx-runtime": jsx, "next/link": { __esModule: true, default: "Link" },
+    "react/jsx-runtime": jsx, "@/components/common/StorefrontLink": { __esModule: true, default: "Link" },
     "@/components/theme/ui/grid/Grid": { __esModule: true, default: { Item: "GridItem" } },
     "@/components/theme/ui/AddToCartButton": { __esModule: true, default: addToCart },
     "@/components/common/NextImage": { NextImage: "Image" }, "@/components/theme/ui/Price": { Price: "Price" },

@@ -5,7 +5,7 @@ import { CategoryIcon } from "@components/common/icons/CategoryIcon";
 import { HomeIcon } from "@components/common/icons/HomeIcon";
 import { IconSkeleton } from "@components/common/skeleton/IconSkeleton";
 import UserAccount from "@components/customer/credentials";
-import Link from "next/link";
+import Link from "@/components/common/StorefrontLink";
 import { Suspense, memo } from "react";
 import clsx from "clsx";
 import OpenCart from "@components/cart/OpenCart";
