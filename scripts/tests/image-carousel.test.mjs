@@ -3,12 +3,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import vm from "node:vm";
-import React from "react";
-import * as jsx from "react/jsx-runtime";
-import { renderToStaticMarkup } from "react-dom/server";
-import ts from "typescript";
+import { createRequire } from "node:module";
 
-const root = path.resolve(import.meta.dirname, "../..");
+const root = path.resolve(process.env.HOMESTORE_NEXT_SOURCE || path.resolve(import.meta.dirname, "../.."));
+const require = createRequire(path.resolve(process.env.HOMESTORE_NEXT_DEPENDENCIES || root, "package.json"));
+const React = require("react"), jsx = require("react/jsx-runtime"), { renderToStaticMarkup } = require("react-dom/server"), ts = require("typescript");
 const file = "src/components/home/ImageCarousel.tsx";
 const images = [
   { image: "storage/phone.webp", link: "/search/celulares", title: "Celulares: ilustración de categoría" },
@@ -27,7 +26,7 @@ function load(file, dependencies, globals = {}) {
   });
   return fixtureModule.exports;
 }
-const documentContract = load("src/lib/storefront-experience/document.ts", {});
+const documentContract = load("src/lib/storefront-experience/document.ts", { "./banner-composition": load("src/lib/storefront-experience/banner-composition.ts", {}) });
 const dependencies = (react) => ({
   react, "react/jsx-runtime": jsx,
   "next/link": { __esModule: true, default: "a" },

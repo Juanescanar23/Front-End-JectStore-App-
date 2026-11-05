@@ -61,11 +61,24 @@ export function installNextPreviewBridge(target: Window, sectionIds: string[]): 
     if (selected && inspection) { pendingSelection ??= 'position'; schedule(); }
   };
   const ready = () => notify({ type: "jectstore:storefront-preview-ready" });
+  const localCreativeControl = (element: Element | null): boolean => {
+    const button = element?.closest?.('button[type="button"]') as HTMLButtonElement | null;
+    if (!button || button.tagName !== 'BUTTON' || button.namespaceURI !== 'http://www.w3.org/1999/xhtml'
+      || button.getAttribute('type') !== 'button' || button.disabled || button.form
+      || element?.closest?.('a,form,input,select,textarea,label') || button.closest('a,form')) return false;
+    const controls = button.closest('nav[data-next-preview-local-controls="creative-covers"]');
+    const section = sectionOf(button);
+    return Boolean(controls && controls.tagName === 'NAV' && controls.namespaceURI === 'http://www.w3.org/1999/xhtml'
+      && root.contains(button) && root.contains(controls) && section?.contains(controls));
+  };
   const click = (event: Event) => {
+    const element = event.target as Element | null;
+    // Only the authored carousel's local navigation may reach its React handler.
+    // Links, forms and every other control remain read-only even without inspection.
+    if (!inspection && localCreativeControl(element)) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const element = event.target as Element | null;
     const section = sectionOf(element);
     const id = section?.dataset.storefrontSectionId;
     if (inspection && section && root.contains(section) && id && allowed.has(id)) {

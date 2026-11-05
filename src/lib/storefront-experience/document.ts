@@ -1,5 +1,8 @@
+import { parseBannerComposition, type BannerComposition } from "./banner-composition";
+
 /** The Next base has its own capabilities; Visual documents never enter React. */
 export type NextImage = { image: string; imageUrl?: string; link: string; title: string };
+export type NextCreativeImage = NextImage & { composition: BannerComposition };
 export type NextHeaderSettings = {
   brand_name: string;
   logo_url: string | null;
@@ -24,6 +27,7 @@ export type NextStoreIntroSettings = {
 };
 export type NextStoreIntroSection = Section<"store_intro", NextStoreIntroSettings>;
 export type NextImageSection = Section<"image_carousel", { images: NextImage[] }>;
+export type NextCreativeBannerSection = Section<"creative_banner_carousel", { images: NextCreativeImage[] }>;
 export type NextProductSection = Section<"product_carousel", {
   title: string;
   description: string;
@@ -42,7 +46,7 @@ export type NextStorefrontDocument = {
     header: Section<"header", NextHeaderSettings>;
     footer: Section<"footer", NextFooterSettings>;
   };
-  sections: Array<NextStoreIntroSection | NextImageSection | NextProductSection | NextCategorySection>;
+  sections: Array<NextStoreIntroSection | NextImageSection | NextCreativeBannerSection | NextProductSection | NextCategorySection>;
 };
 
 const invalid = (field: string): never => { throw new Error(`Invalid Next storefront document: ${field}`); };
@@ -76,6 +80,14 @@ export function nextBannerHref(link: string): string {
   return "";
 }
 
+/** Creative buttons accept only reviewed in-store paths, never category slugs. */
+export function creativeBannerHref(link: string): string {
+  if (!isLocalStorefrontUrl(link)) return "";
+  let decoded = link;
+  for (let pass = 0; pass < 3; pass++) decoded = decoded.replace(/%([0-9a-f]{2})/gi, (_, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)));
+  return decoded.startsWith("//") || /[<>{}\\\u0000-\u001f\u007f]/.test(decoded) ? "" : link;
+}
+
 function imageUrl(value: unknown, field: string): string {
   const url = text(value, field, 2048);
   if (!url) return url;
@@ -86,6 +98,13 @@ function imageUrl(value: unknown, field: string): string {
     if (parsed.protocol === "https:" && !parsed.username && !parsed.password && !/[\\\s]/.test(url)) return url;
   } catch { /* A rejected image never becomes executable markup. */ }
   return invalid(field);
+}
+
+function creativeImagePath(value: unknown, field: string): string {
+  const path = text(value, field, 2048);
+  if (path && (!/^\/storage\/[A-Za-z0-9][A-Za-z0-9_./-]*$/.test(path)
+    || path.split("/").some(segment => segment === "." || segment === ".."))) invalid(field);
+  return path;
 }
 
 function localLink(value: unknown, field: string): string {
@@ -194,6 +213,18 @@ export function parseNextStorefrontDocument(value: unknown): NextStorefrontDocum
         text(image.title, "image.title", 300);
         const link = text(image.link, "image.link", 2048);
         if (link && !nextBannerHref(link)) invalid("image.link");
+      }
+    } else if (section.type === "creative_banner_carousel") {
+      keys(settings, ["images"], "creative.settings");
+      for (const entry of list(settings.images, "creative.images", 20)) {
+        const image = record(entry, "creative.image");
+        keys(image, ["image", "imageUrl", "link", "title", "composition"], "creative.image");
+        creativeImagePath(image.image, "creative.image.image");
+        if (image.imageUrl !== undefined) creativeImagePath(image.imageUrl, "creative.image.imageUrl");
+        text(image.title, "creative.image.title", 300);
+        const link = text(image.link, "creative.image.link", 2048);
+        if (link && !creativeBannerHref(link)) invalid("creative.image.link");
+        parseBannerComposition(image.composition);
       }
     } else if (section.type === "product_carousel") {
       keys(settings, ["title", "description", "filters", "layout"], "product.settings");

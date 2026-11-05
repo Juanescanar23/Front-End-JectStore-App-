@@ -6,7 +6,18 @@ import { ProductsSectionProps } from "../type";
 
 
 export function ProductsSection({ title, description, products }: ProductsSectionProps) {
-  if (!products?.length) return null;
+  const linkedProducts = products?.flatMap((item, index) => {
+    const urlKey = item.urlKey;
+    if (
+      typeof urlKey !== "string" ||
+      new TextEncoder().encode(urlKey).length > 512 ||
+      urlKey.trim() !== urlKey ||
+      !/^[\p{L}\p{N}][\p{L}\p{N}._-]*(?:\/[\p{L}\p{N}][\p{L}\p{N}._-]*)*$/u.test(urlKey)
+    ) return [];
+
+    return [{ item, urlKey, index }];
+  });
+  if (!linkedProducts?.length) return null;
 
   return (
     <div className="flex flex-col gap-y-10 pt-8 sm:pt-12 lg:pt-20 w-full max-w-screen-2xl mx-auto px-4 xss:px-7.5">
@@ -16,21 +27,21 @@ export function ProductsSection({ title, description, products }: ProductsSectio
       </div>
 
       <Grid className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((item, index) => {
+        {linkedProducts.map(({ item, urlKey, index }) => {
           const imageUrl = getProductImageUrl(item) || NOT_IMAGE;
           const price = item?.price ?? "0";
           const specialPrice = item?.specialPrice ?? null;
           return (
             <ProductCard
               key={item.id ?? index}
-              currency="USD"
               imageUrl={imageUrl || ""}
               price={String(price)}
               product={{
-                urlKey: item.urlKey || item.sku,
+                urlKey,
                 name: item?.name || item.sku,
                 id: item.id,
                 type: item.type,
+                isSaleable: item.isSaleable,
               }}
               specialPrice={specialPrice ? String(specialPrice) : undefined}
             />

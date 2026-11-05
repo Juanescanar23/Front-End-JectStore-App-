@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import ImageCarousel from "./ImageCarousel";
+import CreativeBannerCarousel from "./CreativeBannerCarousel";
 import ProductCarousel from "./ProductCarousel";
 import CategoryCarousel from "./CategoryCarousel";
 import { MobileSearchBar } from "@/components/layout/navbar/MobileSearch";
@@ -31,6 +32,9 @@ export default function RenderStorefrontDocument({ document, currency }: { docum
           switch (section.type) {
             case "image_carousel":
               content = <ImageCarousel options={section.settings} editorial />;
+              break;
+            case "creative_banner_carousel":
+              content = <CreativeBannerCarousel options={section.settings} />;
               break;
             case "product_carousel":
               content = <ProductCarousel options={section.settings} layout={section.settings.layout} currency={currency} itemCount={section.settings.layout === "three-item" ? 3 : 4} />;
