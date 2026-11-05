@@ -2,6 +2,7 @@ import { ProductData, ProductReviewNode } from "../type";
 import { ProductDescription } from "./ProductDescription";
 import { getProductWithSwatchAndReview } from "@/utils/hooks/getProductSwatchAndReview";
 import { getTenantWhatsAppConfig } from "@/utils/server/tenant-whatsapp";
+import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 
 export default async function ProductInfo({
   product,
@@ -14,9 +15,10 @@ export default async function ProductInfo({
   reviews: ProductReviewNode[];
   totalReview: number;
 }) {
-  const [productSwatchReview, tenantWhatsApp] = await Promise.all([
+  const [productSwatchReview, tenantWhatsApp, localeCode] = await Promise.all([
     getProductWithSwatchAndReview(slug),
     getTenantWhatsAppConfig(),
+    getStorefrontLocaleCode(),
   ]);
 
   return (
@@ -27,6 +29,7 @@ export default async function ProductInfo({
       reviews={reviews}
       totalReview={totalReview}
       tenantWhatsApp={tenantWhatsApp}
+      localeCode={localeCode || "es"}
     />
   );
 }

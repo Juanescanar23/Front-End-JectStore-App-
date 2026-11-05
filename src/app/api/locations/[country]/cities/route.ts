@@ -4,7 +4,7 @@ import { getRuntimeHost } from "@/utils/server/tenant-runtime";
 
 export async function GET(
   req: Request,
-  context: { params: Promise<{ country: string }> | { country: string } },
+  context: { params: Promise<{ country: string }> },
 ) {
   try {
     const params = await context.params;

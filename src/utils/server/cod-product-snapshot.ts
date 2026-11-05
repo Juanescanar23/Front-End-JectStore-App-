@@ -1,6 +1,7 @@
 import { CodProductSnapshot } from "@/types/cod";
 import { GET_PRODUCT_COD_SNAPSHOT, graphqlRequestNoCache } from "@/graphql";
 import { buildStorefrontFilterInput } from "@/utils/storefront-filters";
+import { normalizeCurrencyCode } from "@/utils/storefront-money";
 
 interface ProductSnapshotResponse {
   products?: {
@@ -184,6 +185,9 @@ export async function getCodProductSnapshot(
     return null;
   }
 
+  const currencyCode = normalizeCurrencyCode(product.priceHtml?.currencyCode);
+  if (!currencyCode) return null;
+
   const regular = parseNumber(product.price);
   const special = parseNumber(product.specialPrice);
 
@@ -217,7 +221,7 @@ export async function getCodProductSnapshot(
     title: String(product.name || "Producto"),
     image: pickProductImage(product),
     base_price: finalPrice,
-    currency_code: product.priceHtml?.currencyCode || "USD",
+    currency_code: currencyCode,
     has_variants: attributes.length > 0,
     is_saleable: Boolean(product.isSaleable),
     type: product.type,

@@ -1,5 +1,4 @@
 import { DEFAULT_OPTION } from "@/utils/constants";
-import { useScrollTo } from "@/utils/hooks/useScrollTo";
 import { resolveCartItemImage } from "@utils/cart/normalize";
 import { NOT_IMAGE } from "@utils/constants";
 import { Price } from "@components/theme/ui/Price";
@@ -23,24 +22,11 @@ export default function CartItemAccordion({
     ? cartItems?.items?.edges
     : [];
 
-  const scrollTo = useScrollTo();
-
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full border-t border-sf-border bg-sf-surface/95 pb-[calc(env(safe-area-inset-bottom)+56px)] shadow-[0_-18px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+    <div className="fixed bottom-0 left-0 z-50 w-full border-t border-sf-border bg-sf-surface/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
       <Accordion
         selectionMode="multiple"
         className="!px-0"
-        onSelectionChange={(e) => {
-          const keys = e as Set<string>;
-          if (keys.has("1")) {
-            setTimeout(() => {
-              scrollTo({
-                top: document.body.scrollHeight,
-                behavior: "smooth",
-              });
-            }, 300);
-          }
-        }}
       >
         <AccordionItem
           key="1"
@@ -53,7 +39,7 @@ export default function CartItemAccordion({
           }
           classNames={{
             heading: "sticky top-0 z-50 bg-sf-surface px-4",
-            content: "px-4 text-sf-content",
+            content: "max-h-[60vh] supports-[height:100dvh]:max-h-[60dvh] overflow-y-auto overscroll-contain px-4 text-sf-content",
             title: "text-sf-content",
             subtitle: "text-sf-muted",
             trigger: "focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2",

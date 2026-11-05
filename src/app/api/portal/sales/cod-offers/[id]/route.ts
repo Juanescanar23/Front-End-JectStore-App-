@@ -11,7 +11,7 @@ import { getRuntimeHost } from "@/utils/server/tenant-runtime";
 
 export async function GET(
   _req: Request,
-  context: { params: Promise<{ id: string }> | { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     const params = await context.params;
@@ -63,7 +63,7 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  context: { params: Promise<{ id: string }> | { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     const params = await context.params;
@@ -115,7 +115,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: Request,
-  context: { params: Promise<{ id: string }> | { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     const params = await context.params;

@@ -93,7 +93,7 @@ export default function Stepper(
         key: "email",
         title: "Correo",
         href: "/checkout",
-        component: <Email />,
+        component: <Email isCurrentStep={currentStep === "email"} />,
       },
       {
         id: 2,
@@ -145,6 +145,7 @@ export default function Stepper(
       },
     ];
   }, [
+    currentStep,
     billingAddress,
     shippingAddress,
     selectedShippingRate,
@@ -159,7 +160,7 @@ export default function Stepper(
 
   return (
     <div className="mx-auto w-full">
-      <header className="pb-6">
+      <header className="pb-3 sm:pb-6">
         <Link
           aria-label={SITE_NAME}
           className="hidden items-center gap-2 text-sf-content md:pt-1 lg:flex"
@@ -168,8 +169,8 @@ export default function Stepper(
           <LogoIcon />
         </Link>
 
-        <div className="mt-3 px-4 py-5 sm:px-5 lg:px-0 lg:py-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mt-0 px-0 py-2 sm:mt-3 sm:px-5 sm:py-5 lg:px-0 lg:py-0">
+          <div className="flex flex-col gap-2 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sf-muted">
                 Checkout
@@ -190,8 +191,8 @@ export default function Stepper(
         </div>
       </header>
 
-      <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 h-[calc(100dvh-260px)] overflow-y-auto pr-1 lg:h-[calc(100dvh-190px)]">
-        <div className="flex h-full flex-col gap-y-5 px-0 sm:px-1">
+      <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 pr-1 lg:h-[calc(100dvh-190px)] lg:overflow-y-auto">
+        <div className="flex lg:h-full flex-col gap-y-5 px-0 sm:px-1">
           {steps.map((step) => (
             <StepItem key={step.id} step={step} currentStep={currentStep} currentStepId={steps[currentStepIndex]?.id || 1} />
           ))}

@@ -23,12 +23,47 @@ function arrow(relative, variable, scope) {
   assert.ok(initializer && ts.isArrowFunction(initializer), `Missing real ${variable}`);
   return evaluate(`exports.action = ${initializer.getText(file)}`, scope).action;
 }
+function checkoutMutation(variable, fetchHandler) {
+  const relative = "src/utils/hooks/useCheckout.ts";
+  const file = ts.createSourceFile(relative, source(relative), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let initializer;
+  const visit = (node) => {
+    if (ts.isVariableDeclaration(node) && ts.isObjectBindingPattern(node.name)
+      && node.name.elements.some(binding => binding.name.getText(file) === variable)
+      && node.initializer && ts.isCallExpression(node.initializer)) {
+      initializer = node.initializer.arguments[0]?.properties?.find(property => property.name?.getText(file) === "mutationFn")?.initializer;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  assert.ok(initializer && ts.isArrowFunction(initializer), `Missing real ${variable} mutationFn`);
+  return evaluate(`exports.action = ${initializer.getText(file)}`, { fetchHandler }).action;
+}
 const guard = () => evaluate(source("src/utils/checkout-submit.ts")).createCheckoutSubmissionGuard();
 const deferred = () => {
   let resolve, reject;
   const promise = new Promise((pass, fail) => { resolve = pass; reject = fail; });
   return { promise, resolve, reject };
 };
+
+for (const [name, endpoint, payload] of [
+  ["savePayment", "/api/checkout/savePayment", { paymentMethod: "cashondelivery" }],
+  ["placeOrder", "/api/checkout/placeOrder", {}],
+]) test(`real ${name} mutation emits a canonical URL through the actual fetch handler`, async () => {
+  const calls = [];
+  const fetchHandler = evaluate(source("src/utils/fetch-handler.ts"), { fetch: async (url, options) => {
+    calls.push({ url, options });
+    return { ok: true, status: 200, json: async () => ({ data: { synthetic: true } }) };
+  } }).fetchHandler;
+  const result = await checkoutMutation(name, fetchHandler)({ token: "synthetic-guest-proof", ...payload });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, endpoint);
+  assert.doesNotMatch(calls[0].url, /\/\//);
+  assert.equal(calls[0].options.method, "POST");
+  assert.deepEqual(calls[0].options.headers, { "Content-Type": "application/json", Authorization: "Bearer synthetic-guest-proof" });
+  assert.deepEqual(JSON.parse(calls[0].options.body), payload);
+  assert.deepEqual(result, { data: { synthetic: true } });
+});
 
 test("UI submission shares only the in-flight action and permits an explicit retry after settlement", async () => {
   const run = guard(), pending = deferred();

@@ -81,7 +81,7 @@ export const GET_PRODUCT_BY_URL_KEY = gql`
         reviews {
           ...ProductReview
         }
-        variants {
+        variants: storefrontVariants {
           id
           sku
           type
@@ -133,7 +133,7 @@ export const GET_PRODUCT_SWATCH_REVIEW = gql`
         urlKey
         price
         isSaleable
-        attributeValues {
+        attributeValues: storefrontAttributeValues {
           id
           textValue
           booleanValue
@@ -149,7 +149,7 @@ export const GET_PRODUCT_SWATCH_REVIEW = gql`
             isVisibleOnFront
           }
         }
-        superAttributes {
+        superAttributes: storefrontSuperAttributes {
           id
           code
           adminName
@@ -158,7 +158,7 @@ export const GET_PRODUCT_SWATCH_REVIEW = gql`
             adminName
           }
         }
-        configutableData {
+        configutableData: storefrontConfigurableData {
           attributes {
             id
             code
@@ -220,7 +220,7 @@ export const GET_RELATED_PRODUCTS = gql`
       data {
         id
         sku
-        relatedProducts {
+        relatedProducts: storefrontRelatedProducts {
           ...ProductSection
         }
       }

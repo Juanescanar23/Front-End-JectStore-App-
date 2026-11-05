@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   CodCheckoutConfigResponse,
   CodOffer,
@@ -5,16 +7,10 @@ import {
   CodShippingMethodOption,
 } from "@/types/cod";
 import { getCodProductSnapshot } from "@/utils/server/cod-product-snapshot";
-import {
-  getTenantCodSettings,
-  listTenantCodOffers,
-} from "@/utils/server/cod-store";
 import { resolveAllowedByPlan } from "@/utils/server/cod-feature-gate";
-import {
-  fetchLandlordJson,
-  getDefaultTenantPlanForHost,
-  normalizeHost,
-} from "@/utils/server/tenant-runtime";
+import { normalizeCurrencyCode } from "@/utils/storefront-money";
+import { fetchNativeCodConfig } from "./cod-config-reader";
+import { StorefrontConnectionUnavailable } from "./client-context";
 
 const parseString = (value: unknown, fallback = "") => {
   if (typeof value === "string") {
@@ -159,6 +155,9 @@ const parseProductSnapshot = (value: unknown): CodProductSnapshot | null => {
     return null;
   }
 
+  const currencyCode = normalizeCurrencyCode(unsafe.currency_code);
+  if (!currencyCode) return null;
+
   const attributes = Array.isArray(unsafe.attributes)
     ? unsafe.attributes
         .map((attribute) => {
@@ -232,7 +231,7 @@ const parseProductSnapshot = (value: unknown): CodProductSnapshot | null => {
     title: parseString(unsafe.title || unsafe.name, "Producto"),
     image: parseString(unsafe.image, "") || null,
     base_price: Number(unsafe.base_price ?? unsafe.price ?? 0),
-    currency_code: parseString(unsafe.currency_code, "USD"),
+    currency_code: currencyCode,
     has_variants: parseBoolean(unsafe.has_variants, attributes.length > 0),
     is_saleable: parseBoolean(unsafe.is_saleable, true),
     type: parseString(unsafe.type, ""),
@@ -243,7 +242,6 @@ const parseProductSnapshot = (value: unknown): CodProductSnapshot | null => {
 
 function normalizeCodConfigFromPayload(
   payload: unknown,
-  runtimeHost: string,
 ): CodCheckoutConfigResponse | null {
   if (!payload || typeof payload !== "object") return null;
 
@@ -253,8 +251,7 @@ function normalizeCodConfigFromPayload(
       ? (unsafe.data as Record<string, unknown>)
       : unsafe;
 
-  const fallbackPlan = getDefaultTenantPlanForHost(runtimeHost);
-  const { plan, allowed } = resolveAllowedByPlan(dataContainer, fallbackPlan);
+  const { plan, allowed } = resolveAllowedByPlan(dataContainer, "basic");
   const rulesObj =
     dataContainer.rules && typeof dataContainer.rules === "object"
       ? (dataContainer.rules as Record<string, unknown>)
@@ -309,11 +306,11 @@ function normalizeCodConfigFromPayload(
   );
   const productAllowsCod = parseBoolean(
     dataContainer.product_allows_cod,
-    true,
+    false,
   );
   const productIsStockable = parseBoolean(
     dataContainer.product_is_stockable,
-    true,
+    false,
   );
 
   return {
@@ -399,133 +396,43 @@ function normalizeCodConfigFromPayload(
   };
 }
 
-async function fetchLandlordCodConfig(
-  runtimeHost: string,
-  productId: number,
-): Promise<CodCheckoutConfigResponse | null> {
-  const normalizedHost = normalizeHost(runtimeHost);
-
-  if (!normalizedHost) {
-    return null;
-  }
-
-  const endpoints = [
-    "/api/storefront/cod/config",
-    "/api/storefront/cod-config",
-  ];
-
-  for (const endpoint of endpoints) {
-    const response = await fetchLandlordJson<unknown>(endpoint, {
-      runtimeHost: normalizedHost,
-      query: { product_id: productId },
-      method: "GET",
-      cache: "no-store",
-    });
-
-    if (!response.ok || !response.data) {
-      continue;
-    }
-
-    const withProductId =
-      typeof response.data === "object" && response.data !== null
-        ? ({
-            ...(response.data as Record<string, unknown>),
-            product_id: productId,
-          } as unknown)
-        : response.data;
-
-    const normalized = normalizeCodConfigFromPayload(withProductId, normalizedHost);
-    if (normalized) {
-      return normalized;
-    }
-  }
-
-  return null;
-}
-
-function buildLocalCodConfig(
-  runtimeHost: string,
-  productSnapshot: CodProductSnapshot | null,
-): CodCheckoutConfigResponse {
-  const settings = getTenantCodSettings(runtimeHost);
-  const { plan, allowed } = resolveAllowedByPlan(
-    { plan_name: settings.plan_name },
-    settings.plan_name,
-  );
-
-  const offers = productSnapshot
-    ? listTenantCodOffers(runtimeHost, {
-        productId: productSnapshot.id,
-        onlyActive: true,
-      })
-    : [];
-
-  const shippingMethods = (settings.allowed_shipping_methods || []).map((code) => ({
-    code,
-    label: code,
-    description: null,
-    price: 0,
-  }));
-
-  return {
-    feature_key: "cash_on_delivery",
-    plan_name: plan,
-    allowed_by_plan: allowed,
-    cod_active: settings.active,
-    available:
-      allowed &&
-      settings.active &&
-      (productSnapshot?.is_saleable ?? true),
-    reason:
-      !allowed
-        ? "plan_not_allowed"
-        : !settings.active
-          ? "cod_inactive"
-          : productSnapshot?.is_saleable === false
-            ? "product_not_saleable"
-            : null,
-    product_allows_cod: true,
-    product_is_stockable: productSnapshot?.is_saleable !== false,
-    title: settings.title,
-    description: settings.description,
-    rules: {
-      countries: settings.countries,
-      min_total: settings.min_total,
-      max_total: settings.max_total,
-      allowed_shipping_methods: settings.allowed_shipping_methods,
-    },
-    fee: {
-      type: settings.fee_type,
-      value: settings.fee_value,
-    },
-    fields: {
-      require_email: settings.require_email,
-      require_whatsapp: settings.require_whatsapp,
-    },
-    modal: {
-      modal_enabled: settings.modal_enabled,
-      modal_cta_text: settings.modal_cta_text,
-      modal_helper_text: settings.modal_helper_text,
-    },
-    product_snapshot: productSnapshot,
-    shipping_methods: shippingMethods,
-    offers,
-  };
+/** Availability/plan decisions must be explicit facts from the canonical backend. */
+function canonicalConfigPayload(payload: unknown, productId: number): Record<string, unknown> {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new StorefrontConnectionUnavailable();
+  const envelope = payload as Record<string, unknown>;
+  const data = Object.hasOwn(envelope, "data") ? envelope.data : envelope;
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw new StorefrontConnectionUnavailable();
+  const value = data as Record<string, unknown>;
+  if (value.feature_key !== "cash_on_delivery" || value.product_id !== productId
+    || typeof value.plan_name !== "string" || !value.plan_name.trim() || value.plan_name.length > 100
+    || ["allowed_by_plan", "cod_active", "available", "product_allows_cod"].some(key => typeof value[key] !== "boolean")
+    || !(typeof value.product_is_stockable === "boolean" || value.product_is_stockable === null)
+    || !(value.reason === null || typeof value.reason === "string" && /^[a-z0-9_:-]{1,120}$/.test(value.reason))
+    || !Object.hasOwn(value, "product_snapshot")) throw new StorefrontConnectionUnavailable();
+  const snapshot = value.product_snapshot;
+  if (snapshot !== null && (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)
+    || Number((snapshot as Record<string, unknown>).id) !== productId)) throw new StorefrontConnectionUnavailable();
+  if (value.available && (!value.allowed_by_plan || !value.cod_active || !value.product_allows_cod
+    || value.product_is_stockable !== true || value.reason !== null)) throw new StorefrontConnectionUnavailable();
+  return value;
 }
 
 export async function resolveCodCheckoutConfig(
   runtimeHost: string,
   productId: number,
 ): Promise<CodCheckoutConfigResponse> {
-  const fromLandlord = await fetchLandlordCodConfig(runtimeHost, productId);
-  if (fromLandlord) {
-    if (!fromLandlord.product_snapshot) {
-      fromLandlord.product_snapshot = await getCodProductSnapshot(productId);
-    }
-
-    return fromLandlord;
+  const payload = canonicalConfigPayload(await fetchNativeCodConfig(runtimeHost, productId), productId);
+  const config = normalizeCodConfigFromPayload(payload);
+  if (!config) throw new StorefrontConnectionUnavailable();
+  // A product metadata read cannot grant availability or replace a backend
+  // denial. It only completes an otherwise confirmed, matching product.
+  if (config.available && !config.product_snapshot) {
+    const snapshot = await getCodProductSnapshot(productId).catch(() => null);
+    if (snapshot?.id === productId) config.product_snapshot = snapshot;
   }
-
-  const productSnapshot = await getCodProductSnapshot(productId);
-  return buildLocalCodConfig(runtimeHost, productSnapshot);
+  if (config.available && !config.product_snapshot) {
+    config.available = false;
+    config.reason ||= "product_snapshot_unavailable";
+  }
+  return config;
 }

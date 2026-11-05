@@ -17,8 +17,9 @@ const text = (tree) => typeof tree === "string" ? tree : Array.isArray(tree) ? t
 const tick = () => new Promise(setImmediate);
 const allowed = [{ method: "fixture-approved", title: "Método autorizado de prueba" }];
 
-function fixture(t, replies, { token = "synthetic-cart-only", cod = null } = {}) {
-  const calls = [], advances = [], codQueries = [];
+function fixture(t, replies, { token = "synthetic-cart-only", cod = null, codState = {}, codFetch } = {}) {
+  const calls = [], advances = [], codQueries = [], codRetries = [];
+  let currentCod = cod, currentCodState = codState;
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   let observer, unsubscribe;
   const dependencies = {
@@ -43,20 +44,28 @@ function fixture(t, replies, { token = "synthetic-cart-only", cod = null } = {})
         }
         return observer.getCurrentResult();
       },
-      useQueries: ({ queries }) => { codQueries.push(queries); return queries.map(() => ({ data: cod, isLoading: false, isFetching: false })); },
+      useQueries: ({ queries }) => {
+        codQueries.push(queries);
+        return queries.map((query) => ({
+          data: currentCod, isLoading: false, isFetching: false, isError: false,
+          ...currentCodState,
+          refetch: () => { codRetries.push(query.queryKey); },
+        }));
+      },
     },
   };
   const output = ts.transpileModule(readFileSync(path.join(root, file), "utf8"), {
     fileName: file, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText;
   const fixtureModule = { exports: {} };
-  new Function("require", "module", "exports", output)(
+  new Function("require", "module", "exports", "fetch", output)(
     (name) => { assert.ok(Object.hasOwn(dependencies, name), `Unexpected dependency ${name}`); return dependencies[name]; },
-    fixtureModule, fixtureModule.exports,
+    fixtureModule, fixtureModule.exports, codFetch || (() => assert.fail("No external COD fetch permitted")),
   );
   t.after(() => { unsubscribe?.(); client.clear(); });
   return {
-    calls, advances, codQueries,
+    calls, advances, codQueries, codRetries,
+    setCod: (value, state = {}) => { currentCod = value; currentCodState = state; },
     render: (props = {}) => fixtureModule.exports.default({ isOpen: true, setIsOpen: (value) => advances.push(value), ...props }),
     refetch: () => observer.refetch(),
   };
@@ -141,4 +150,67 @@ test("product-blocked COD retains its authored disabled method and no cart token
   const absent = fixture(t, [], { token: null });
   assert.equal(assertUnavailable(absent.render(), true).props.disabled, true);
   assert.deepEqual(absent.calls, []);
+});
+
+const codAndCard = [
+  { method: "cashondelivery", title: "Contraentrega" },
+  { method: "card", title: "Tarjeta" },
+];
+
+for (const [label, response] of [
+  ["500", { ok: false, status: 500, json: async () => ({ available: true }) }],
+  ["503", { ok: false, status: 503, json: async () => ({ available: false, reason: "plan_disallows_cod" }) }],
+  ["invalid payload", { ok: true, status: 200, json: async () => ({ error: "sensitive-fixture" }) }],
+  ["invalid JSON", { ok: true, status: 200, json: async () => { throw new SyntaxError("sensitive-fixture"); } }],
+  ["timeout", new Error("synthetic-timeout")],
+]) test(`COD ${label} cannot be interpreted as approved or as a plan rejection`, async (t) => {
+  const h = fixture(t, [{ data: codAndCard }], { codState: { isError: true }, codFetch: async () => {
+    if (response instanceof Error) throw response;
+    return response;
+  } });
+  h.render(); await tick();
+  const tree = h.render({ selectedPayment: "cashondelivery", isOpen: false });
+  await assert.rejects(h.codQueries.at(-1)[0].queryFn());
+  const method = nodes(tree, "PaymentMethod")[0];
+  assert.ok(method, "Other approved methods remain available");
+  assert.equal(method.props.methods[0].disabled, true);
+  assert.equal(method.props.methods[1].disabled, undefined);
+  assert.equal(method.props.selectedPayment, undefined, "Stale COD cannot stay selected");
+  assert.equal(method.props.isOpen, true);
+  assert.match(text(tree), /No pudimos comprobar la disponibilidad de contraentrega/);
+  assert.doesNotMatch(text(tree), /sensitive|plan|synthetic-timeout/);
+  const retry = nodes(tree, "button")[0];
+  assert.equal(retry.props.type, "button");
+  retry.props.onClick();
+  assert.deepEqual(h.codRetries, [["checkout-cod-config", 7]]);
+  assert.deepEqual(h.advances, []);
+  assert.equal(h.calls.length, 1, "COD retry cannot initiate a save or order");
+  h.setCod({ available: true });
+  const recovered = h.render({ selectedPayment: "card", isOpen: false });
+  assert.equal(recovered.type, "PaymentMethod");
+  assert.equal(recovered.props.methods[0].disabled, undefined);
+  assert.equal(recovered.props.selectedPayment, "card");
+  assert.equal(nodes(recovered, "button").length, 0);
+});
+
+test("COD loading does not block a confirmed alternative and clears an unconfirmed COD selection", async (t) => {
+  const h = fixture(t, [{ data: codAndCard }], { codState: { isLoading: true, isFetching: true } });
+  h.render(); await tick();
+  const tree = h.render({ selectedPayment: "cashondelivery", isOpen: false });
+  const method = nodes(tree, "PaymentMethod")[0];
+  assert.ok(method);
+  assert.equal(method.props.methods[0].disabled, true);
+  assert.equal(method.props.methods[1].disabled, undefined);
+  assert.equal(method.props.selectedPayment, undefined);
+  assert.equal(method.props.isOpen, true);
+});
+
+test("a backend COD denial removes only COD, and a stale removed COD selection is cleared", async (t) => {
+  const h = fixture(t, [{ data: codAndCard }], { cod: { available: false, reason: "plan_disallows_cod" } });
+  h.render(); await tick();
+  const tree = h.render({ selectedPayment: "cashondelivery", isOpen: false });
+  assert.deepEqual(tree.props.methods, [codAndCard[1]]);
+  assert.equal(tree.props.selectedPayment, undefined);
+  assert.equal(tree.props.isOpen, true);
+  assert.equal(nodes(tree, "button").length, 0);
 });

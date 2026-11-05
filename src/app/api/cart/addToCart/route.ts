@@ -1,8 +1,8 @@
 import { CREATE_ADD_PRODUCT_IN_CART } from "@/graphql";
 import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
+import { addToCartFailureResponse } from "@/utils/server/add-to-cart-error";
 import { AddToCartOperation } from "@/types/cart/type";
 import { bagistoFetch } from "@/utils/bagisto";
-import { isBagistoError } from "@/utils/type-guards";
 import { getAuthToken } from "@utils/helper";
 
 export async function POST(req: Request) {
@@ -29,23 +29,7 @@ export async function POST(req: Request) {
   } catch (error) {
     const unavailable = storefrontUnavailableResponse(error);
     if (unavailable) return unavailable;
-    if (isBagistoError(error)) {
-      return Response.json(
-        {
-          data: { createAddProductInCart: null },
-          error: error.cause ?? error,
-        },
-        { status: 200 }
-      );
-    }
-
-    return Response.json(
-      {
-        message: "Network error",
-        error: error instanceof Error ? error.message : error,
-      },
-      { status: 500 }
-    );
+    return addToCartFailureResponse(error);
   }
 }
 

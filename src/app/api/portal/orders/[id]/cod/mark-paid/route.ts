@@ -8,7 +8,7 @@ import { getRuntimeHost } from "@/utils/server/tenant-runtime";
 
 export async function POST(
   _req: Request,
-  context: { params: Promise<{ id: string }> | { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     const params = await context.params;

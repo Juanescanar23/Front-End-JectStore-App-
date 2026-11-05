@@ -12,7 +12,7 @@ import { EMAIL_REGEX } from "@utils/constants";
 
 
 
-const Email = () => {
+const Email = ({ isCurrentStep }: { isCurrentStep: boolean }) => {
   const email = getLocalStorage(EMAIL);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -34,16 +34,7 @@ const Email = () => {
 
   return (
     <>
-      {email === "" || typeof email === "object" ? (
-        <form className="mt-5" noValidate onSubmit={handleSubmit(onSubmit)}>
-          <EmailForm
-            register={register}
-            errors={errors}
-            isSubmitting={isSubmitting}
-            isGuest={isGuest}
-          />
-        </form>
-      ) : isOpen ? (
+      {isCurrentStep || email === "" || typeof email === "object" || isOpen ? (
         <form className="mt-5" noValidate onSubmit={handleSubmit(onSubmit)}>
           <EmailForm
             register={register}

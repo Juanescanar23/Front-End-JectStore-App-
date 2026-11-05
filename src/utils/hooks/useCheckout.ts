@@ -187,7 +187,7 @@ export const useCheckout = () => {
     {
       mutationFn: ({ token, ...data }: savePaymentMethodsTypes) =>
         fetchHandler({
-          url: "/checkout/savePayment",
+          url: "checkout/savePayment",
           method: "POST",
           contentType: true,
           body: data,
@@ -236,7 +236,7 @@ export const useCheckout = () => {
   const { mutateAsync: placeOrder, isPending: isPlaceOrder } = useMutation({
     mutationFn: ({ token, ...data }: any) =>
       fetchHandler({
-        url: "/checkout/placeOrder",
+        url: "checkout/placeOrder",
         method: "POST",
         contentType: true,
         body: data,

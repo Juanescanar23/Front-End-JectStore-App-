@@ -18,7 +18,7 @@ import {
 import Link from "next/link";
 import { buildProductWhatsAppUrl, TenantWhatsAppConfig } from "@/utils/whatsapp";
 import CodQuickCheckout from "@/components/cod/CodQuickCheckout";
-import { detectClientLocaleRoot, getStorefrontCopy } from "@/utils/storefront-copy";
+import { resolveLocaleRoot, getStorefrontCopy } from "@/utils/storefront-copy";
 import {
   resolveProductPurchaseState,
   SOLD_OUT_WHATSAPP_HELPER,
@@ -31,6 +31,7 @@ export function ProductDescription({
   totalReview,
   productSwatchReview,
   tenantWhatsApp,
+  localeCode,
 }: {
   product: ProductData;
   slug: string;
@@ -38,6 +39,7 @@ export function ProductDescription({
   totalReview: number;
   productSwatchReview: any;
   tenantWhatsApp: TenantWhatsAppConfig | null;
+  localeCode: string | null;
 }) {
   const priceValue = safePriceValue(product);
   const currencyCode = safeCurrencyCode(product);
@@ -47,7 +49,7 @@ export function ProductDescription({
     ) || {};
   const searchParams = useSearchParams();
   const [userInteracted, setUserInteracted] = useState(false);
-  const localeRoot = detectClientLocaleRoot();
+  const localeRoot = resolveLocaleRoot(localeCode);
   const allowsCheckout = tenantWhatsApp?.allowsCheckout !== false;
 
   const superAttributes = productSwatchReview?.superAttributeOptions

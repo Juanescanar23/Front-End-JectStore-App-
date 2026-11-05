@@ -77,12 +77,18 @@ const Payment: FC<{
           },
         );
 
-        const payload = (await response.json()) as CodConfigResponseLike;
-
         if (!response.ok && response.status !== 403) {
-          return null;
+          throw new Error("No pudimos comprobar la disponibilidad de contraentrega.");
         }
 
+        const payload = (await response.json().catch(() => null)) as CodConfigResponseLike | null;
+        if (
+          !payload ||
+          typeof payload.available !== "boolean" ||
+          (response.status === 403 && payload.available !== false)
+        ) {
+          throw new Error("No pudimos comprobar la disponibilidad de contraentrega.");
+        }
         return payload;
       },
     })),
@@ -91,6 +97,11 @@ const Payment: FC<{
     hasCodMethod &&
     uniqueProductIds.length > 0 &&
     codQueries.some((query) => query.isLoading || query.isFetching);
+  const isCodAvailabilityUnconfirmed =
+    hasCodMethod &&
+    !isCheckingCodAvailability &&
+    (uniqueProductIds.length === 0 ||
+      codQueries.some((query) => query.isError || typeof query.data?.available !== "boolean"));
   const blockedCodConfig = useMemo(
     () =>
       codQueries
@@ -113,7 +124,7 @@ const Payment: FC<{
             return true;
           }
 
-          if (isCheckingCodAvailability) {
+          if (isCheckingCodAvailability || isCodAvailabilityUnconfirmed) {
             return true;
           }
 
@@ -136,6 +147,14 @@ const Payment: FC<{
             };
           }
 
+          if (isCodAvailabilityUnconfirmed) {
+            return {
+              ...method,
+              disabled: true,
+              helperMessage: "Disponibilidad sin confirmar. Vuelve a consultar.",
+            };
+          }
+
           if (!blockedCodConfig) {
             return method;
           }
@@ -154,19 +173,22 @@ const Payment: FC<{
       blockedCodConfig,
       codBlockedByProduct,
       isCheckingCodAvailability,
+      isCodAvailabilityUnconfirmed,
       paymentMethods,
     ],
   );
   const isSelectedCodUnavailable =
     Boolean(selectedPayment) &&
     isCodMethod({ method: String(selectedPayment) }) &&
-    Boolean(blockedCodConfig);
+    !normalizedMethods.some(
+      (method: any) => method.method === selectedPayment && !method.disabled,
+    );
   const effectiveSelectedPayment = isSelectedCodUnavailable
     ? undefined
     : selectedPayment;
   const effectiveIsOpen = isOpen || !effectiveSelectedPayment;
 
-  if ((isLoading && !isFetched) || (hasCodMethod && isCheckingCodAvailability)) {
+  if (isLoading && !isFetched) {
     return <CartCheckoutPageSkeleton />;
   }
 
@@ -191,13 +213,45 @@ const Payment: FC<{
     );
   }
 
-  return (
+  const paymentForm = (
     <PaymentMethod
       methods={normalizedMethods}
       selectedPayment={effectiveSelectedPayment as any}
       isOpen={effectiveIsOpen}
       setIsOpen={setIsOpen}
     />
+  );
+
+  if (!isCodAvailabilityUnconfirmed) {
+    return paymentForm;
+  }
+
+  return (
+    <>
+      {paymentForm}
+      <div className="mt-3">
+        <p role="status" className="text-base text-sf-muted">
+          No pudimos comprobar la disponibilidad de contraentrega. Vuelve a
+          consultar antes de continuar con este método.
+        </p>
+        <button
+          type="button"
+          className="mt-3 min-h-11 text-base text-sf-link underline hover:text-sf-link-hover focus-visible:outline-2 focus-visible:outline-sf-focus focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60"
+          disabled={isCheckingCodAvailability || !token}
+          onClick={() => {
+            if (codQueries.length === 0) {
+              void refetch();
+              return;
+            }
+            codQueries
+              .filter((query) => query.isError || typeof query.data?.available !== "boolean")
+              .forEach((query) => { void query.refetch(); });
+          }}
+        >
+          Volver a consultar
+        </button>
+      </div>
+    </>
   );
 };
 

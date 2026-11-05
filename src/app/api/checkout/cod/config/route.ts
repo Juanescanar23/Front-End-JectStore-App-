@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { resolveCodCheckoutConfig } from "@/utils/server/cod-config";
 import { getRuntimeHost } from "@/utils/server/tenant-runtime";
+import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const productId = Number(url.searchParams.get("product_id"));
 
-    if (!Number.isFinite(productId) || productId <= 0) {
+    if (!Number.isSafeInteger(productId) || productId <= 0) {
       return NextResponse.json(
         {
           error: "`product_id` es obligatorio y debe ser numérico.",
@@ -31,11 +32,13 @@ export async function GET(req: Request) {
 
     return NextResponse.json(config, { status: 200 });
   } catch (error) {
+    const unavailable = storefrontUnavailableResponse(error);
+    if (unavailable) return unavailable;
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Error inesperado",
+        error: "No pudimos consultar la disponibilidad de contraentrega.",
       },
-      { status: 500 },
+      { status: 500, headers: { "Cache-Control": "private, no-store" } },
     );
   }
 }

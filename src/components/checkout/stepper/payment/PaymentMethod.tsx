@@ -48,7 +48,7 @@ export default function PaymentMethod({
       (method: any) => method?.method === data.method
     );
 
-    if (selectedMethod?.disabled) {
+    if (!selectedMethod || selectedMethod.disabled) {
       showToast(
         selectedMethod?.helperMessage ||
           "Este método de pago no está disponible en este momento.",
@@ -148,7 +148,7 @@ export default function PaymentMethod({
 
             <div className="my-6 justify-self-end">
                 <ProceedToCheckout
-                buttonName="Pagar ahora"
+                buttonName="Continuar"
                 pending={isPaymentLoading || isSubmitting}
               />
             </div>
