@@ -368,14 +368,15 @@ export function safeCurrencyCode(product: ProductData): string | undefined {
 }
 
 
-export const useAddressesFromApi = (): {
+export const useAddressesFromApi = (enabled = true): {
   billingAddress: MappedCheckoutAddress | null;
   shippingAddress: MappedCheckoutAddress | null;
+  isLoading: boolean;
 } => {
-  const { data } = useAddress();
+  const { data, isLoading } = useAddress(enabled);
   const address = data?.data?.edges;
   if (!Array.isArray(address))
-    return { billingAddress: null, shippingAddress: null };
+    return { billingAddress: null, shippingAddress: null, isLoading };
 
   const billingNode = address.find((a) => a.node?.addressType === "cart_billing")
     ?.node;
@@ -405,6 +406,7 @@ export const useAddressesFromApi = (): {
   return {
     billingAddress: mapNode(billingNode),
     shippingAddress: mapNode(shippingNode),
+    isLoading,
   };
 };
 

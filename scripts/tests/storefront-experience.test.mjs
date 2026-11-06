@@ -323,6 +323,7 @@ const componentMocks = {
   react: { Suspense: "Suspense" }, "react/jsx-runtime": { jsx: element, jsxs: element, Fragment: "Fragment" },
   "@/components/common/StorefrontLink": { default: "a", __esModule: true },
   "./ImageCarousel": { default: "ImageCarousel", __esModule: true }, "./ProductCarousel": { default: "ProductCarousel", __esModule: true },
+  "./CreativeBannerCarousel": { default: "CreativeBannerCarousel", __esModule: true },
   "./CategoryCarousel": { default: "CategoryCarousel", __esModule: true }, "@/components/layout/navbar/MobileSearch": { MobileSearchBar: "MobileSearchBar" },
   "@/components/common/skeleton/CategoryCarouselSkeleton": { CategoryCarouselSkeleton: "CategorySkeleton" },
   "./StoreIntro": { default: "StoreIntro", __esModule: true },

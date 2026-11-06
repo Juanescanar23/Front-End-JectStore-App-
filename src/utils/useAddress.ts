@@ -5,12 +5,12 @@ import { getCartToken } from "./getCartToken";
 import { fetchHandler } from "./fetch-handler";
 
 
-export const useAddress = () => {
+export const useAddress = (enabled = true) => {
   const token = getCartToken();
 
   return useQuery({
     queryKey: ["address", token],
-    enabled: !!token,
+    enabled: !!token && enabled,
     queryFn: () =>
       fetchHandler({
         url: "checkout/saveAddress",

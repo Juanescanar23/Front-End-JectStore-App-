@@ -51,7 +51,7 @@ function contact({ saved = "owner@example.com", pending = false } = {}) {
       },
       formState: state,
     }) },
-    "next/navigation": { useRouter: () => ({ push: (url) => routes.push(url) }) },
+    "@/utils/checkout-step": { updateCheckoutStep: (...args) => routes.push(args) },
     "@/store/local-storage": { EMAIL: "email", getLocalStorage: () => saved, setLocalStorage: (...args) => writes.push(args) },
     "next/link": interop("Link"),
     "@components/common/form/Input": interop("InputText"),
@@ -80,7 +80,7 @@ test("saved email on the active step renders the existing prefilled validated fo
   assert.deepEqual(h.routes, []);
   await form.props.onSubmit({ email: "owner@example.com" });
   assert.deepEqual(h.writes, [["email", "owner@example.com"]]);
-  assert.deepEqual(h.routes, ["/checkout?step=address"]);
+  assert.deepEqual(h.routes, [["address", "push"]]);
 });
 
 test("completed saved contact stays a summary, while Cambiar retains the original edit form", () => {

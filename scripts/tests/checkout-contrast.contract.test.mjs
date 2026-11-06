@@ -90,7 +90,7 @@ test("checkout uses an opt-in themed surface without descendant color overrides 
       for (const unchanged of ["rounded-[28px]", "px-4", "py-4", "sm:px-6", "lg:px-8"]) {
         assert.ok(tokens(panel[0]).has(unchanged), `Preserve checkout presentation: ${unchanged}`);
       }
-      assert.equal(nodes(panel[0], (node) => node.type === (loading ? "CheckoutSkeleton" : "Stepper")).length, 1);
+      assert.equal(nodes(panel[0], (node) => node.type === (loading && step !== "email" ? "CheckoutSkeleton" : "Stepper")).length, 1);
       assert.equal(nodes(panel[0], (node) => node.type === "CheckoutCart").length, 0);
     }
   }
@@ -256,7 +256,7 @@ function hydrationMarkup({ phase = "server", guest = false, email = null, cached
     "@/utils/hooks/useCartDetail": { useCartDetail() { const result = useCartDetail(); state.isLoading = result.isLoading; return result; } },
     "./checkout-cart/CheckoutCart": interop(() => React.createElement("div", { "data-offline-summary": true })),
     "./stepper": interop(Stepper),
-    "@utils/helper": { useAddressesFromApi() { useAddress(); return { billingAddress: null, shippingAddress: null }; } },
+    "@utils/helper": { useAddressesFromApi(enabled) { reads.addressEnabled = enabled; useAddress(enabled); return { billingAddress: null, shippingAddress: null }; } },
     "@/utils/hooks/useScrollTo": { useScrollToTop() {} },
     "next/navigation": { useSearchParams: () => new URLSearchParams({ step }) },
     "@/utils/checkout-step": load("src/utils/checkout-step.ts", {}, null),
@@ -288,10 +288,15 @@ test("SSR and initial hydration snapshots match with a cold guest cookie, no coo
   }
 });
 
-test("after hydration the existing guest loading gate remains until cart data arrives", () => {
-  const pending = hydrationMarkup({ phase: "client", guest: true, email: "synthetic@example.invalid" });
+test("contact is interactive before the cart resolves, but later steps remain gated", () => {
+  const contact = hydrationMarkup({ phase: "client", guest: true, email: "synthetic@example.invalid" });
+  assert.match(contact.html, /<input[^>]*name="email"/);
+  assert.doesNotMatch(contact.html, /data-offline-summary/);
+  assert.equal(contact.reads.addressEnabled, false);
+  const pending = hydrationMarkup({ phase: "client", guest: true, email: "synthetic@example.invalid", step: "address" });
   assert.match(pending.html, /Cargando\.\.\./);
   assert.doesNotMatch(pending.html, /Finaliza tu compra|synthetic@example/);
+  assert.equal(pending.reads.addressEnabled, true);
   assert.equal(pending.reads.storage, 0);
   const ready = hydrationMarkup({ phase: "client", guest: true, cached: true, email: "synthetic@example.invalid", step: "address" });
   assert.match(ready.html, /Finaliza tu compra/);

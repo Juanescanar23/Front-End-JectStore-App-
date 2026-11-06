@@ -1,17 +1,8 @@
 import "server-only";
 
 import { headers } from "next/headers";
-import { GET_DEFAULT_CHANNEL } from "@/graphql";
-import { graphqlRequest } from "@/lib/graphql-fetch";
+import { getStorefrontDefaultChannel } from "./storefront-default-channel";
 import { resolveLocaleRoot } from "@/utils/storefront-copy";
-
-type DefaultChannelResponse = {
-  getDefaultChannel?: {
-    defaultLocale?: {
-      code?: string | null;
-    } | null;
-  } | null;
-};
 
 export const normalizeLocaleCode = (value?: string | null) => {
   if (!value) return "";
@@ -42,18 +33,8 @@ export async function getStorefrontLocaleCode(): Promise<string | undefined> {
   }
 
   try {
-    const data = await graphqlRequest<DefaultChannelResponse>(
-      GET_DEFAULT_CHANNEL,
-      undefined,
-      {
-        tags: ["channel"],
-        life: "hours",
-      },
-    );
-
-    const channelLocale = normalizeLocaleCode(
-      data?.getDefaultChannel?.defaultLocale?.code,
-    );
+    const channel = await getStorefrontDefaultChannel();
+    const channelLocale = normalizeLocaleCode(channel?.defaultLocale?.code);
 
     if (channelLocale) {
       return channelLocale;

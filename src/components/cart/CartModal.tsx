@@ -46,12 +46,12 @@ export default function CartModal({
 }) {
   const { isLoading } = useCartDetail();
   const cartDetail = useAppSelector((state) => state.cartDetail);
-  const { billingAddress } = useAddressesFromApi();
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { billingAddress, isLoading: loadingAddress } = useAddressesFromApi(isOpen);
   const cart = Array.isArray(cartDetail?.cart?.items?.edges)
     ? cartDetail?.cart?.items?.edges
     : [];
   const cartObj: any = cartDetail?.cart ?? {};
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   const handleOpen = () => {
@@ -238,6 +238,7 @@ export default function CartModal({
                               isSelectShipping={(cartObj?.selectedShippingRate != null)}
                               isSeclectAddress={isObject(billingAddress)}
                               isSelectPayment={(cartObj?.paymentMethod != null)}
+                              loadingAddress={loadingAddress}
                             />
                           </form>
 
@@ -413,6 +414,7 @@ export default function CartModal({
                               isSelectShipping={(cartObj?.selectedShippingRate != null)}
                               isSeclectAddress={isObject(billingAddress)}
                               isSelectPayment={(cartObj?.paymentMethod != null)}
+                              loadingAddress={loadingAddress}
                             />
                           </form>
 
@@ -450,6 +452,7 @@ function CheckoutButton(
     isSeclectAddress,
     isSelectShipping,
     isSelectPayment,
+    loadingAddress,
   }: {
     cartDetails: Array<any>;
     isGuest: boolean;
@@ -457,9 +460,11 @@ function CheckoutButton(
     isSeclectAddress: boolean;
     isSelectShipping: boolean;
     isSelectPayment: boolean;
+    loadingAddress: boolean;
   }
 ) {
   const { pending } = useFormStatus();
+  const waiting = pending || loadingAddress;
   const email = isEmail;
 
   return (
@@ -479,13 +484,14 @@ function CheckoutButton(
       <button
         className={clsx(
           "block w-full rounded-full bg-blue-600 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100",
-          pending ? "cursor-wait" : "cursor-pointer"
+          waiting ? "cursor-wait" : "cursor-pointer"
         )}
-        disabled={pending}
+        disabled={waiting}
+        aria-busy={waiting}
         type="submit"
       >
         {
-          pending ? <LoadingDots className="bg-white" /> :
+          waiting ? <LoadingDots className="bg-white" /> :
             "Continuar con el pago"
         }
       </button>

@@ -1,21 +1,8 @@
 import "server-only";
 
 import { cache } from "react";
-import { GET_DEFAULT_CHANNEL, graphqlRequest } from "@/graphql";
+import { getStorefrontDefaultChannel } from "./storefront-default-channel";
 import { getRequestBaseUrl } from "@/utils/server/request-base-url";
-
-type DefaultChannelSeoResponse = {
-  getDefaultChannel?: {
-    name?: string | null;
-    description?: string | null;
-    logoUrl?: string | null;
-    faviconUrl?: string | null;
-    homeSeo?: {
-      metaTitle?: string | null;
-      metaDescription?: string | null;
-    } | null;
-  } | null;
-};
 
 export type StorefrontSeoPayload = {
   title?: string;
@@ -47,16 +34,7 @@ export const getStorefrontSeoPayload = cache(async (): Promise<StorefrontSeoPayl
   const baseUrl = await getRequestBaseUrl();
 
   try {
-    const data = await graphqlRequest<DefaultChannelSeoResponse>(
-      GET_DEFAULT_CHANNEL,
-      undefined,
-      {
-        tags: ["channel"],
-        life: "hours",
-      },
-    );
-
-    const channel = data?.getDefaultChannel;
+    const channel = await getStorefrontDefaultChannel();
     if (!channel) return null;
 
     const siteName = normalizeText(channel.name);
