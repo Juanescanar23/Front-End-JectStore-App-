@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { GET_DEFAULT_CHANNEL, graphqlRequest } from "@/graphql";
 import { getRequestBaseUrl } from "@/utils/server/request-base-url";
 
@@ -42,7 +43,7 @@ const toAbsoluteUrl = (value: string | undefined, baseUrl?: string | null) => {
   return `${baseUrl}${normalizedPath}`;
 };
 
-export async function getStorefrontSeoPayload(): Promise<StorefrontSeoPayload | null> {
+export const getStorefrontSeoPayload = cache(async (): Promise<StorefrontSeoPayload | null> => {
   const baseUrl = await getRequestBaseUrl();
 
   try {
@@ -82,4 +83,4 @@ export async function getStorefrontSeoPayload(): Promise<StorefrontSeoPayload | 
     console.error("Unable to resolve storefront SEO payload:", error);
     return null;
   }
-}
+});

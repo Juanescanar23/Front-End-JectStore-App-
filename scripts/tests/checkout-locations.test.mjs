@@ -225,12 +225,12 @@ test("real hook success callback navigates only on explicit success and shows va
     const notices = [], navigation = [], invalidations = [];
     const callback = arrowFromSource("src/utils/hooks/useCheckout.ts", "saveAddressToCheckout", {
       isCheckoutAddressSaveSuccessful: helper.isCheckoutAddressSaveSuccessful,
-      showToast: (...args) => notices.push(args), router: { replace: (value) => navigation.push(value) },
+      showToast: (...args) => notices.push(args), updateCheckoutStep: (...args) => navigation.push(args),
       queryClient: { invalidateQueries: (value) => invalidations.push(value) },
     }, "onSuccess");
     callback(result);
     if (result === addressResult) {
-      assert.deepEqual(navigation, ["/checkout?step=shipping"]);
+      assert.deepEqual(navigation, [["shipping", "replace"]]);
       assert.equal(invalidations.length, 2);
       assert.equal(notices[0][1], "success");
     } else {

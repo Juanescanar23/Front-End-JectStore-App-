@@ -12,6 +12,7 @@ import { ORDER_ID, IS_GUEST } from "@/utils/constants";
 import { isCheckoutAddressSaveSuccessful } from "@/utils/checkout-address-location";
 import { useRef } from "react";
 import { createCheckoutSubmissionGuard } from "@/utils/checkout-submit";
+import { updateCheckoutStep } from "@/utils/checkout-step";
 
 export interface InputDataTypes {
   input: {
@@ -80,7 +81,7 @@ export const useCheckout = () => {
           showToast(responseData?.message as string, "success");
           queryClient.invalidateQueries({ queryKey: ["cart-detail"] });
           queryClient.invalidateQueries({ queryKey: ["address"] });
-          router.replace("/checkout?step=shipping");
+          updateCheckoutStep("shipping", "replace");
         } else {
           showToast(response?.error?.message || "No pudimos guardar la dirección. Revisa los datos e inténtalo nuevamente.", "warning");
         }
@@ -162,7 +163,7 @@ export const useCheckout = () => {
       if (isObject(responseData)) {
         showToast(responseData?.message as string, "success");
         queryClient.invalidateQueries({ queryKey: ["cart-detail"] });
-        router.replace("/checkout?step=payment");
+        updateCheckoutStep("payment", "replace");
       } else {
         showToast(response?.error?.message as string, "warning");
       }
@@ -213,7 +214,7 @@ export const useCheckout = () => {
             showToast("La URL de pago recibida no es segura.", "warning");
           }
 
-          router.replace("/checkout?step=review");
+          updateCheckoutStep("review", "replace");
         } else {
           showToast(response?.error?.message as string, "warning");
         }

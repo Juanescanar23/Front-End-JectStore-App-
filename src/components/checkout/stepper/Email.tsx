@@ -1,12 +1,11 @@
 "use client";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EMAIL, getLocalStorage, setLocalStorage } from "@/store/local-storage";
 import Link from "next/link";
 import InputText from "@components/common/form/Input";
 import { ProceedToCheckout } from "./ProceedToCheckout";
-import { delay } from "@utils/helper";
+import { updateCheckoutStep } from "@/utils/checkout-step";
 import { EmailFormProps, EmailFormValues } from "../type";
 import { EMAIL_REGEX } from "@utils/constants";
 
@@ -15,7 +14,6 @@ import { EMAIL_REGEX } from "@utils/constants";
 const Email = ({ isCurrentStep }: { isCurrentStep: boolean }) => {
   const email = getLocalStorage(EMAIL);
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
   const isGuest = true;
 
   const {
@@ -26,10 +24,10 @@ const Email = ({ isCurrentStep }: { isCurrentStep: boolean }) => {
     defaultValues: { email },
   });
 
-  const onSubmit = async (data: EmailFormValues) => {
+  const onSubmit = (data: EmailFormValues) => {
     setLocalStorage(EMAIL, data?.email);
-    await delay(200);
-    router.push("/checkout?step=address");
+    setIsOpen(false);
+    updateCheckoutStep("address", "push");
   };
 
   return (

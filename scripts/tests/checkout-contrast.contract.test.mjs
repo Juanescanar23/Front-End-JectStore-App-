@@ -63,6 +63,8 @@ function checkout(step, isLoading = false) {
     "./stepper": { default: "Stepper", __esModule: true },
     "@utils/helper": { useAddressesFromApi: () => ({ billingAddress: null, shippingAddress: null }) },
     "@/utils/hooks/useScrollTo": { useScrollToTop() {} },
+    "next/navigation": { useSearchParams: () => null },
+    "@/utils/checkout-step": load("src/utils/checkout-step.ts", {}, null),
     "./checkout-theme.css": {},
   });
   return component({ step });
@@ -160,6 +162,7 @@ function checkoutComponent(file, { email = "qa@example.invalid", open, pending =
     "next/link": interop(({ children, ...props }) => React.createElement("a", props, children)),
     "@/components/common/StorefrontLink": interop(({ children, ...props }) => React.createElement("a", props, children)),
     "next/navigation": { useRouter: () => ({ push() {} }) },
+    "@/utils/checkout-step": { updateCheckoutStep() {} },
     "@/store/local-storage": { EMAIL: "email", getLocalStorage: () => email, setLocalStorage() {} },
     "@/store/slices/cart-slice": { setCheckoutAddresses: (value) => value },
     "@/utils/type-guards": { isObject: (value) => Boolean(value) && typeof value === "object" },
@@ -184,7 +187,7 @@ function htmlFor(file, props, options) {
 // React's SSR renderer uses getServerSnapshot, as does the first hydration
 // render. The client-phase fixture selects getSnapshot explicitly; browser
 // hydration itself is verified separately by the native-browser QA gate.
-function hydrationMarkup({ phase = "server", guest = false, email = null, cached = false, blockedStorage = false } = {}) {
+function hydrationMarkup({ phase = "server", guest = false, email = null, cached = false, blockedStorage = false, step = "email" } = {}) {
   const reads = { storage: 0, upstream: 0, writes: 0 };
   const proof = "synthetic-offline-cart-proof";
   const envelope = encodeURIComponent(`${Buffer.from("{}").toString("base64")}.${Buffer.from(encodeURIComponent(JSON.stringify({ sessionToken: proof }))).toString("base64")}.guest`);
@@ -221,7 +224,7 @@ function hydrationMarkup({ phase = "server", guest = false, email = null, cached
   }, "useAddress");
   const Email = load("src/components/checkout/stepper/Email.tsx", {
     ...sharedReact, "react-hook-form": hookForm,
-    "next/navigation": { useRouter: () => ({ push() { reads.writes++; } }) },
+    "@/utils/checkout-step": { updateCheckoutStep() { reads.writes++; } },
     "@/store/local-storage": storage,
     "next/link": interop(({ children, ...props }) => React.createElement("a", props, children)),
     "@components/common/form/Input": interop(inputComponent),
@@ -255,6 +258,8 @@ function hydrationMarkup({ phase = "server", guest = false, email = null, cached
     "./stepper": interop(Stepper),
     "@utils/helper": { useAddressesFromApi() { useAddress(); return { billingAddress: null, shippingAddress: null }; } },
     "@/utils/hooks/useScrollTo": { useScrollToTop() {} },
+    "next/navigation": { useSearchParams: () => new URLSearchParams({ step }) },
+    "@/utils/checkout-step": load("src/utils/checkout-step.ts", {}, null),
     "./checkout-theme.css": {},
   });
   const client = new reactQuery.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -288,7 +293,7 @@ test("after hydration the existing guest loading gate remains until cart data ar
   assert.match(pending.html, /Cargando\.\.\./);
   assert.doesNotMatch(pending.html, /Finaliza tu compra|synthetic@example/);
   assert.equal(pending.reads.storage, 0);
-  const ready = hydrationMarkup({ phase: "client", guest: true, cached: true, email: "synthetic@example.invalid" });
+  const ready = hydrationMarkup({ phase: "client", guest: true, cached: true, email: "synthetic@example.invalid", step: "address" });
   assert.match(ready.html, /Finaliza tu compra/);
   assert.match(ready.html, /synthetic@example.invalid/);
   assert.doesNotMatch(ready.html, /<form\b|Cargando\.\.\./);
@@ -301,7 +306,7 @@ test("after hydration absent email keeps its existing form and saved email keeps
     assert.match(empty.html, /<input[^>]*name="email"/);
     assert.doesNotMatch(empty.html, />Cambiar<\/button>/);
   }
-  const saved = hydrationMarkup({ phase: "client", email: "synthetic@example.invalid" });
+  const saved = hydrationMarkup({ phase: "client", email: "synthetic@example.invalid", step: "address" });
   assert.match(saved.html, /synthetic@example.invalid/);
   assert.match(saved.html, />Cambiar<\/button>/);
   assert.doesNotMatch(saved.html, /<form\b/);

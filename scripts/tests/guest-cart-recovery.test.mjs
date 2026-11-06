@@ -304,8 +304,8 @@ test("the existing Add BFF preserves the server session/tenant authority and nev
   const route = load("src/app/api/cart/addToCart/route.ts", {
     "@/graphql": { CREATE_ADD_PRODUCT_IN_CART: "synthetic-query" },
     "@/utils/server/storefront-unavailable": { storefrontUnavailableResponse: () => null },
+    "@/utils/server/add-to-cart-error": load("src/utils/server/add-to-cart-error.ts", { "server-only": {} }),
     "@/utils/bagisto": { bagistoFetch: async options => { calls.push(options); return { body: success() }; } },
-    "@/utils/type-guards": { isBagistoError: () => false },
     "@utils/helper": { getAuthToken: request => request.headers.get("authorization")?.slice(7) },
   }).POST;
   const response = await route(new Request("https://synthetic-tenant-a.test/api/cart/addToCart", {

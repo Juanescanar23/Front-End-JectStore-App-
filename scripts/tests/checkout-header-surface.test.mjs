@@ -59,11 +59,11 @@ test("real checkout header has no boxed background or radius in either theme, wi
     const wrapper = header.match(/<div\b([^>]*)>/);
     assert.ok(wrapper);
     const classes = wrapper[1].match(/\bclass="([^"]*)"/)?.[1];
-    assert.equal(classes, "mt-3 px-4 py-5 sm:px-5 lg:px-0 lg:py-0");
+    assert.equal(classes, "mt-0 px-0 py-2 sm:mt-3 sm:px-5 sm:py-5 lg:px-0 lg:py-0");
     assert.doesNotMatch(classes, /(?:^|\s)(?:[^\s:]+:)*(?:bg-|rounded|border|shadow)/);
     assert.doesNotMatch(wrapper[1], /\bstyle=/);
-    assert.match(header, /^<header class="pb-6">/);
-    assert.match(header, /class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"/);
+    assert.match(header, /^<header class="pb-3 sm:pb-6">/);
+    assert.match(header, /class="flex flex-col gap-2 sm:gap-4 sm:flex-row sm:items-start sm:justify-between"/);
   }
 });
 

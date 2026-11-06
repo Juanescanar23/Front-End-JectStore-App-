@@ -8,6 +8,8 @@ import Stepper from "./stepper";
 import { useState, useEffect, useSyncExternalStore } from 'react';
 import { useAddressesFromApi } from "@utils/helper";
 import { useScrollToTop } from "@/utils/hooks/useScrollTo";
+import { useSearchParams } from "next/navigation";
+import { resolveCheckoutStep } from "@/utils/checkout-step";
 import "./checkout-theme.css";
 
 
@@ -21,6 +23,8 @@ const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
 const CheckOut = ({ step }: CheckOutProps) => {
+  const searchParams = useSearchParams();
+  const currentStep = resolveCheckoutStep(searchParams ? searchParams.get("step") : step);
   // Cookies and localStorage are unavailable in SSR. Keep the first hydration
   // render identical before mounting the browser-dependent checkout steps.
   const hydrated = useSyncExternalStore(subscribeToHydration, getClientSnapshot, getServerSnapshot);
@@ -54,7 +58,7 @@ const CheckOut = ({ step }: CheckOutProps) => {
           ) : (
             <Stepper
               billingAddress={billingAddress}
-              currentStep={step}
+              currentStep={currentStep}
               selectedPayment={selectedPayment}
               selectedPaymentTitle={selectedPaymentTitle}
               selectedShippingRate={selectedShippingRate}

@@ -25,6 +25,7 @@ export default async function Navbar({
     slug: string;
   }> = [];
 
+  const brandingRequest = getStorefrontSeoPayload();
   try {
     if (!editorial?.menu_links.length) {
     const data = await graphqlRequest<any>(
@@ -52,7 +53,7 @@ export default async function Navbar({
     console.error("Unable to resolve navbar categories:", error);
   }
 
-  const branding = await getStorefrontSeoPayload();
+  const branding = await brandingRequest;
   const logoSrc = editorial?.logo_url || branding?.image;
   const logoAlt = editorial?.brand_name || branding?.siteName || branding?.title || "JectStore";
 
