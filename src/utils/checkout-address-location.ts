@@ -15,6 +15,27 @@ export const checkoutCountryCode = (value: unknown): string => {
   return /^[A-Z]{2}$/.test(code) ? code : "";
 };
 
+const CITY_MAX_LENGTH = 255;
+const CITY_START = /^[\p{L}\p{Nd}]/u;
+const CITY_LETTER = /[\p{Lu}\p{Ll}\p{Lt}\p{Lo}]/u;
+const CITY_UNSUPPORTED = /[^\p{L}\p{M}\p{Nd}\p{Zs}\p{Pd}.'’,()·・\u200c\u200d]/u;
+const CITY_DETACHED_MARK = /(?:^|[^\p{L}\p{M}])\p{M}/u;
+const CITY_DETACHED_JOINER = /(?:^|[^\p{L}\p{M}])[\u200c\u200d]|[\u200c\u200d](?!\p{L})/u;
+
+/** Keep the spelling (including accents and word joiners), but use one canonical Unicode form. */
+export const normalizeCheckoutCity = (value: unknown): string =>
+  typeof value === "string" ? value.normalize("NFC").replace(/^\p{Zs}+|\p{Zs}+$/gu, "") : "";
+
+export function isValidCheckoutCity(value: unknown): boolean {
+  const city = normalizeCheckoutCity(value);
+  return Array.from(city).length <= CITY_MAX_LENGTH
+    && CITY_START.test(city)
+    && CITY_LETTER.test(city)
+    && !CITY_UNSUPPORTED.test(city)
+    && !CITY_DETACHED_MARK.test(city)
+    && !CITY_DETACHED_JOINER.test(city);
+}
+
 export function isCanonicalCheckoutStatesPayload(value: unknown): boolean {
   const envelope = record(value);
   if (!Object.hasOwn(envelope, "data")) return false;
