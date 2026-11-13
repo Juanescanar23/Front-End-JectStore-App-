@@ -11,7 +11,7 @@ import { ProceedToCheckout } from "./ProceedToCheckout";
 import CheckBox from "@components/theme/ui/element/Checkbox";
 import { useDispatch } from "react-redux";
 import { setCheckoutAddresses } from "@/store/slices/cart-slice";
-import { checkoutCountryCode, checkoutLocationAfterCountryChange, checkoutLocationError, checkoutLocationForReset, checkoutRegionCode, isCheckoutAddressSaveSuccessful, type CheckoutLocations } from "@/utils/checkout-address-location";
+import { checkoutCountryCode, checkoutLocationAfterCountryChange, checkoutLocationError, checkoutLocationForReset, checkoutRegionCode, isCheckoutAddressSaveSuccessful, isValidCheckoutCity, normalizeCheckoutCity, type CheckoutLocations } from "@/utils/checkout-address-location";
 
 
 export const GuestAddAdressForm: FC<{
@@ -149,8 +149,8 @@ export const GuestAddAdressForm: FC<{
 
   const addGuestAddress = async (data: any) => {
     if (isLoadingToSave || locationsLoading || locationsError) return;
-    const billing = data?.billing;
-    const shipping = data?.shipping;
+    const billing = { ...data.billing, city: normalizeCheckoutCity(data.billing.city) };
+    const shipping = { ...data.shipping, city: normalizeCheckoutCity(data.shipping.city) };
 
     const useForShipping = Boolean(data.useForShipping);
     const shippingSource = useForShipping ? billing : shipping;
@@ -479,10 +479,7 @@ export const GuestAddAdressForm: FC<{
         <InputText
           {...register("billing.city", {
             required: "La ciudad es obligatoria",
-            pattern: {
-              value: IS_VALID_INPUT,
-              message: "Ciudad inválida",
-            },
+            validate: (value) => isValidCheckoutCity(value) || "Escribe un nombre de ciudad válido",
           })}
           className="col-span-6 xxs:col-span-3 mb-4"
           errorMsg={errors?.billing?.city?.message}
@@ -598,10 +595,7 @@ export const GuestAddAdressForm: FC<{
           <InputText
             {...register("shipping.city", {
               required: "La ciudad es obligatoria",
-              pattern: {
-                value: IS_VALID_INPUT,
-                message: "Ciudad inválida",
-              },
+              validate: (value) => isValidCheckoutCity(value) || "Escribe un nombre de ciudad válido",
             })}
             className="col-span-3 mb-4"
             errorMsg={errors?.shipping?.city?.message}
