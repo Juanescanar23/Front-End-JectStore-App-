@@ -1,6 +1,6 @@
 import {MainProvider} from "./MainProvider";
 import { StorefrontCurrencyProvider } from "./StorefrontCurrencyProvider";
-import { getStorefrontCurrencyCode } from "@/utils/server/storefront-currency";
+import { getStorefrontMoneyContext } from "@/utils/server/storefront-currency";
 
 interface AppWrapperProps {
   children: React.ReactNode;
@@ -9,9 +9,9 @@ interface AppWrapperProps {
 
 async function AppWrapper({ children }: AppWrapperProps) {
   // Missing metadata must not relabel an amount or make the entire shop fail.
-  const currencyCode = await getStorefrontCurrencyCode().catch(() => null);
+  const money = await getStorefrontMoneyContext().catch(() => null);
   return (
-        <StorefrontCurrencyProvider currencyCode={currencyCode}>
+        <StorefrontCurrencyProvider currencyCode={money?.currencyCode ?? null} locale={money?.locale}>
           <MainProvider>
             {children}
           </MainProvider>

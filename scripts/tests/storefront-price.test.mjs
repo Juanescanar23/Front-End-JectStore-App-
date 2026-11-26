@@ -23,7 +23,12 @@ function sourceLoader({ locale = "en-US", mocks = {} } = {}) {
   const cache = new Map();
   // Model different host/browser default locales without changing global Intl.
   // Explicit locales still use the actual runtime formatter.
-  const fixtureIntl = { NumberFormat: function NumberFormat(locales, options) { return new Intl.NumberFormat(locales ?? locale, options); } };
+  const fixtureIntl = {
+    Locale: Intl.Locale,
+    NumberFormat: function NumberFormat(locales, options) {
+      return new Intl.NumberFormat(locales ?? locale, options);
+    },
+  };
   const load = (relative) => {
     const candidate = path.isAbsolute(relative) ? relative : path.join(root, relative);
     const file = [candidate, `${candidate}.ts`, `${candidate}.tsx`].find((name) => existsSync(name));
@@ -50,11 +55,11 @@ function sourceLoader({ locale = "en-US", mocks = {} } = {}) {
   return load;
 }
 
-function priceMarkup({ amount = "3499000.00", currencyCode = "COP", locale = "en-US", context, ...props } = {}) {
+function priceMarkup({ amount = "3499000.00", currencyCode = "COP", locale = "en-US", context, storeLocale, ...props } = {}) {
   const load = sourceLoader({ locale });
   const { Price } = load(priceFile);
   const element = React.createElement(Price, { amount, currencyCode, className: "existing-price-class", ...props });
-  const tree = context === undefined ? element : React.createElement(load(providerFile).StorefrontCurrencyProvider, { currencyCode: context }, element);
+  const tree = context === undefined ? element : React.createElement(load(providerFile).StorefrontCurrencyProvider, { currencyCode: context, locale: storeLocale }, element);
   return renderToStaticMarkup(tree);
 }
 
@@ -85,6 +90,45 @@ test("COP SSR and client-equivalent initial renders agree even when their defaul
   const clientEquivalent = priceMarkup({ locale: "de-DE", amount: "3499000.00" });
   assert.equal(server, clientEquivalent);
   assert.equal(text(clientEquivalent), "$3,499,000");
+
+  const regional = { context: "COP", storeLocale: "es-CO", amount: "5636000" };
+  const regionalServer = priceMarkup({ ...regional, locale: "en-US" });
+  const regionalClient = priceMarkup({ ...regional, locale: "de-DE" });
+  assert.equal(regionalServer, regionalClient);
+  assert.equal(text(regionalClient), "$\u00a05.636.000");
+});
+
+test("regional prices match the v3 Laravel money fixtures and distinguish USD by store country", () => {
+  const { formatStorefrontPrice, regionalMoneyLocale } = sourceLoader()("src/utils/storefront-money.ts");
+  const cases = [
+    ["es-CO", "COP", 5636000, "$\u00a05.636.000"],
+    ["es-CO", "COP", 1250.5, "$\u00a01.251"],
+    ["es-CO", "COP", -1250.5, "-$\u00a01.251"],
+    ["es-CO", "COP", 0, "$\u00a00"],
+    ["es-MX", "MXN", 1250.5, "$1,250.50"],
+    ["es-MX", "MXN", 5636000, "$5,636,000.00"],
+    ["es-US", "USD", 1250.5, "$1,250.50"],
+    ["en-US", "USD", 1250.5, "$1,250.50"],
+    ["es-PE", "PEN", 1250.5, "S/\u00a01,250.50"],
+    ["es-AR", "ARS", 1250.5, "$\u00a01.250,50"],
+    ["es-DO", "DOP", 1250.5, "RD$1,250.50"],
+    ["es-DO", "USD", 1250.5, "US$1,250.50"],
+    ["en-CA", "CAD", 1250.5, "$1,250.50"],
+    ["es-ES", "EUR", 1250.5, "1.250,50\u00a0€"],
+    ["es-ES", "EUR", 5636000, "5.636.000,00\u00a0€"],
+    ["es-MX", "MXN", 999.995, "$1,000.00"],
+    ["es-EC", "USD", 1250.5, "$1.250,50"],
+    ["es-PA", "USD", 1250.5, "$1,250.50"],
+    ["es-SV", "USD", 1250.5, "$1,250.50"],
+    ["es-PR", "USD", 1250.5, "$1,250.50"],
+    ["es-CA", "CAD", 1250.5, "$1,250.50"],
+  ];
+  for (const [locale, currency, amount, expected] of cases) {
+    assert.equal(formatStorefrontPrice(String(amount), currency, regionalMoneyLocale(locale)), expected, locale + "/" + currency);
+  }
+  for (const invalid of [null, "es", "es-419", "invalid tag"]) {
+    assert.equal(regionalMoneyLocale(invalid), null);
+  }
 });
 
 test("actual provider supplies the channel unit, explicit currency wins, and explicit unknown never inherits", () => {
@@ -105,9 +149,9 @@ test("actual provider supplies the channel unit, explicit currency wins, and exp
 
 test("server wrapper uses verified experience currency first and isolates legacy/new channel contexts", async () => {
   const results = await Promise.all([
-    { host: "existing-cop.test", experience: { currency: "COP" }, channel: "USD", expectedQueries: 0, expected: "$3,499,000" },
-    { host: "new-mxn.test", experience: null, channel: "MXN", expectedQueries: 1, expected: baseline("3499000.00", "MXN") },
-    { host: "existing-usd.test", experience: null, channel: "USD", expectedQueries: 1, expected: baseline("3499000.00", "USD") },
+    { host: "existing-cop.test", experience: { currency: "COP", locale: "es_CO" }, channel: "USD", channelLocale: "en-US", expectedQueries: 0, expected: "$\u00a03.499.000" },
+    { host: "new-usd.test", experience: null, channel: "USD", channelLocale: "es-DO", expectedQueries: 1, expected: "US$3,499,000.00" },
+    { host: "legacy-cop.test", experience: null, channel: "COP", channelLocale: "es", expectedQueries: 1, expected: "$3,499,000" },
   ].map(async (scenario) => {
     let queries = 0;
     const load = sourceLoader({ mocks: {
@@ -116,7 +160,7 @@ test("server wrapper uses verified experience currency first and isolates legacy
       "@/lib/storefront-experience/server": { getVerifiedExperienceContext: async () => scenario.experience },
       "@/lib/graphql-fetch": { graphqlRequest: async (_query, variables, options) => {
         queries++; assert.equal(variables, undefined); assert.deepEqual(JSON.parse(JSON.stringify(options)), { tags: ["channel"], life: "hours" });
-        return { getDefaultChannel: { baseCurrency: { code: scenario.channel } } };
+        return { getDefaultChannel: { baseCurrency: { code: scenario.channel }, defaultLocale: { code: scenario.channelLocale } } };
       } },
     } });
     const { Price } = load(priceFile);

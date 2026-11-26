@@ -14,12 +14,12 @@ export const Price = ({
   /** Omitted: channel currency. Null: explicitly unknown (e.g. a legacy order). */
   currencyCode?: string | null;
 } & React.ComponentProps<"p">) => {
-  const channelCurrency = useStorefrontCurrency();
+  const { currencyCode: channelCurrency, locale } = useStorefrontCurrency();
   const resolvedCurrency = normalizeCurrencyCode(currencyCode === undefined ? channelCurrency : currencyCode);
 
   return (
     <p className={className} suppressHydrationWarning={true} data-currency={resolvedCurrency ?? undefined} {...rest}>
-      {formatStorefrontPrice(amount, resolvedCurrency)}
+      {formatStorefrontPrice(amount, resolvedCurrency, locale)}
     </p>
   );
 };
