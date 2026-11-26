@@ -12,7 +12,7 @@ export default async function StorefrontShell({ children, document }: { children
       <Navbar allowsCheckout={tenantWhatsApp?.allowsCheckout !== false} editorial={document?.regions.header.settings} />
       <div className="mx-auto min-h-[calc(100vh-580px)] w-full">{children}</div>
       <Footer editorial={document?.regions.footer.settings} branding={document?.regions.header.settings} />
-      <FloatingWhatsAppButton href={tenantWhatsApp?.enabled ? tenantWhatsApp.waBaseUrl : null} />
+      <FloatingWhatsAppButton href={tenantWhatsApp?.places.floating ? tenantWhatsApp.waBaseUrl : null} label={tenantWhatsApp?.labels.floating} />
     </main>
   );
 }

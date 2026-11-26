@@ -110,22 +110,26 @@ export function AddToCart({
   productId,
   userInteracted,
   whatsappUrl,
+  whatsappLabel,
   isSaleable = true,
   allowsCheckout = true,
   showSoldOutWhatsappCta = false,
   soldOutWhatsappUrl,
   soldOutHelperText,
+  soldOutWhatsappLabel = "Consultar por WhatsApp",
 }: {
   productSwatchReview: any;
   productId: string;
   index: Record<string, Record<string, number>>;
   userInteracted: boolean;
   whatsappUrl?: string | null;
+  whatsappLabel?: string;
   isSaleable?: boolean;
   allowsCheckout?: boolean;
   showSoldOutWhatsappCta?: boolean;
   soldOutWhatsappUrl?: string | null;
   soldOutHelperText?: string;
+  soldOutWhatsappLabel?: string;
 }) {
   const { onAddToCart, isCartLoading } = useAddProduct();
   const { handleSubmit, setValue, control, register } = useForm({
@@ -237,7 +241,7 @@ export function AddToCart({
             <>
               <WhatsAppButton
                 href={soldOutWhatsappUrl}
-                label="Consultar por WhatsApp"
+                label={soldOutWhatsappLabel}
                 primary
               />
               {soldOutHelperText ? (
@@ -255,7 +259,7 @@ export function AddToCart({
             />
           ) : (
             <>
-              <WhatsAppButton href={whatsappUrl} label="Pedir por WhatsApp" primary />
+              <WhatsAppButton href={whatsappUrl} label={whatsappLabel || "Pedir por WhatsApp"} primary />
               <p className="max-w-xl text-sm leading-6 text-neutral-600">
                 {whatsappUrl
                   ? "Esta tienda recibe pedidos directamente por WhatsApp."
@@ -265,7 +269,7 @@ export function AddToCart({
           )}
 
           {!showSoldOutWhatsappCta && allowsCheckout && whatsappUrl ? (
-            <WhatsAppButton href={whatsappUrl} label="WhatsApp" />
+            <WhatsAppButton href={whatsappUrl} label={whatsappLabel || "WhatsApp"} />
           ) : null}
         </div>
       </form>
