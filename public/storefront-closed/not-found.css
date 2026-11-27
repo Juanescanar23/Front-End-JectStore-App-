@@ -8,9 +8,9 @@
   font-weight: 100 900;
   src: url(outfit-latin-wght-normal.woff2) format("woff2-variations");
 }
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *),
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *):after,
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *):before {
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *),
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *):after,
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *):before {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
   --tw-translate-x: 0;
@@ -63,17 +63,17 @@
   --tw-contain-paint:  ;
   --tw-contain-style:  ;
 }
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *),
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *):after,
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *):before {
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *),
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *):after,
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *):before {
   box-sizing: border-box;
   border: 0 solid #e5e7eb;
 }
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *):after,
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *):before {
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *):after,
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *):before {
   --tw-content: "";
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
@@ -84,37 +84,55 @@
   font-variation-settings: normal;
   -webkit-tap-highlight-color: transparent;
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   margin: 0;
   line-height: inherit;
 }
-[data-storefront-v3-not-found] h1 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) h1 {
   font-size: inherit;
   font-weight: inherit;
 }
-[data-storefront-v3-not-found] a {
+/* The error action is a button. Tailwind Kit preflight applies only inside the status surfaces. */
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) button {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  text-transform: none;
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+  cursor: pointer;
+}
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) a {
   color: inherit;
   text-decoration: inherit;
 }
-[data-storefront-v3-not-found] h1,
-[data-storefront-v3-not-found] p {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) h1,
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) p {
   margin: 0;
 }
-[data-storefront-v3-not-found] img {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) img {
   display: block;
   vertical-align: middle;
 }
-[data-storefront-v3-not-found] img {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) img {
   max-width: 100%;
   height: auto;
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   -webkit-tap-highlight-color: transparent;
 }
-:is([data-storefront-v3-not-found],[data-storefront-v3-not-found] *) {
+:is(:is([data-storefront-v3-not-found],[data-storefront-v3-error]),:is([data-storefront-v3-not-found],[data-storefront-v3-error]) *) {
   scrollbar-color: color-mix(in oklch,currentColor 35%,transparent) transparent;
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   --p: 20.5481% 0.003923 286.04946;
   --inc: 84.1096% 0.000785 286.04946;
   --wac: 84.1096% 0.000785 286.04946;
@@ -145,12 +163,12 @@
   --border-btn: 1px;
   --tab-radius: 0.5rem;
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   -webkit-text-size-adjust: 100%;
   --f-texto: "JectStore 404 Outfit";
   --f-titulo: "JectStore 404 Outfit";
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   --tw-bg-opacity: 1;
   background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity,1)));
   font-family: var(--f-texto),system-ui,sans-serif;
@@ -161,18 +179,18 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-[data-storefront-v3-not-found] h1 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) h1 {
   font-family: var(--f-titulo),var(--f-texto),system-ui,sans-serif;
 }
-[data-storefront-v3-not-found] :focus-visible {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) :focus-visible {
   outline: 2px solid oklch(var(--a));
   outline-offset: 2px;
 }
-[data-storefront-v3-not-found] i[class^=ph] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) i[class^=ph] {
   line-height: 1;
   flex: none;
 }
-[data-storefront-v3-not-found] .btn {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn {
   display: inline-flex;
   height: 3rem;
   min-height: 3rem;
@@ -209,31 +227,31 @@
   --tw-bg-opacity: 1;
   --tw-border-opacity: 1;
 }
-[data-storefront-v3-not-found] .btn:disabled,
-[data-storefront-v3-not-found] .btn[disabled] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:disabled,
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn[disabled] {
   pointer-events: none;
 }
 @media (hover:hover) {
-  [data-storefront-v3-not-found] .btn:hover {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:hover {
     --tw-border-opacity: 1;
     border-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity)));
     --tw-bg-opacity: 1;
     background-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-bg-opacity)));
   }
   @supports (color:color-mix(in oklab,black,black)) {
-    [data-storefront-v3-not-found] .btn:hover {
+    :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:hover {
       background-color: color-mix(in oklab,oklch(var(--btn-color,var(--b2))/var(--tw-bg-opacity,1)) 90%,#000);
       border-color: color-mix(in oklab,oklch(var(--btn-color,var(--b2))/var(--tw-border-opacity,1)) 90%,#000);
     }
   }
   @supports not (color:oklch(0% 0 0)) {
-    [data-storefront-v3-not-found] .btn:hover {
+    :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:hover {
       background-color: var(--btn-color,var(--fallback-b2));
       border-color: var(--btn-color,var(--fallback-b2));
     }
   }
-  [data-storefront-v3-not-found] .btn:disabled:hover,
-  [data-storefront-v3-not-found] .btn[disabled]:hover {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:disabled:hover,
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn[disabled]:hover {
     --tw-border-opacity: 0;
     background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity)));
     --tw-bg-opacity: 0.2;
@@ -242,41 +260,41 @@
   }
 }
 @media (prefers-reduced-motion:no-preference) {
-  [data-storefront-v3-not-found] .btn {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn {
     animation: jectstore-storefront-v3-404-button-pop var(--animation-btn,.25s) ease-out;
   }
 }
-[data-storefront-v3-not-found] .btn:active:focus,
-[data-storefront-v3-not-found] .btn:active:hover {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:active:focus,
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:active:hover {
   animation: jectstore-storefront-v3-404-button-pop 0s ease-out;
   transform: scale(var(--btn-focus-scale,.97));
 }
 @supports not (color:oklch(0% 0 0)) {
-  [data-storefront-v3-not-found] .btn {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn {
     background-color: var(--btn-color,var(--fallback-b2));
     border-color: var(--btn-color,var(--fallback-b2));
   }
-  [data-storefront-v3-not-found] .btn-accent {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn-accent {
     --btn-color: var(--fallback-a);
   }
 }
-[data-storefront-v3-not-found] .btn:focus-visible {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-offset: 2px;
 }
 @supports (color:oklch(0% 0 0)) {
-  [data-storefront-v3-not-found] .btn-accent {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn-accent {
     --btn-color: var(--a);
   }
 }
-[data-storefront-v3-not-found] .btn-accent {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn-accent {
   --tw-text-opacity: 1;
   color: var(--fallback-ac,oklch(var(--ac)/var(--tw-text-opacity)));
   outline-color: var(--fallback-a,oklch(var(--a)/1));
 }
-[data-storefront-v3-not-found] .btn:disabled,
-[data-storefront-v3-not-found] .btn[disabled] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn:disabled,
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn[disabled] {
   --tw-border-opacity: 0;
   background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity)));
   --tw-bg-opacity: 0.2;
@@ -294,18 +312,18 @@
     transform: scale(1);
   }
 }
-[data-storefront-v3-not-found] .t-seccion {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .t-seccion {
   font-family: var(--f-titulo),var(--f-texto),system-ui,sans-serif;
   font-size: 20px;
   line-height: 28px;
   font-weight: 600;
 }
-[data-storefront-v3-not-found] .t-nota {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .t-nota {
   font-size: 12px;
   line-height: 16px;
   color: var(--fallback-bc,oklch(var(--bc)/.7));
 }
-[data-storefront-v3-not-found] .caja {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .caja {
   min-width: 0;
   border-radius: var(--rounded-box,1rem);
   border-width: 1px;
@@ -314,167 +332,167 @@
   --tw-bg-opacity: 1;
   background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity,1)));
 }
-[data-storefront-v3-not-found] .btn {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn {
   height: 2.75rem;
   min-height: 44px;
   font-size: 14px;
   line-height: 20px;
   line-height: 1.25rem;
 }
-[data-storefront-v3-not-found] .mt-2 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .mt-2 {
   margin-top: .5rem;
 }
-[data-storefront-v3-not-found] .mt-4 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .mt-4 {
   margin-top: 1rem;
 }
-[data-storefront-v3-not-found] .mt-5 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .mt-5 {
   margin-top: 1.25rem;
 }
-[data-storefront-v3-not-found] .mt-6 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .mt-6 {
   margin-top: 1.5rem;
 }
-[data-storefront-v3-not-found] .flex {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .flex {
   display: flex;
 }
-[data-storefront-v3-not-found] .inline-flex {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .inline-flex {
   display: inline-flex;
 }
-[data-storefront-v3-not-found] .grid {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .grid {
   display: grid;
 }
-[data-storefront-v3-not-found] .h-14 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .h-14 {
   height: 3.5rem;
 }
-[data-storefront-v3-not-found] .h-8 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .h-8 {
   height: 2rem;
 }
-[data-storefront-v3-not-found] .min-h-\[calc\(100vh-40px\)\] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .min-h-\[calc\(100vh-40px\)\] {
   min-height: calc(100vh - 40px);
 }
-[data-storefront-v3-not-found] .w-14 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .w-14 {
   width: 3.5rem;
 }
-[data-storefront-v3-not-found] .w-8 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .w-8 {
   width: 2rem;
 }
-[data-storefront-v3-not-found] .w-full {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .w-full {
   width: 100%;
 }
-[data-storefront-v3-not-found] .min-w-0 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .min-w-0 {
   min-width: 0;
 }
-[data-storefront-v3-not-found] .max-w-sm {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .max-w-sm {
   max-width: 24rem;
 }
-[data-storefront-v3-not-found] .place-items-center {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .place-items-center {
   place-items: center;
 }
-[data-storefront-v3-not-found] .items-center {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .items-center {
   align-items: center;
 }
-[data-storefront-v3-not-found] .justify-center {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .justify-center {
   justify-content: center;
 }
-[data-storefront-v3-not-found] .gap-2 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .gap-2 {
   gap: .5rem;
 }
-[data-storefront-v3-not-found] .space-y-2>:not([hidden])~:not([hidden]) {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .space-y-2>:not([hidden])~:not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(.5rem*(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(.5rem*var(--tw-space-y-reverse));
 }
-[data-storefront-v3-not-found] .rounded-2xl {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .rounded-2xl {
   border-radius: 1rem;
 }
-[data-storefront-v3-not-found] .rounded-full {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .rounded-full {
   border-radius: 9999px;
 }
-[data-storefront-v3-not-found] .bg-base-200 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .bg-base-200 {
   --tw-bg-opacity: 1;
   background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity,1)));
 }
-[data-storefront-v3-not-found] .bg-neutral {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .bg-neutral {
   --tw-bg-opacity: 1;
   background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity,1)));
 }
-[data-storefront-v3-not-found] .p-6 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .p-6 {
   padding: 1.5rem;
 }
-[data-storefront-v3-not-found] .px-4 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .px-4 {
   padding-left: 1rem;
   padding-right: 1rem;
 }
-[data-storefront-v3-not-found] .py-10 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .py-10 {
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
 }
-[data-storefront-v3-not-found] .text-center {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-center {
   text-align: center;
 }
-[data-storefront-v3-not-found] .text-\[28px\] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-\[28px\] {
   font-size: 28px;
 }
-[data-storefront-v3-not-found] .text-base {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-base {
   font-size: 16px;
   line-height: 24px;
 }
-[data-storefront-v3-not-found] .text-sm {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-sm {
   font-size: 14px;
   line-height: 20px;
 }
-[data-storefront-v3-not-found] .text-xs {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-xs {
   font-size: 12px;
   line-height: 16px;
 }
-[data-storefront-v3-not-found] .font-bold {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .font-bold {
   font-weight: 700;
 }
-[data-storefront-v3-not-found] .font-semibold {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .font-semibold {
   font-weight: 600;
 }
-[data-storefront-v3-not-found] .text-base-content\/70 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-base-content\/70 {
   color: var(--fallback-bc,oklch(var(--bc)/.7));
 }
-[data-storefront-v3-not-found] .text-neutral-content {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .text-neutral-content {
   --tw-text-opacity: 1;
   color: var(--fallback-nc,oklch(var(--nc)/var(--tw-text-opacity,1)));
 }
-[data-storefront-v3-not-found] .underline {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .underline {
   text-decoration-line: underline;
 }
-[data-storefront-v3-not-found] .underline-offset-4 {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .underline-offset-4 {
   text-underline-offset: 4px;
 }
 @media (max-width:767px) {
-  [data-storefront-v3-not-found] .btn {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn {
     min-height: 2.75rem;
     flex-shrink: 0;
   }
 }
-[data-storefront-v3-not-found] .btn {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) .btn {
   flex-shrink: 0;
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   background: oklch(var(--b2));
 }
-[data-storefront-v3-not-found] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) {
   min-height: 100vh;
   min-height: 100dvh;
 }
 @media (min-width:640px) {
-  [data-storefront-v3-not-found] .sm\:p-8 {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .sm\:p-8 {
     padding: 2rem;
   }
 }
 @media (min-width:1024px) {
-  [data-storefront-v3-not-found] .lg\:max-w-md {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .lg\:max-w-md {
     max-width: 28rem;
   }
-  [data-storefront-v3-not-found] .lg\:p-10 {
+  :is([data-storefront-v3-not-found],[data-storefront-v3-error]) .lg\:p-10 {
     padding: 2.5rem;
   }
 }
-[data-storefront-v3-not-found] [data-storefront-name] {
+:is([data-storefront-v3-not-found],[data-storefront-v3-error]) [data-storefront-name] {
   min-width: 0;
   overflow-wrap: anywhere;
 }
