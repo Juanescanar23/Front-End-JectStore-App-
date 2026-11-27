@@ -323,6 +323,7 @@ export async function fetchStorefrontMoneyLocale(host: string): Promise<string |
     method: "GET", headers, cache: "no-store", redirect: "error",
     signal: AbortSignal.timeout(1500),
   });
+  if (!response.ok) throw new StorefrontExperienceError(`backend-${response.status}`);
   const { money_locale: locale } = object(object(await responseJson(response)).data);
   return typeof locale === "string" && locale.length <= 80 ? locale : null;
 }
