@@ -18,6 +18,7 @@ const configSource = ts.transpileModule(readFileSync(resolve(root, "next.config.
 }).outputText;
 new Function("require", "module", "exports", configSource)(
   name => {
+    if (name === "node:crypto") return require(name);
     assert.equal(name, "@/utils/constants");
     return { configHeader: [] };
   }, configModule, configModule.exports,
