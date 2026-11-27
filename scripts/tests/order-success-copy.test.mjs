@@ -56,7 +56,16 @@ function actualOrderSuccess(scope) {
 
 function orderFixture() {
   const calls = [];
+  const whatsappHelpers = {};
+  const whatsappSource = readFileSync(path.join(root, "src/utils/whatsapp-order.ts"), "utf8");
+  const whatsappOutput = ts.transpileModule(whatsappSource, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  new Function("exports", whatsappOutput)(whatsappHelpers);
+
   const callback = actualOrderSuccess({
+    isWhatsAppOrderId: whatsappHelpers.isWhatsAppOrderId,
+    WHATSAPP_RECEIPT_PATH: whatsappHelpers.WHATSAPP_RECEIPT_PATH,
     isObject: (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0,
     showToast: (...args) => calls.push(["toast", ...args]),
     setCookie: (...args) => calls.push(["cookie", ...args]), ORDER_ID: "synthetic-order-cookie",
@@ -81,4 +90,13 @@ test("order rejection retains its native warning and never emits the new success
   const h = orderFixture();
   h.callback({ error: { message: "Revisa los datos del pedido." } });
   assert.deepEqual(h.calls, [["toast", "Revisa los datos del pedido.", "warning"]]);
+});
+
+test("WhatsApp receipt clears the cart and advances only to its own receipt page", () => {
+  const h = orderFixture();
+  h.callback({ whatsappOrder: { id: 41 } });
+  assert.deepEqual(h.calls, [
+    ["dispatch", { type: "cart/clear" }],
+    ["replace", "/checkout/whatsapp-order/41"],
+  ]);
 });
