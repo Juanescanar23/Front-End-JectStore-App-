@@ -30,6 +30,7 @@ export type StorefrontExperience = {
   base_key: ExperienceBase;
   channel: { id: number; code: string };
   locale: string;
+  money_locale?: string;
   currency: string;
   version: number;
   published_revision_id: number | null;
@@ -304,6 +305,29 @@ function fixedBackendRequest(url: URL, options: RequestInit): Promise<Response> 
   });
 }
 
+function publicBackendHeaders(host: string): Headers {
+  if (canonicalExperienceHost(host) !== host) throw new StorefrontExperienceError("host", 400);
+  return new Headers({
+    Accept: "application/json",
+    "Cache-Control": "no-store",
+    Host: host,
+    "x-tenant-host": host,
+    "x-storefront-host": host,
+  });
+}
+
+export async function fetchStorefrontMoneyLocale(host: string): Promise<string | null> {
+  const headers = publicBackendHeaders(host);
+  const url = new URL("/api/storefront/money-locale", configuredOrigin("backend"));
+  const response = await fixedBackendRequest(url, {
+    method: "GET", headers, cache: "no-store", redirect: "error",
+    signal: AbortSignal.timeout(1500),
+  });
+  if (!response.ok) throw new StorefrontExperienceError(`backend-${response.status}`);
+  const { money_locale: locale } = object(object(await responseJson(response)).data);
+  return typeof locale === "string" && locale.length <= 80 ? locale : null;
+}
+
 export async function fetchStorefrontExperience({
   host, incoming = new Headers(), pin, previewQuery, legacyGuestToken, fetcher = fixedBackendRequest,
 }: {
@@ -314,16 +338,13 @@ export async function fetchStorefrontExperience({
   legacyGuestToken?: string;
   fetcher?: (url: URL, options: RequestInit) => Promise<Response>;
 }): Promise<StorefrontExperience> {
-  if (canonicalExperienceHost(host) !== host) throw new StorefrontExperienceError("host", 400);
+  const requestHeaders = publicBackendHeaders(host);
   const preview = previewQuery !== undefined;
   const url = new URL(preview ? "/api/storefront/next-preview" : "/api/storefront/experience", configuredOrigin("backend"));
   if (preview) {
     url.search = validatePreviewQuery(previewQuery);
     if (url.searchParams.get("host") !== host) throw new StorefrontExperienceError("preview-host", 400);
   }
-  const requestHeaders = new Headers({ Accept: "application/json", "Cache-Control": "no-store", Host: host });
-  requestHeaders.set("x-tenant-host", host);
-  requestHeaders.set("x-storefront-host", host);
   if (pin) requestHeaders.set("x-jectstore-experience-pin", pin);
   if (legacyGuestToken && legacyGuestToken.length <= 4096) requestHeaders.set("x-jectstore-legacy-guest-token", legacyGuestToken);
   const language = incoming.get("accept-language");
