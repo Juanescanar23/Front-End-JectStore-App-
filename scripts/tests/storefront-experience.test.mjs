@@ -296,18 +296,34 @@ test("backend errors, malformed documents and oversized bodies fail closed witho
 test("actual fixed-origin HTTP transport preserves tenant Host and refuses redirects and empty responses", async (t) => {
   let destination = "valid";
   let observedHost;
+  let observedPath;
+  let observedHeaders;
   const provider = createServer((req, res) => {
     observedHost = req.headers.host;
+    observedPath = req.url;
+    observedHeaders = req.headers;
     if (destination === "redirect") { res.writeHead(302, { Location: "https://outside.invalid/never-follow" }).end(); return; }
     if (destination === "empty") { res.writeHead(204).end(); return; }
-    res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(experience()));
+    const body = observedPath === "/api/storefront/money-locale"
+      ? { data: { money_locale: "es-CO" } }
+      : experience({ money_locale: "es-MX" });
+    res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(body));
   });
   await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
   t.after(() => new Promise((resolve) => provider.close(resolve)));
   env(t, { STOREFRONT_BACKEND_ORIGIN: `http://127.0.0.1:${provider.address().port}` });
-  assert.equal((await runtime.fetchStorefrontExperience({ host: HOST })).currency, "MXN");
+  const parsed = await runtime.fetchStorefrontExperience({ host: HOST });
+  assert.equal(parsed.currency, "MXN");
+  assert.equal(parsed.money_locale, "es-MX");
   assert.equal(observedHost, HOST, "Unlike Node fetch, the explicit Host must survive transport");
+  assert.equal(await runtime.fetchStorefrontMoneyLocale(HOST), "es-CO");
+  assert.equal(observedPath, "/api/storefront/money-locale");
+  assert.equal(observedHost, HOST);
+  assert.equal(observedHeaders.cookie, undefined);
+  assert.equal(observedHeaders.authorization, undefined);
+  assert.equal(observedHeaders["cache-control"], "no-store");
   destination = "redirect"; await assert.rejects(() => runtime.fetchStorefrontExperience({ host: HOST }), /backend-302/);
+  await assert.rejects(() => runtime.fetchStorefrontMoneyLocale(HOST), /backend-302/);
   destination = "empty"; await assert.rejects(() => runtime.fetchStorefrontExperience({ host: HOST }), /backend-204/);
 });
 

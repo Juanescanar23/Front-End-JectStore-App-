@@ -147,17 +147,29 @@ test("actual provider supplies the channel unit, explicit currency wins, and exp
   assert.equal(text(renderToStaticMarkup(React.createElement(Price, { amount: "1234.50" }))), "—");
 });
 
-test("server wrapper uses verified experience currency first and isolates legacy/new channel contexts", async () => {
+test("server wrapper uses the monetary locale from each tenant's experience or default channel", async () => {
   const results = await Promise.all([
-    { host: "existing-cop.test", experience: { currency: "COP", locale: "es_CO" }, channel: "USD", channelLocale: "en-US", expectedQueries: 0, expected: "$\u00a03.499.000" },
-    { host: "new-usd.test", experience: null, channel: "USD", channelLocale: "es-DO", expectedQueries: 1, expected: "US$3,499,000.00" },
-    { host: "legacy-cop.test", experience: null, channel: "COP", channelLocale: "es", expectedQueries: 1, expected: "$3,499,000" },
+    { host: "experience.test", experience: { currency: "COP", locale: "es", money_locale: "es-CO" }, channel: "USD", channelLocale: "en-US", expectedQueries: 0, expected: "$\u00a03.499.000" },
+    { host: "old-experience.test", experience: { currency: "COP", locale: "es_CO" }, expectedQueries: 0, expected: "$\u00a03.499.000" },
+    { host: "default.test", experience: null, channel: "USD", channelLocale: "es", moneyLocale: "es-DO", expectedQueries: 1, expected: "US$3,499,000.00" },
+    { host: "legacy.test", experience: null, channel: "COP", channelLocale: "es", moneyError: true, expectedQueries: 1, expected: "$3,499,000" },
+    { host: "invalid.test", experience: null, channel: "COP", channelLocale: "es-CO", moneyLocale: "bad value", expectedQueries: 1, expected: "$\u00a03.499.000" },
   ].map(async (scenario) => {
     let queries = 0;
+    const moneyRequests = [];
     const load = sourceLoader({ mocks: {
       "server-only": {},
       "./MainProvider": { MainProvider: passthrough },
       "@/lib/storefront-experience/server": { getVerifiedExperienceContext: async () => scenario.experience },
+      "next/headers": { headers: async () => new Headers({ host: scenario.host, "x-tenant-host": "ignored.test" }) },
+      "@/lib/storefront-experience/runtime": {
+        canonicalExperienceHost: (host) => host,
+        fetchStorefrontMoneyLocale: async (host) => {
+          moneyRequests.push(host);
+          if (scenario.moneyError) throw new Error("Metadata endpoint unavailable");
+          return scenario.moneyLocale;
+        },
+      },
       "@/lib/graphql-fetch": { graphqlRequest: async (_query, variables, options) => {
         queries++; assert.equal(variables, undefined); assert.deepEqual(JSON.parse(JSON.stringify(options)), { tags: ["channel"], life: "hours" });
         return { getDefaultChannel: { baseCurrency: { code: scenario.channel }, defaultLocale: { code: scenario.channelLocale } } };
@@ -168,9 +180,10 @@ test("server wrapper uses verified experience currency first and isolates legacy
     const html = renderToStaticMarkup(await AppWrapper({ children: React.createElement(Price, { amount: "3499000.00" }) }));
     assert.equal(text(html), scenario.expected, scenario.host);
     assert.equal(queries, scenario.expectedQueries);
+    assert.deepEqual(moneyRequests, scenario.experience ? [] : [scenario.host]);
     return html;
   }));
-  assert.notEqual(results[0], results[1]);
+  assert.notEqual(results[0], results[2]);
 });
 
 test("missing/unavailable currency metadata keeps the storefront wrapper usable without an invented unit", async () => {
