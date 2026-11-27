@@ -348,6 +348,46 @@ test("only a valid non-preview 503 JSON closure becomes a typed storefront state
   }
 });
 
+test("a verified merchant pause has its own 503 and safely renders a public message", async (t) => {
+  env(t, {
+    STOREFRONT_BACKEND_ORIGIN: "http://127.0.0.1:9123",
+    STOREFRONT_EXPERIENCES_ENABLED: "true",
+  });
+  const message = 'Volvemos el lunes <tienda> & equipo.';
+  const payload = { code: "STOREFRONT_CLOSED", state: "paused", pause_message: message };
+  const { closedStorefrontResponse } = loadSource("src/lib/storefront-experience/closed.ts");
+
+  for (const pauseMessage of [message, undefined, "x".repeat(501)]) {
+    let details;
+    await assert.rejects(() => runtime.fetchStorefrontExperience({
+      host: HOST,
+      fetcher: async () => Response.json({ ...payload, pause_message: pauseMessage }, { status: 503 }),
+    }), (error) => {
+      assert.equal(error.details.paused, true);
+      details = error.details;
+      return true;
+    });
+    const response = closedStorefrontResponse(details, false);
+    assert.equal(response.status, 503);
+    assert.match(response.headers.get("cache-control"), /no-store/);
+    assert.match(response.headers.get("x-robots-tag"), /noindex/);
+    const html = await response.text();
+    assert.match(html, /Esta tienda está en pausa/);
+    assert.doesNotMatch(html, /<tienda>/);
+    assert.match(html, pauseMessage === message
+      ? /Volvemos el lunes &lt;tienda&gt; &amp; equipo\./
+      : /La tienda volverá a abrir/);
+    assert.equal(await closedStorefrontResponse(details, true).text(), "");
+  }
+
+  for (const [status, state] of [[404, "paused"], [503, "other"]]) {
+    await assert.rejects(() => runtime.fetchStorefrontExperience({
+      host: HOST,
+      fetcher: async () => Response.json({ ...payload, state }, { status }),
+    }), (error) => error.code !== "storefront-closed");
+  }
+});
+
 test("public proxy serves a closed shop without changing the buyer's experience cookie", async (t) => {
   const testHost = "closed.jectstore.test";
   const storeName = 'Café <a> & "Lima"';
