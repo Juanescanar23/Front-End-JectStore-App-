@@ -97,13 +97,67 @@ test("missing channel, central and untrusted forwarded hosts keep the global 404
   await assert.rejects(app({ error: signal }).html, (err) => err === signal);
 });
 
-test("the 404 kit rules do not style any other storefront region", () => {
+test("the public status kit rules do not style any other storefront region", () => {
   const css = postcss.parse(readFileSync(resolve(root, "public/storefront-closed/not-found.css"), "utf8"));
   css.walkRules((rule) => {
     if (rule.parent.type === "atrule" && rule.parent.name === "keyframes") {
       assert.equal(rule.parent.params, "jectstore-storefront-v3-404-button-pop");
       return;
     }
-    assert.ok(rule.selectors.every((selector) => selector.includes("[data-storefront-v3-not-found]")), rule.selector);
+    assert.ok(rule.selectors.every((selector) => selector.includes(":is([data-storefront-v3-not-found],[data-storefront-v3-error])")), rule.selector);
   });
+});
+
+test("public segment error prefers the runtime retry and can fall back to reset", () => {
+  const jsx = (type, props) => ({ type, props });
+  const title = "Café de prueba";
+  const ErrorPage = loadSource("src/app/(public)/error.tsx", {
+    "react": { useContext: () => title },
+    "react/jsx-runtime": { jsx, jsxs: jsx },
+    "next/image": "img",
+    "./error-context": { StorefrontErrorNameContext: {} },
+  }).default;
+  let retries = 0;
+  let resets = 0;
+  const retry = () => retries++;
+  const reset = () => resets++;
+  const visit = function* (element) {
+    if (!element || typeof element !== "object") return;
+    yield element;
+    for (const child of [element.props.children].flat()) yield* visit(child);
+  };
+  for (const [options, expected] of [[{ retry, reset }, [1, 0]], [{ reset }, [1, 1]]]) {
+    const elements = [...visit(ErrorPage({ ...options, error: new Error("private detail") }))];
+    assert.equal(elements[0].props["data-storefront-v3-error"], true);
+    const button = elements.find((entry) => entry.type === "button");
+    assert.equal(button.props.type, "button");
+    button.props.onClick();
+    assert.deepEqual([retries, resets], expected);
+    const serialized = JSON.stringify(elements);
+    assert.match(serialized, /Algo falló al cargar/);
+    assert.match(serialized, /No pudimos mostrar esta página. Lo que tenías en el carrito sigue ahí\./);
+    assert.match(serialized, /Intentar otra vez/);
+    assert.match(serialized, /Café de prueba/);
+    assert.doesNotMatch(serialized, /private detail/);
+  }
+});
+
+test("the public layout passes only the already resolved public channel name", async () => {
+  const provided = [];
+  const Layout = loadSource("src/app/(public)/layout.tsx", {
+    "@/lib/storefront-experience/server": { getStorefrontExperience: async () => ({ document: null }) },
+    "@/utils/server/storefront-seo": {
+      getStorefrontSeoPayload: async () => ({ title: "Page title", siteName: "Café de prueba", image: "https://outside.invalid/logo" }),
+    },
+    "@/components/layout/StorefrontShell": ({ children }) => children,
+    "./error-context": {
+      StorefrontErrorNameProvider: (props) => {
+        provided.push(props);
+        return props.children;
+      },
+    },
+  }).default;
+  const html = renderToStaticMarkup(await Layout({ children: "contents" }));
+  assert.equal(html, "contents");
+  assert.deepEqual(provided, [{ name: "Café de prueba", children: "contents" }]);
 });
