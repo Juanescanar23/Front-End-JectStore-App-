@@ -69,6 +69,9 @@ export function ProductDescription({
     () => resolveProductPurchaseState(product, selectedVariantId),
     [product, selectedVariantId],
   );
+  const whatsappPlace = allowsCheckout || !purchaseState.isSaleable ? "inquiry" : "purchase";
+  const whatsappVisible = tenantWhatsApp?.places[whatsappPlace] === true;
+  const showSoldOutWhatsappCta = purchaseState.showWhatsAppCta && whatsappVisible;
 
   const additionalData = productSwatchReview?.attributeValues || [];
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
@@ -150,7 +153,7 @@ export function ProductDescription({
             {purchaseState.statusLabel}
           </span>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            {purchaseState.showWhatsAppCta
+            {showSoldOutWhatsappCta
               ? "Producto agotado por ahora."
               : purchaseState.isSaleable
                 ? allowsCheckout
@@ -181,10 +184,12 @@ export function ProductDescription({
               productId={product?.id || ""}
               productSwatchReview={productSwatchReview}
               userInteracted={userInteracted}
-              whatsappUrl={whatsappProductUrl}
+              whatsappUrl={whatsappVisible ? whatsappProductUrl : null}
+              whatsappLabel={tenantWhatsApp?.labels[whatsappPlace]}
               isSaleable={purchaseState.isSaleable}
               allowsCheckout={allowsCheckout}
-              showSoldOutWhatsappCta={purchaseState.showWhatsAppCta}
+              showSoldOutWhatsappCta={showSoldOutWhatsappCta}
+              soldOutWhatsappLabel={tenantWhatsApp?.labels.inquiry}
               soldOutWhatsappUrl={purchaseState.whatsappUrl}
               soldOutHelperText={SOLD_OUT_WHATSAPP_HELPER}
             />

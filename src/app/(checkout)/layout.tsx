@@ -1,5 +1,6 @@
 import Navbar from "@components/layout/navbar";
 import { Suspense, type ReactNode } from "react";
+import StorefrontVisit from "@/components/common/StorefrontVisit";
 export default function RootLayout({
   children,
 }: {
@@ -7,6 +8,7 @@ export default function RootLayout({
 }) {
   return (
     <>
+      <StorefrontVisit pageType="checkout" />
       <div className="block lg:hidden">
         <Suspense fallback={<div aria-hidden="true" className="h-[68px] bg-neutral-50 dark:bg-neutral-900" />}>
           <Navbar />

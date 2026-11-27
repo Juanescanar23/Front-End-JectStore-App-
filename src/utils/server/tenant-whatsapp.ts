@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { TenantWhatsAppConfig } from "@/utils/whatsapp";
+import { parseTenantWhatsAppConfig, type TenantWhatsAppConfig } from "@/utils/whatsapp";
 import { storefrontCacheTags } from "../storefront-cache-scope";
 
 const FALLBACK_LANDLORD_HOST = "app.jectstore.com";
@@ -50,28 +50,7 @@ export async function getTenantWhatsAppConfig(): Promise<TenantWhatsAppConfig | 
       return null;
     }
 
-    const payload = (await response.json()) as {
-      enabled?: unknown;
-      allows_checkout?: unknown;
-      wa_base_url?: unknown;
-      phone_e164?: unknown;
-    };
-
-    return {
-      enabled: Boolean(payload?.enabled),
-      allowsCheckout:
-        typeof payload?.allows_checkout === "boolean"
-          ? payload.allows_checkout
-          : true,
-      waBaseUrl:
-        typeof payload?.wa_base_url === "string" && payload.wa_base_url.trim() !== ""
-          ? payload.wa_base_url
-          : null,
-      phoneE164:
-        typeof payload?.phone_e164 === "string" && payload.phone_e164.trim() !== ""
-          ? payload.phone_e164
-          : null,
-    };
+    return parseTenantWhatsAppConfig(await response.json());
   } catch {
     return null;
   }

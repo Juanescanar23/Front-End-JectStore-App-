@@ -94,12 +94,19 @@ for (const route of routes) {
   });
 
   test(`actual ${route} handler preserves its legacy commercial-error contract`, async t => {
-    const error = new Error("Synthetic commercial validation"); error.cause = { message: "Synthetic commercial validation" };
+    const commercialMessage = "Synthetic commercial validation";
+    const error = route === "cart/addToCart"
+      ? { message: commercialMessage, path: ["createAddProductInCart"] }
+      : Object.assign(new Error(commercialMessage), { cause: { message: commercialMessage } });
     const h = harness(t, error);
     const response = await h.load(`src/app/api/${route}/route.ts`).POST(new Request(`http://tenant-a.test/api/${route}`, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }));
     assert.equal(response.status, legacy500.has(route) ? 500 : 200);
     assert.equal(response.headers.has("retry-after"), false);
-    assert.equal((await response.text()).includes(message), false);
+    const contents = await response.text();
+    assert.equal(contents.includes(message), false);
+    if (route === "cart/addToCart") {
+      assert.equal(contents.includes(commercialMessage), false);
+    }
     assert.equal(h.networkCalls(), 0);
   });
 

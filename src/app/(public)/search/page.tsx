@@ -21,6 +21,7 @@ import {
   resolveSortToStorefrontFilters,
 } from "@/utils/storefront-filters";
 import { getRequestBaseUrl } from "@/utils/server/request-base-url";
+import StorefrontVisit from "@/components/common/StorefrontVisit";
 const Pagination = dynamicImport(
   () => import("@/components/catalog/Pagination")
 );
@@ -146,7 +147,7 @@ export default async function SearchPage({
 
   return (
     <>
-
+      <StorefrontVisit pageType="search" term={typeof searchValue === "string" ? searchValue : undefined} results={totalCount} />
       <MobileSearchBar />
       <h2 className="text-2xl sm:text-4xl font-semibold mx-auto mt-7.5 w-full max-w-screen-2xl my-3 mx-auto px-4 xss:px-7.5">
         Todos los productos destacados

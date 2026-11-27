@@ -31,6 +31,7 @@ import {
 } from "@/utils/storefront-filters";
 import { pickTranslationByLocale } from "@/utils/theme-translation";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
+import StorefrontVisit from "@/components/common/StorefrontVisit";
 
 function CategoryFallback({
   title,
@@ -212,6 +213,7 @@ export default async function CategoryPage({
 
   return (
     <>
+      <StorefrontVisit pageType={searchValue ? "search" : "category"} pageId={numericId} term={typeof searchValue === "string" ? searchValue : undefined} results={totalCount} />
       <MobileSearchBar />
       <section>
         <Suspense fallback={<FilterListSkeleton />}>

@@ -17,6 +17,7 @@ import { RelatedProductsSection } from "@components/catalog/product/RelatedProdu
 import ProductInfo from "@components/catalog/product/ProductInfo";
 import { MobileSearchBar } from "@components/layout/navbar/MobileSearch";
 import { buildStorefrontFilterInput } from "@/utils/storefront-filters";
+import StorefrontVisit from "@/components/common/StorefrontVisit";
 
 export const dynamic = "force-dynamic";
 
@@ -179,6 +180,7 @@ export default async function ProductPage({
 
   return (
     <>
+      <StorefrontVisit pageType="product" pageId={product.id} />
       <MobileSearchBar />
       <script
         dangerouslySetInnerHTML={{
