@@ -6,14 +6,17 @@ import {
 import { isObject } from "@/utils/type-guards";
 import { useCheckout } from "@utils/hooks/useCheckout";
 import { ProceedToCheckout } from "../ProceedToCheckout";
+import { isWhatsAppOrderId } from "@/utils/whatsapp-order";
 export default function OrderReview({
   selectedPaymentTitle,
+  whatsappCartId,
   shippingAddress,
   billingAddress,
   selectedShipping : _selectedShipping,
   selectedShippingRateTitle,
 }: {
   selectedPaymentTitle?: string;
+  whatsappCartId?: number;
   shippingAddress?: AddressDataTypes;
   billingAddress?: AddressDataTypes;
   selectedShipping?: string;
@@ -21,9 +24,11 @@ export default function OrderReview({
 }) {
   const { isPlaceOrder, SavePlaceOrder } = useCheckout();
   const { handleSubmit, formState: { isSubmitting } } = useForm();
+  const isWhatsAppOrder = whatsappCartId !== undefined;
+  const canSubmit = !isWhatsAppOrder || isWhatsAppOrderId(whatsappCartId);
   const onSubmit = async () => {
-    if (isPlaceOrder) return;
-    return await SavePlaceOrder();
+    if (isPlaceOrder || !canSubmit) return;
+    return await SavePlaceOrder(whatsappCartId);
   };
 
   return (
@@ -88,14 +93,19 @@ export default function OrderReview({
         )}
       </div>
       <div className="flex flex-col gap-6">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        {isWhatsAppOrder && (
+          <p className="text-base text-sf-muted">
+            Tu pedido quedará por confirmar. La tienda coordinará contigo el pago y la entrega.
+          </p>
+        )}
+        {canSubmit && <form onSubmit={handleSubmit(onSubmit)}>
           <div className="justify-self-end">
             <ProceedToCheckout
-              buttonName="Realizar pedido"
+              buttonName={isWhatsAppOrder ? "Crear pedido" : "Realizar pedido"}
               pending={isPlaceOrder || isSubmitting}
             />
           </div>
-        </form>
+        </form>}
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ import { useCustomToast } from "@utils/hooks/useToast";
 import { useCheckout } from "@utils/hooks/useCheckout";
 import { ProceedToCheckout } from "../ProceedToCheckout";
 import { CustomRadioProps } from "@components/checkout/type";
+import { updateCheckoutStep } from "@/utils/checkout-step";
+import { WHATSAPP_ORDER_METHOD } from "@/utils/whatsapp-order";
 
 export default function PaymentMethod({
   selectedPayment,
@@ -58,6 +60,11 @@ export default function PaymentMethod({
     }
 
     try {
+      if (data.method === WHATSAPP_ORDER_METHOD) {
+        updateCheckoutStep("review", "replace", true);
+        setIsOpen(false);
+        return;
+      }
       await saveCheckoutPayment(data.method);
       setIsOpen(false);
     } catch {

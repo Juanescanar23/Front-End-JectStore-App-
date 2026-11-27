@@ -25,6 +25,7 @@ interface CheckOutProps {
   currentStep: string;
   selectedPayment?: any;
   selectedPaymentTitle?: string;
+  whatsappCartId?: number;
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
   selectedShippingRate?: any;
@@ -80,6 +81,7 @@ export default function Stepper(
     selectedShippingRateTitle,
     selectedPayment,
     selectedPaymentTitle,
+    whatsappCartId,
     currentStep,
     isOpen,
     setIsOpen
@@ -137,6 +139,7 @@ export default function Stepper(
           <Review
             billingAddress={billingAddress}
             selectedPaymentTitle={selectedPaymentTitle}
+            whatsappCartId={whatsappCartId}
             selectedShippingRate={selectedShippingRate}
             selectedShippingRateTitle={selectedShippingRateTitle}
             shippingAddress={shippingAddress}
@@ -151,6 +154,7 @@ export default function Stepper(
     selectedShippingRate,
     selectedPayment,
     selectedPaymentTitle,
+    whatsappCartId,
     selectedShippingRateTitle,
     isOpen,
     setIsOpen
