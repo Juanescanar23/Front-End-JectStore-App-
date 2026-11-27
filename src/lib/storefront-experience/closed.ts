@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { StorefrontClosedError } from "./runtime";
 
-const TITLE = "Esta tienda no está disponible por ahora";
 const ASSETS = "/storefront-closed";
 const HTML_ENTITIES: Record<string, string> = {
   "&": "&amp;",
@@ -16,9 +15,13 @@ function escapeHtml(value: string): string {
 }
 
 export function closedStorefrontResponse(
-  { storeName, whatsappUrl }: StorefrontClosedError["details"],
+  { storeName, whatsappUrl, paused, pauseMessage }: StorefrontClosedError["details"],
   headOnly: boolean,
 ): NextResponse {
+  const title = paused ? "Esta tienda está en pausa" : "Esta tienda no está disponible por ahora";
+  const message = paused
+    ? pauseMessage ?? "La tienda volverá a abrir. Visítala más tarde."
+    : "Vuelve a intentarlo más tarde. Si tienes un pedido en curso, escríbele a la tienda.";
   const brand = storeName
     ? `<div class="flex justify-center"><span class="inline-flex items-center gap-2 text-sm font-semibold"><span aria-hidden="true" class="grid h-8 w-8 place-items-center rounded-full bg-neutral text-xs font-bold text-neutral-content">${escapeHtml(([...storeName][0] ?? "").toLocaleUpperCase("es"))}</span>${escapeHtml(storeName)}</span></div>`
     : "";
@@ -30,7 +33,7 @@ export function closedStorefrontResponse(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${TITLE}</title>
+  <title>${title}</title>
   <link rel="stylesheet" href="${ASSETS}/kit.css">
 </head>
 <body>
@@ -39,8 +42,8 @@ export function closedStorefrontResponse(
       ${brand}
       <div class="caja mt-6 p-6 sm:p-8 lg:p-10">
         <span class="grid h-14 w-14 place-items-center rounded-2xl bg-base-200"><i class="ph-duotone ph-storefront text-[28px]" aria-hidden="true"><img src="${ASSETS}/storefront.svg" alt="" width="28" height="28"></i></span>
-        <h1 class="t-seccion mt-4">${TITLE}</h1>
-        <p class="mt-2 text-sm text-base-content/70">Vuelve a intentarlo más tarde. Si tienes un pedido en curso, escríbele a la tienda.</p>
+        <h1 class="t-seccion mt-4">${title}</h1>
+        <p class="mt-2 whitespace-pre-line break-words text-sm text-base-content/70">${escapeHtml(message)}</p>
         ${contact}
       </div>
       <p class="t-nota mt-6 text-center">Tienda hecha con <a class="underline underline-offset-4" href="https://jectstore.com/" target="_blank" rel="noopener noreferrer">JectStore</a></p>

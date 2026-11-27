@@ -45,7 +45,12 @@ export class StorefrontExperienceError extends Error {
   }
 }
 
-type StorefrontClosure = { storeName?: string; whatsappUrl?: string };
+type StorefrontClosure = {
+  storeName?: string;
+  whatsappUrl?: string;
+  paused?: true;
+  pauseMessage?: string;
+};
 
 export class StorefrontClosedError extends StorefrontExperienceError {
   constructor(public readonly details: StorefrontClosure) {
@@ -72,10 +77,18 @@ function isWhatsAppContact(value: unknown): value is string {
 function parseStorefrontClosure(value: unknown): StorefrontClosure | null {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
 
-  const { code, store_name: storeName, whatsapp_url: whatsappUrl } = value as Record<string, unknown>;
-  if (code !== "STOREFRONT_CLOSED") return null;
+  const {
+    code, store_name: storeName, whatsapp_url: whatsappUrl, state, pause_message: pauseMessage,
+  } = value as Record<string, unknown>;
+  if (code !== "STOREFRONT_CLOSED" || (state !== undefined && state !== "paused")) return null;
 
   const details: StorefrontClosure = {};
+  if (state === "paused") {
+    details.paused = true;
+    if (typeof pauseMessage === "string" && [...pauseMessage].length <= 500 && pauseMessage.trim()) {
+      details.pauseMessage = pauseMessage.trim();
+    }
+  }
   if (storeName !== undefined) {
     if (typeof storeName !== "string" || !storeName.trim() || [...storeName].length > 160
       || /[\u0000-\u001f\u007f]/.test(storeName)) return null;
