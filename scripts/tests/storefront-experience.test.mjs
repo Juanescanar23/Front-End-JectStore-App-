@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createRequire } from "node:module";
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -291,6 +291,121 @@ test("backend errors, malformed documents and oversized bodies fail closed witho
   for (const response of [new Response("no", { status: 403 }), Response.json({ data: {} }), new Response("<html>error</html>"), new Response(" ".repeat(262145), { headers: { "content-type": "application/json" } })]) {
     await assert.rejects(() => runtime.fetchStorefrontExperience({ host: HOST, fetcher: async () => response }), /unavailable/);
   }
+});
+
+test("only a valid non-preview 503 JSON closure becomes a typed storefront state", async (t) => {
+  env(t, { STOREFRONT_BACKEND_ORIGIN: "http://127.0.0.1:9123" });
+  const payload = {
+    code: "STOREFRONT_CLOSED",
+    store_name: "Café Las Nubes",
+    whatsapp_url: "https://wa.me/573001234567?text=Hola%20Caf%C3%A9",
+    reason: "Private detail",
+  };
+  const fetchResponse = (response, previewQuery) =>
+    runtime.fetchStorefrontExperience({ host: HOST, previewQuery, fetcher: async () => response });
+
+  await assert.rejects(() => fetchResponse(Response.json(payload, { status: 503 })), (error) => {
+    assert.equal(error.code, "storefront-closed");
+    assert.equal(error.status, 503);
+    assert.deepEqual(error.details, { storeName: payload.store_name, whatsappUrl: payload.whatsapp_url });
+    assert.doesNotMatch(error.message, /Private detail/);
+    return true;
+  });
+  await assert.rejects(() => fetchResponse(Response.json({ code: payload.code }, { status: 503 })), (error) => {
+    assert.equal(error.code, "storefront-closed");
+    assert.deepEqual(error.details, {});
+    return true;
+  });
+
+  for (const [response, previewQuery] of [
+    [Response.json(payload, { status: 403 })],
+    [Response.json(payload, { status: 404 })],
+    [Response.json(payload)],
+    [Response.json(payload, { status: 503 }), query()],
+    [Response.json({ code: "STOREFRONT_CLOSED_TEMPORARILY" }, { status: 503 })],
+    [new Response(JSON.stringify(payload), { status: 503, headers: { "Content-Type": "text/html" } })],
+    [new Response("{", { status: 503, headers: { "Content-Type": "application/json" } })],
+    [Response.json({ ...payload, store_name: "🚲".repeat(161) }, { status: 503 })],
+    [Response.json({ ...payload, store_name: "name\u0000control" }, { status: 503 })],
+    [Response.json({ ...payload, whatsapp_url: "https://wa.me/573001234567?text=" + "x".repeat(2048) }, { status: 503 })],
+    [Response.json({ ...payload, reason: "x".repeat(262_145) }, { status: 503 })],
+  ]) {
+    await assert.rejects(() => fetchResponse(response, previewQuery), (error) => error.code !== "storefront-closed");
+  }
+  for (const whatsapp_url of [
+    "javascript:alert(1)",
+    "https://wa.me.attacker.invalid/573001234567",
+    "https://wa.me@attacker.invalid/573001234567",
+    "https://wa.me/573001234567?redirect=https://other.invalid",
+    "https://wa.me/573001234567?text=a&text=b",
+    "https://wa.me/573001234567\u0000",
+  ]) {
+    await assert.rejects(
+      () => fetchResponse(Response.json({ ...payload, whatsapp_url }, { status: 503 })),
+      (error) => error.code !== "storefront-closed",
+      whatsapp_url,
+    );
+  }
+});
+
+test("public proxy serves a closed shop without changing the buyer's experience cookie", async (t) => {
+  const testHost = "closed.jectstore.test";
+  const storeName = 'Café <a> & "Lima"';
+  let receivedHost;
+  let receivedCookie;
+  const provider = createServer((req, res) => {
+    receivedHost = req.headers.host;
+    receivedCookie = req.headers.cookie;
+    const isClosed = receivedHost === testHost;
+    res.writeHead(503, { "Content-Type": "application/json" }).end(JSON.stringify(isClosed ? {
+      code: "STOREFRONT_CLOSED",
+      store_name: storeName,
+      whatsapp_url: "https://wa.me/573001234567?text=Hola%20Lima",
+      reason: "billing reason",
+    } : { code: "BACKEND_UNAVAILABLE" }));
+  });
+  await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise((resolve) => provider.close(resolve)));
+  env(t, {
+    STOREFRONT_BACKEND_ORIGIN: `http://127.0.0.1:${provider.address().port}`,
+    STOREFRONT_EXPERIENCES_ENABLED: "true",
+    STOREFRONT_EXPERIENCE_HOST_POLICY: "backend-registered",
+    STOREFRONT_RUNTIME_SIGNING_KEY: randomBytes(32).toString("base64url"),
+    NEXTAUTH_SECRET: "",
+  });
+  const { NextRequest } = require("next/server");
+  const { proxy } = loadSource("src/proxy.ts", { "@/lib/storefront-experience/runtime": runtime });
+  const requestFor = (host, method = "GET") => new NextRequest(`http://${host}/product/taza`, {
+    method,
+    headers: {
+      host,
+      cookie: `${runtime.EXPERIENCE_COOKIE}=previous-pin; guest_cart_token=guest-fixture`,
+      "x-tenant-host": testHost,
+      "x-jectstore-storefront-closed": "STOREFRONT_CLOSED",
+    },
+  });
+
+  const closed = await proxy(requestFor(testHost));
+  assert.equal(receivedHost, testHost);
+  assert.equal(receivedCookie, undefined);
+  assert.equal(closed.status, 503);
+  assert.match(closed.headers.get("content-type"), /^text\/html/);
+  assert.match(closed.headers.get("cache-control"), /no-store/);
+  assert.match(closed.headers.get("x-robots-tag"), /noindex/);
+  assert.equal(closed.headers.get("referrer-policy"), "no-referrer");
+  assert.equal(closed.headers.get("set-cookie"), null);
+  const html = await closed.text();
+  assert.match(html, /Esta tienda no está disponible por ahora/);
+  assert.match(html, /Café &lt;a&gt; &amp; &quot;Lima&quot;/);
+  assert.match(html, /href="https:\/\/wa\.me\/573001234567\?text=Hola%20Lima"/);
+  assert.doesNotMatch(html, /billing reason|STOREFRONT_CLOSED|<a> &/);
+  assert.equal(await (await proxy(requestFor(testHost, "HEAD"))).text(), "");
+
+  const generic = await proxy(requestFor("other.jectstore.test"));
+  assert.equal(receivedHost, "other.jectstore.test");
+  assert.equal(generic.status, 503);
+  assert.equal(generic.headers.get("set-cookie"), null);
+  assert.match(await generic.text(), /No pudimos cargar esta versión de la tienda/);
 });
 
 test("actual fixed-origin HTTP transport preserves tenant Host and refuses redirects and empty responses", async (t) => {

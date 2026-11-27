@@ -45,6 +45,49 @@ export class StorefrontExperienceError extends Error {
   }
 }
 
+type StorefrontClosure = { storeName?: string; whatsappUrl?: string };
+
+export class StorefrontClosedError extends StorefrontExperienceError {
+  constructor(public readonly details: StorefrontClosure) {
+    super("storefront-closed", 503);
+    this.name = "StorefrontClosedError";
+  }
+}
+
+function isWhatsAppContact(value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 2048 || !value.startsWith("https://wa.me/") || /[\s\u0000-\u001f\u007f]/.test(value)) {
+    return false;
+  }
+  try {
+    const url = new URL(value);
+    const parameters = [...url.searchParams.keys()];
+    return /^\/[0-9]{8,16}$/.test(url.pathname)
+      && !url.hash
+      && (parameters.length === 0 || (parameters.length === 1 && parameters[0] === "text"));
+  } catch {
+    return false;
+  }
+}
+
+function parseStorefrontClosure(value: unknown): StorefrontClosure | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const { code, store_name: storeName, whatsapp_url: whatsappUrl } = value as Record<string, unknown>;
+  if (code !== "STOREFRONT_CLOSED") return null;
+
+  const details: StorefrontClosure = {};
+  if (storeName !== undefined) {
+    if (typeof storeName !== "string" || !storeName.trim() || [...storeName].length > 160
+      || /[\u0000-\u001f\u007f]/.test(storeName)) return null;
+    details.storeName = storeName.trim();
+  }
+  if (whatsappUrl !== undefined) {
+    if (!isWhatsAppContact(whatsappUrl)) return null;
+    details.whatsappUrl = whatsappUrl;
+  }
+  return details;
+}
+
 export function experiencesEnabled(): boolean {
   return process.env.STOREFRONT_EXPERIENCES_ENABLED === "true";
 }
@@ -248,7 +291,6 @@ export function validatePreviewQuery(query: string): string {
 }
 
 async function responseJson(response: Response): Promise<unknown> {
-  if (!response.ok) throw new StorefrontExperienceError(`backend-${response.status}`);
   if (!response.headers.get("content-type")?.includes("application/json")) throw new StorefrontExperienceError("response-type");
   if (Number(response.headers.get("content-length")) > MAX_RESPONSE_BYTES) throw new StorefrontExperienceError("response-size");
   const reader = response.body?.getReader();
@@ -335,6 +377,14 @@ export async function fetchStorefrontExperience({
       method: "GET", headers: requestHeaders, cache: "no-store", redirect: "error",
       signal: AbortSignal.timeout(5000),
     });
+    if (!response.ok) {
+      const mediaType = response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+      if (!preview && response.status === 503 && mediaType === "application/json") {
+        const closed = parseStorefrontClosure(await responseJson(response));
+        if (closed) throw new StorefrontClosedError(closed);
+      }
+      throw new StorefrontExperienceError(`backend-${response.status}`);
+    }
     return parseStorefrontExperience(await responseJson(response), preview);
   } catch (error) {
     if (error instanceof StorefrontExperienceError) throw error;

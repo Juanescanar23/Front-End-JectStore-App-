@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { decodeTenantSession } from "@/utils/tenant-session";
+import { closedStorefrontResponse } from "@/lib/storefront-experience/closed";
 import {
   canonicalExperienceHost, decodeExperiencePin, encodeExperiencePin, experienceRequestAuthority,
   EXPERIENCE_COOKIE, EXPERIENCE_REQUEST_HEADER, experiencesEnabledForHost,
   fetchStorefrontExperience, isExperiencePage, legacyGuestProof,
   nativeDestination, pinForExperience, requestPinForExperience, PIN_MAX_AGE, PREVIEW_PATH,
   PREVIEW_QUERY_HEADER, runtimeSigningKey, safeRequestHeaders,
-  StorefrontExperienceError, validatePreviewQuery, type ExperiencePin,
+  StorefrontClosedError, StorefrontExperienceError, validatePreviewQuery, type ExperiencePin,
 } from "@/lib/storefront-experience/runtime";
 
 function unavailable(error: unknown) {
@@ -92,6 +93,9 @@ export async function proxy(request: NextRequest) {
     }
     return response || NextResponse.next({ request: { headers: forwarded } });
   } catch (error) {
+    if (error instanceof StorefrontClosedError) {
+      return closedStorefrontResponse(error.details, request.method === "HEAD");
+    }
     return unavailable(error);
   }
 }
