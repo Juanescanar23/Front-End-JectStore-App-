@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
+import { startHttpFixture } from "./fixtures/http-loopback.mjs";
 import test from "node:test";
 import { loader } from "../../tests/product-preview-test-helpers.mjs";
 
@@ -16,20 +16,13 @@ function environment(t, origin) {
   } });
 }
 
-async function server(t, handle) {
-  const value = createServer(handle);
-  await new Promise(done => value.listen(0, "127.0.0.1", done));
-  t.after(() => new Promise(done => { value.closeAllConnections(); value.close(done); }));
-  return `http://127.0.0.1:${value.address().port}`;
-}
-
 const respond = (response, value) => {
   response.writeHead(200, { "Content-Type": "application/json" });
   response.end(JSON.stringify(value));
 };
 
-test("one native read uses only the configured destination, canonical path and scoped headers", async t => {
-  const calls = [], origin = await server(t, (request, response) => {
+test("[HTTP] one native read uses only the configured destination, canonical path and scoped headers", async t => {
+  const calls = [], origin = await startHttpFixture(t, (request, response) => {
     calls.push({ method: request.method, path: request.url, headers: request.headers });
     respond(response, { synthetic: true });
   });
@@ -42,8 +35,8 @@ test("one native read uses only the configured destination, canonical path and s
     "x-tenant-host": "a.example.test", "x-storefront-host": "a.example.test", connection: "close" });
 });
 
-test("concurrent tenant reads have separate request scope, never cached or shared responses", async t => {
-  const calls = [], origin = await server(t, (request, response) => {
+test("[HTTP] concurrent tenant reads have separate request scope, never cached or shared responses", async t => {
+  const calls = [], origin = await startHttpFixture(t, (request, response) => {
     calls.push(request.headers.host);
     respond(response, { tenant: request.headers.host, available: request.headers.host === "a.example.test" });
   });
@@ -83,9 +76,9 @@ test("missing or malformed native origin cannot fall back to landlord, caller ho
   assert.equal(reader.nativeCodConfigRequest("a.example.test", 6).url.hostname, "configured-native.example.test");
 });
 
-test("redirects and unsuccessful statuses are not followed or treated as a plan decision", async t => {
+test("[HTTP] redirects and unsuccessful statuses are not followed or treated as a plan decision", async t => {
   let status = 302, calls = 0;
-  const origin = await server(t, (_request, response) => {
+  const origin = await startHttpFixture(t, (_request, response) => {
     calls++; response.writeHead(status, { "Content-Type": "application/json", Location: "https://must-not-follow.invalid" });
     response.end("{}");
   });
@@ -96,9 +89,9 @@ test("redirects and unsuccessful statuses are not followed or treated as a plan 
   assert.equal(calls, 13);
 });
 
-test("malformed, compressed, oversized and truncated responses fail closed without body details", async t => {
+test("[HTTP] malformed, compressed, oversized and truncated responses fail closed without body details", async t => {
   let mode = "json";
-  const origin = await server(t, (_request, response) => {
+  const origin = await startHttpFixture(t, (_request, response) => {
     if (mode === "json") { response.writeHead(200, { "Content-Type": "application/json" }); response.end("{SECRET-DETAIL"); }
     if (mode === "type") { response.writeHead(200, { "Content-Type": "text/html" }); response.end("SECRET-DETAIL"); }
     if (mode === "encoding") { response.writeHead(200, { "Content-Type": "application/json", "Content-Encoding": "gzip" }); response.end("SECRET-DETAIL"); }
@@ -115,8 +108,8 @@ test("malformed, compressed, oversized and truncated responses fail closed witho
   }
 });
 
-test("an unresponsive native read has a bounded five-second timeout", async t => {
-  const origin = await server(t, () => {});
+test("[HTTP] an unresponsive native read has a bounded five-second timeout", async t => {
+  const origin = await startHttpFixture(t, () => {});
   environment(t, origin);
   const start = performance.now();
   await assert.rejects(reader.fetchNativeCodConfig("a.example.test", 6), StorefrontConnectionUnavailable);

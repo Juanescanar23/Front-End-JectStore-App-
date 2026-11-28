@@ -11,6 +11,7 @@
     "package-version": "npx npm-check-updates",
     "smoke:tenants": "node scripts/smoke-tenants.mjs",
     "check:styles": "node scripts/check-storefront-styles.mjs",
+    "test:http": "node --test --test-timeout=15000 --test-name-pattern='^\\[HTTP\\] ' scripts/tests/cod-native-config.test.mjs scripts/tests/storefront-experience.test.mjs",
     "test:styles": "node --test scripts/tests/storefront-styles.test.mjs"
   },
   "dependencies": {

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createRequire } from "node:module";
 import { createHmac, randomBytes } from "node:crypto";
-import { createServer } from "node:http";
+import { startHttpFixture } from "./fixtures/http-loopback.mjs";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import ts from "typescript";
@@ -388,12 +388,12 @@ test("a verified merchant pause has its own 503 and safely renders a public mess
   }
 });
 
-test("public proxy serves a closed shop without changing the buyer's experience cookie", async (t) => {
+test("[HTTP] public proxy serves a closed shop without changing the buyer's experience cookie", async (t) => {
   const testHost = "closed.jectstore.test";
   const storeName = 'Café <a> & "Lima"';
   let receivedHost;
   let receivedCookie;
-  const provider = createServer((req, res) => {
+  const origin = await startHttpFixture(t, (req, res) => {
     receivedHost = req.headers.host;
     receivedCookie = req.headers.cookie;
     const isClosed = receivedHost === testHost;
@@ -404,10 +404,8 @@ test("public proxy serves a closed shop without changing the buyer's experience 
       reason: "billing reason",
     } : { code: "BACKEND_UNAVAILABLE" }));
   });
-  await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
-  t.after(() => new Promise((resolve) => provider.close(resolve)));
   env(t, {
-    STOREFRONT_BACKEND_ORIGIN: `http://127.0.0.1:${provider.address().port}`,
+    STOREFRONT_BACKEND_ORIGIN: origin,
     STOREFRONT_EXPERIENCES_ENABLED: "true",
     STOREFRONT_EXPERIENCE_HOST_POLICY: "backend-registered",
     STOREFRONT_RUNTIME_SIGNING_KEY: randomBytes(32).toString("base64url"),
@@ -448,18 +446,16 @@ test("public proxy serves a closed shop without changing the buyer's experience 
   assert.match(await generic.text(), /No pudimos cargar esta versión de la tienda/);
 });
 
-test("actual fixed-origin HTTP transport preserves tenant Host and refuses redirects and empty responses", async (t) => {
+test("[HTTP] actual fixed-origin HTTP transport preserves tenant Host and refuses redirects and empty responses", async (t) => {
   let destination = "valid";
   let observedHost;
-  const provider = createServer((req, res) => {
+  const origin = await startHttpFixture(t, (req, res) => {
     observedHost = req.headers.host;
     if (destination === "redirect") { res.writeHead(302, { Location: "https://outside.invalid/never-follow" }).end(); return; }
     if (destination === "empty") { res.writeHead(204).end(); return; }
     res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(experience()));
   });
-  await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
-  t.after(() => new Promise((resolve) => provider.close(resolve)));
-  env(t, { STOREFRONT_BACKEND_ORIGIN: `http://127.0.0.1:${provider.address().port}` });
+  env(t, { STOREFRONT_BACKEND_ORIGIN: origin });
   assert.equal((await runtime.fetchStorefrontExperience({ host: HOST })).currency, "MXN");
   assert.equal(observedHost, HOST, "Unlike Node fetch, the explicit Host must survive transport");
   destination = "redirect"; await assert.rejects(() => runtime.fetchStorefrontExperience({ host: HOST }), /backend-302/);
