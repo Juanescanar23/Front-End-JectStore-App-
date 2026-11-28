@@ -10,6 +10,7 @@ import { useAddressesFromApi } from "@utils/helper";
 import { useScrollToTop } from "@/utils/hooks/useScrollTo";
 import { useSearchParams } from "next/navigation";
 import { resolveCheckoutStep } from "@/utils/checkout-step";
+import { WHATSAPP_ORDER_METHOD, WHATSAPP_ORDER_TITLE } from "@/utils/whatsapp-order";
 import "./checkout-theme.css";
 
 
@@ -39,8 +40,9 @@ const CheckOut = ({ step }: CheckOutProps) => {
   const cartItems = cartDetail?.cart;
   const selectedShippingRate = cartItems?.selectedShippingRate;
   const selectedShippingRateTitle = cartItems?.selectedShippingRateTitle || cartItems?.selectedShippingRate;
-  const selectedPayment = cartItems?.paymentMethod;
-  const selectedPaymentTitle = cartItems?.paymentMethodTitle;
+  const whatsappSelected = searchParams?.get("payment") === "whatsapp";
+  const selectedPayment = whatsappSelected ? WHATSAPP_ORDER_METHOD : cartItems?.paymentMethod;
+  const selectedPaymentTitle = whatsappSelected ? WHATSAPP_ORDER_TITLE : cartItems?.paymentMethodTitle;
   const [isOpen, setIsOpen] = useState(!selectedPayment);
   useScrollToTop();
 
@@ -65,6 +67,7 @@ const CheckOut = ({ step }: CheckOutProps) => {
               currentStep={currentStep}
               selectedPayment={selectedPayment}
               selectedPaymentTitle={selectedPaymentTitle}
+              whatsappCartId={whatsappSelected ? Number(cartItems?.id) : undefined}
               selectedShippingRate={selectedShippingRate}
               selectedShippingRateTitle={selectedShippingRateTitle}
               shippingAddress={shippingAddress}

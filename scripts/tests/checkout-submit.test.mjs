@@ -124,7 +124,8 @@ test("actual review submit remains pending through the parent promise and busy s
     const pending = deferred();
     let calls = 0, settled = false;
     const action = arrow("src/components/checkout/stepper/review/OrderReview.tsx", "onSubmit", {
-      isPlaceOrder: busy, SavePlaceOrder: () => { calls++; return pending.promise; },
+      isPlaceOrder: busy, canSubmit: true, whatsappCartId: undefined,
+      SavePlaceOrder: () => { calls++; return pending.promise; },
     });
     const result = action().then((value) => { settled = true; return value; });
     await Promise.resolve();

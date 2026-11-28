@@ -13,6 +13,7 @@ import { isCheckoutAddressSaveSuccessful } from "@/utils/checkout-address-locati
 import { useRef } from "react";
 import { createCheckoutSubmissionGuard } from "@/utils/checkout-submit";
 import { updateCheckoutStep } from "@/utils/checkout-step";
+import { isWhatsAppOrderId, WHATSAPP_RECEIPT_PATH } from "@/utils/whatsapp-order";
 
 export interface InputDataTypes {
   input: {
@@ -214,7 +215,7 @@ export const useCheckout = () => {
             showToast("La URL de pago recibida no es segura.", "warning");
           }
 
-          updateCheckoutStep("review", "replace");
+          updateCheckoutStep("review", "replace", false);
         } else {
           showToast(response?.error?.message as string, "warning");
         }
@@ -247,6 +248,12 @@ export const useCheckout = () => {
         },
       }),
     onSuccess: (response) => {
+      const whatsappOrderId = response?.whatsappOrder?.id;
+      if (isWhatsAppOrderId(whatsappOrderId)) {
+        dispatch(clearCart());
+        router.replace(`${WHATSAPP_RECEIPT_PATH}/${whatsappOrderId}`);
+        return;
+      }
       const responseData = response?.data?.createCheckoutOrder?.checkoutOrder;
 
       if (isObject(responseData)) {
@@ -256,7 +263,7 @@ export const useCheckout = () => {
         router.replace("/success");
       }
       else {
-        showToast(response?.error?.message as string, "warning");
+        showToast(response?.message || response?.error?.message, "warning");
       }
     },
     onError: (error) => {
@@ -264,13 +271,16 @@ export const useCheckout = () => {
     },
   });
 
-  const SavePlaceOrder = async () => {
+  const SavePlaceOrder = async (whatsappCartId?: number) => {
     const token = getCartToken();
     return await submitOnce("order", async () => {
-      const response = await placeOrder({ token: token || "" });
+      const response = await placeOrder({
+        token: token || "",
+        ...(whatsappCartId !== undefined ? { whatsappCartId } : {}),
+      });
 
       const isGuest = getCookie(IS_GUEST);
-      if (isGuest === "true") {
+      if (isGuest === "true" && (whatsappCartId === undefined || isWhatsAppOrderId(response?.whatsappOrder?.id))) {
         await resetGuestToken();
       }
       return response;

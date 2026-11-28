@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { WHATSAPP_RECEIPT_PATH } from "@/utils/whatsapp-order";
 import { decodeTenantSession } from "@/utils/tenant-session";
 import {
   canonicalExperienceHost, decodeExperiencePin, encodeExperiencePin, experienceRequestAuthority,
@@ -64,7 +65,9 @@ export async function proxy(request: NextRequest) {
       forwarded.set("x-locale", experience.locale);
       forwarded.set("x-jectstore-experience-channel", String(experience.channel.id));
       forwarded.set("x-jectstore-experience-revision", String(experience.published_revision_id ?? 0));
-      if (experience.engine === "visual") {
+      // The receipt for orders handed off by Next is always rendered here.
+      const useNative = experience.engine === "visual" && !pathname.startsWith(WHATSAPP_RECEIPT_PATH + "/");
+      if (useNative) {
         // The dedicated native ingress is loopback-only and restores this scoped Host.
         forwarded.set("x-jectstore-native-host", authority);
         // Laravel's published-theme resolver validates this exact request release.
@@ -79,7 +82,7 @@ export async function proxy(request: NextRequest) {
         maxAge: Math.max(0, pin.expires_at - Math.floor(Date.now() / 1000)),
       });
       response.headers.set("Cache-Control", "private, no-store");
-      if (experience.engine === "visual") return response;
+      if (useNative) return response;
     }
 
     if (["/customer/login", "/customer/register"].includes(pathname)) {

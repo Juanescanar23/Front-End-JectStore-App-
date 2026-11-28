@@ -65,6 +65,7 @@ function checkout(step, isLoading = false) {
     "@/utils/hooks/useScrollTo": { useScrollToTop() {} },
     "next/navigation": { useSearchParams: () => null },
     "@/utils/checkout-step": load("src/utils/checkout-step.ts", {}, null),
+    "@/utils/whatsapp-order": load("src/utils/whatsapp-order.ts", {}, null),
     "./checkout-theme.css": {},
   });
   return component({ step });
@@ -163,6 +164,7 @@ function checkoutComponent(file, { email = "qa@example.invalid", open, pending =
     "@/components/common/StorefrontLink": interop(({ children, ...props }) => React.createElement("a", props, children)),
     "next/navigation": { useRouter: () => ({ push() {} }) },
     "@/utils/checkout-step": { updateCheckoutStep() {} },
+    "@/utils/whatsapp-order": load("src/utils/whatsapp-order.ts", {}, null),
     "@/store/local-storage": { EMAIL: "email", getLocalStorage: () => email, setLocalStorage() {} },
     "@/store/slices/cart-slice": { setCheckoutAddresses: (value) => value },
     "@/utils/type-guards": { isObject: (value) => Boolean(value) && typeof value === "object" },
@@ -260,6 +262,7 @@ function hydrationMarkup({ phase = "server", guest = false, email = null, cached
     "@/utils/hooks/useScrollTo": { useScrollToTop() {} },
     "next/navigation": { useSearchParams: () => new URLSearchParams({ step }) },
     "@/utils/checkout-step": load("src/utils/checkout-step.ts", {}, null),
+    "@/utils/whatsapp-order": load("src/utils/whatsapp-order.ts", {}, null),
     "./checkout-theme.css": {},
   });
   const client = new reactQuery.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
