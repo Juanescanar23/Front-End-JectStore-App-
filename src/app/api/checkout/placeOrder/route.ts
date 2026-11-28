@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { storefrontUnavailableResponse } from "@/utils/server/storefront-unavailable";
+import { experienceRequestAuthority } from "@/lib/storefront-experience/runtime";
 import { CREATE_CHECKOUT_ORDER } from "@/graphql";
 import { CREATE_WHATSAPP_ORDER } from "@/graphql/checkout/whatsapp-order";
 import { bagistoFetch } from "@utils/bagisto";
@@ -8,10 +9,25 @@ import { CreateCheckoutOrderOperation } from "@/types/checkout/type";
 import { getAuthToken } from "@/utils/helper";
 import { isWhatsAppOrderId, parseWhatsAppOrder, WHATSAPP_RECEIPT_COOKIE, WHATSAPP_RECEIPT_PATH } from "@/utils/whatsapp-order";
 
+function isSameStorefrontOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+
+  try {
+    const authority = experienceRequestAuthority(request.headers.get("host"));
+    // The checkout ingress overwrites this header with its own scheme.
+    const scheme = request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.slice(0, -1);
+    if (scheme !== "http" && scheme !== "https") return false;
+    return origin === new URL(scheme + "://" + authority).origin;
+  } catch {
+    return false;
+  }
+}
+
 async function placeWhatsAppOrder(req: Request, input: Record<string, unknown>) {
   const privateHeaders = { "Cache-Control": "private, no-store" };
-  if (req.headers.get("origin") !== new URL(req.url).origin
-    || !req.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+  if (!isSameStorefrontOrigin(req)
+    || req.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
     return NextResponse.json({ message: "No pudimos verificar esta solicitud." }, { status: 403, headers: privateHeaders });
   }
 
