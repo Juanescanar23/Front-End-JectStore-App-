@@ -143,6 +143,7 @@ test("signed CMS query remains byte-exact baseline; no policy content or contact
 test("canonical CMS displays configured Spanish date copy and uses the semantic API calendar date", async () => {
   const Page = load("src/app/(public)/[page]/page.tsx", {
     "react/jsx-runtime": { jsx, jsxs: jsx },
+    "@/components/common/StorefrontVisit": interop(() => null),
     "next/navigation": { notFound: () => { throw new Error("not-found"); } },
     "@components/theme/search/Prose": interop("Prose"),
     "@utils/bagisto": { getPage: async () => [{ updatedAt: "2026-11-05T00:00:00Z", translation: { pageTitle: "Ejemplo", htmlContent: "<p>Ejemplo</p>" } }] },

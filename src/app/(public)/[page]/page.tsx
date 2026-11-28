@@ -3,6 +3,7 @@ import Prose from "@components/theme/search/Prose";
 import { getPage } from "@utils/bagisto";
 import { getStorefrontLocaleCode } from "@/utils/server/storefront-locale";
 import { cmsUpdatedAt } from "@/utils/cms-updated-at";
+import StorefrontVisit from "@/components/common/StorefrontVisit";
 
 
 export default async function Page({
@@ -21,6 +22,7 @@ export default async function Page({
 
   return (
     <div className="my-4 flex flex-col justify-between p-4">
+      <StorefrontVisit pageType="page" pageId={page?.[0]?.id} />
       <div className="flex flex-col gap-4 mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold">{pageData?.pageTitle}</h1>
         <Prose className="mb-8" html={pageData?.htmlContent} />
