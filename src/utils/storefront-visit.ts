@@ -69,7 +69,8 @@ export function reportStorefrontVisit(
     body,
     credentials: "omit",
     mode: "same-origin",
-    referrerPolicy: "no-referrer",
+    // Laravel checks Origin; trim the Referer without making Origin opaque.
+    referrerPolicy: "strict-origin",
     keepalive: true,
     redirect: "error",
   }).catch(() => { /* A metric never interrupts shopping. */ });

@@ -67,7 +67,7 @@ test("navigation sends once, handles SPA visits and search changes, and does not
     assert.equal(options.method, "POST");
     assert.equal(options.credentials, "omit");
     assert.equal(options.mode, "same-origin");
-    assert.equal(options.referrerPolicy, "no-referrer");
+    assert.equal(options.referrerPolicy, "strict-origin");
     assert.deepEqual(plain(options.headers), { "Content-Type": "application/json" });
   }
   report({ pageType: "cart" }, "http://integracion.localhost/cart", "", async () => { throw new Error("offline"); });
